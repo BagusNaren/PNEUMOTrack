@@ -59,6 +59,7 @@ Never reference the raw palette in JSX. Use these names.
 | `border` | `#E3E9EE` | `#243244` | Dividers |
 | `ink` | `#0B1B2B` | `#F5F7FA` | Primary text |
 | `ink-muted` | `#60646C` | `#A9B4C2` | Secondary text |
+| `icon-muted` | `#AEB7C2` | `#6B7A8C` | Inactive nav icon |
 | `brand` | `#1F4B75` | `#7FB3D9` | Brand text, primary CTA |
 | `brand-strong` | `#173A5C` | `#A9CBE8` | Pressed/strong |
 | `on-brand` | `#FFFFFF` | `#0B1220` | Text on brand fill |
@@ -87,6 +88,7 @@ module.exports = {
         'surface-brand-soft': { DEFAULT: '#EAF4F9', dark: '#17293D' },
         border: { DEFAULT: '#E3E9EE', dark: '#243244' },
         ink: { DEFAULT: '#0B1B2B', muted: '#60646C', dark: '#F5F7FA', 'dark-muted': '#A9B4C2' },
+        'icon-muted': { DEFAULT: '#AEB7C2', dark: '#6B7A8C' },
         brand: { DEFAULT: '#1F4B75', strong: '#173A5C', light: '#7FB3D9' },
         'on-brand': '#FFFFFF',
         risk: {
@@ -285,6 +287,10 @@ Static amplitude strip inside a `rounded-card bg-surface-brand` block, 64–96px
 
 Icon `h-16 w-16` muted, `text-subtitle` title, `text-body text-ink-muted` body, one `PrimaryButton` action (“Rekam ulang”, “Coba lagi”).
 
+### `BottomNav` (app shell)
+
+Icon-only tab bar shown on the four root screens. Anatomy and states are specified in [§7.18](#718-bottom-navigation-navbar).
+
 ---
 
 ## 7. Screen specifications
@@ -421,7 +427,7 @@ High fidelity reference: `UI_reference/recommendations page_user.png`.
 - Filter chips `rounded-pill bg-surface-brand-soft px-4 py-2`, active `bg-brand text-on-brand`.
 - “Artikel Populer” horizontal carousel of `w-40` cards: image `h-24 rounded-xl`, title `text-label font-semibold numberOfLines={2}`, meta `text-caption text-ink-muted`.
 - “Artikel Terkait” vertical list with 56px thumbnail and 2-line title.
-- Bottom nav: four tabs (Beranda, Riwayat, Pesan, Artikel) — `NativeTabs`, styled via props from the same color tokens.
+- Uses the shared bottom navbar (see §7.18), with “Menu” as the active item.
 
 ### 7.17 Add child
 
@@ -430,6 +436,66 @@ High fidelity reference: `UI_reference/recommendations page_user.png`.
 - Inputs: label `text-label font-semibold`, field `h-12 rounded-xl border border-border bg-surface px-4 text-body`.
 - Sex selector `SegmentedTabs` (Laki-laki / Perempuan).
 - Sticky `PrimaryButton` “Simpan”.
+
+### 7.18 Bottom navigation (navbar)
+
+Reference: the 4-icon bar below the mockup screens (`UI_reference/chat list_user.png`, `cough analysis_user.png`).
+
+**Anatomy:** white bar, 1px top hairline, four evenly spaced icon-only items, 64px tall (plus system safe-area inset). Icons 24px, no labels, no badge.
+
+| # | Item | Icon | Route |
+|---|---|---|---|
+| 1 | Beranda | house outline | `/` |
+| 2 | Riwayat | pulse / waveform | `/history` |
+| 3 | Profil | person outline | `/profile` |
+| 4 | Menu | three horizontal lines | opens `MenuSheet` (does not navigate) |
+
+**States**
+
+| State | Icon color | Notes |
+|---|---|---|
+| Active | `brand` (`#1F4B75`) | Also thicker stroke (2px vs 1.5px) — do not rely on color alone |
+| Inactive | `icon-muted` (`#AEB7C2`) | 60% visual weight |
+| Pressed | `brand-strong` | `active:opacity-70` on Pressable |
+
+**Implementation**
+
+Use a custom tab bar with `Tabs` from `expo-router/ui` (the same pattern already in `src/components/app-tabs.web.tsx`). `NativeTabs` is not used for this bar: it always renders labels and cannot express the icon-only navy styling in the mockup.
+
+```tsx
+// src/app/(tabs)/_layout.tsx
+<View className="border-t border-border bg-surface dark:border-border-dark dark:bg-surface-dark">
+  <View className="h-16 flex-row items-center">
+    <TabTrigger name="home" href="/" asChild>
+      <Pressable
+        className="h-12 flex-1 items-center justify-center"
+        accessibilityRole="tab"
+        accessibilityLabel="Beranda"
+        accessibilityState={{ selected: isFocused }}>
+        <HomeIcon
+          className={
+            isFocused
+              ? 'text-brand dark:text-brand-light'
+              : 'text-icon-muted dark:text-icon-muted-dark'
+          }
+        />
+      </Pressable>
+    </TabTrigger>
+    {/* history, profile, menu — same anatomy */}
+  </View>
+  <View style={{ height: insets.bottom }} />
+</View>
+```
+
+Rules:
+
+- The bar is **not** `absolute`; it sits in normal flex flow so screens never scroll under it. Screens that use `ScrollView` add `contentContainerStyle={{ paddingBottom: 24 }}` and the bar's height handles the rest.
+- Each item is `flex-1` with a ≥ 48px touch area; the visible icon is 24px.
+- Icon-only controls require `accessibilityLabel` in Indonesian and `accessibilityState={{ selected }}`.
+- The bar is hidden on focused flows: Recording, Recording guidance, Analyzing, Result, Recommended Action, Chat room, Add child, and Hospital map. Those screens are full-bleed and rely on the header back action.
+- “Menu” opens a bottom sheet (`rounded-sheet`, `bg-surface-card`, drag handle `h-1 w-10 rounded-full bg-border`) with: Profil Anak, Pengaturan, Tentang Aplikasi, Bantuan. It is not a pushed route, so the active tab stays highlighted.
+- Dark mode: surface `#131C2A`, hairline `#243244`, active icon `brand-light` `#7FB3D9`, inactive `#6B7A8C`.
+- Do not add a floating tab bar, blur, or shadow; the mockup is flat with one hairline.
 
 ---
 
