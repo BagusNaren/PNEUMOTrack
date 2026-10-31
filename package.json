@@ -58,6 +58,9 @@
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f",
     "db:reset": "docker compose down -v && docker compose up -d",
+    "db:migrate": "supabase migration up --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+    "db:seed": "docker compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < supabase/seed.sql",
+    "db:rls": "node server_side/scripts/rls-test.mjs",
     "db:types": "supabase gen types typescript --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres --schema public"
   },
   "private": true

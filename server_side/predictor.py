@@ -1,97 +1,162 @@
-from pathlib import Path
-import logging
-import numpy as np
-from typing import Dict, Any, List
-from tensorflow.keras.models import Model
-from sklearn.svm import OneClassSVM
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+"""Audio preprocessing, validation, segmentation, and inference helpers."""
+
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
+
 import librosa
+import numpy as np
 import noisereduce as nr
-from scipy.stats import skew, kurtosis
+from scipy.stats import kurtosis, skew
 
-logger = logging.getLogger(__name__)
+# ---------------------------------------------------------------------------
+# Quality-gate thresholds (Sprint 2 — synthetic fixtures; calibrate with real
+# recordings before claiming production quality)
+# ---------------------------------------------------------------------------
+MIN_DURATION_SEC = 3.0
+SILENT_RMS = 1e-4
+MAX_ACTIVE_RATIO = 0.8
+MIN_SNR_DB = 3.0
+ACTIVE_FRAME_RATIO = 0.2
+WAVEFORM_POINTS = 100
 
-# ---------------------------------------------
-# AUDIO PREPROCESSING
-# ---------------------------------------------
-def logmmse_noise_reduction(
-    audio: np.ndarray,
-    sr: int = 22050,
-    prop_decrease: float = 0.4,
-    stationary: bool = True
-) -> np.ndarray:
-    try:
-        audio_denoised = nr.reduce_noise(
-            y=audio, sr=sr,
-            prop_decrease=prop_decrease,
-            stationary=stationary,
-            n_fft=512, n_jobs=1
-        )
-        return audio_denoised.astype(np.float32)
-    except Exception as e:
-        logger.warning(f"Noise reduction gagal, pakai audio asli: {e}")
-        return audio
+ERROR_MESSAGES = {
+    "AUDIO_TOO_SHORT": "Rekaman terlalu pendek. Rekam minimal 3 detik.",
+    "AUDIO_SILENT": "Tidak ada suara yang terekam. Coba rekam ulang.",
+    "NO_COUGH_DETECTED": "Batuk belum terdeteksi. Rekam ulang saat anak batuk.",
+    "AUDIO_TOO_NOISY": "Rekaman terlalu berisik. Cari tempat yang lebih tenang.",
+    "UNSUPPORTED_FORMAT": "Format audio tidak didukung.",
+    "FILE_TOO_LARGE": "Ukuran file terlalu besar (maksimal 10 MB).",
+    "INTERNAL_ERROR": "Terjadi kesalahan. Coba lagi.",
+}
 
-def normalize_amplitude(audio: np.ndarray) -> np.ndarray:
-    max_val = np.max(np.abs(audio))
-    if max_val > 1e-8:
-        return (audio / max_val).astype(np.float32)
+
+class AudioValidationError(Exception):
+    """Raised when a recording is not usable for screening."""
+
+    def __init__(self, code: str, message: Optional[str] = None) -> None:
+        self.code = code
+        self.message = message or ERROR_MESSAGES.get(code, ERROR_MESSAGES["INTERNAL_ERROR"])
+        super().__init__(self.message)
+
+
+# ---------------------------------------------------------------------------
+# Loading & preprocessing
+# ---------------------------------------------------------------------------
+def load_audio(filepath: str, sr: int = 22050) -> np.ndarray:
+    audio, _ = librosa.load(filepath, sr=sr, mono=True)
+    if audio.size == 0:
+        raise AudioValidationError("AUDIO_SILENT")
     return audio.astype(np.float32)
 
-def preprocess_audio(filepath: str, sr: int = 22050) -> np.ndarray:
+
+def reduce_noise(audio: np.ndarray, sr: int = 22050) -> np.ndarray:
     try:
-        audio, _ = librosa.load(filepath, sr=sr, mono=True)
-        if len(audio) == 0:
-            logger.warning(f"File kosong: {filepath}")
-            return None
-        audio = logmmse_noise_reduction(audio, sr)
-        audio = normalize_amplitude(audio)
-        return audio
-    except Exception as e:
-        logger.error(f"Gagal preprocess {filepath}: {e}")
-        return None
+        cleaned = nr.reduce_noise(
+            y=audio,
+            sr=sr,
+            prop_decrease=0.4,
+            stationary=True,
+            n_fft=512,
+            n_jobs=1,
+        )
+        return cleaned.astype(np.float32)
+    except Exception:  # pragma: no cover - optional enhancement
+        return audio.astype(np.float32)
 
-# ---------------------------------------------
-# ADAPTIVE COUGH SEGMENTATION
-# ---------------------------------------------
-def compute_frame_energy(
-    audio: np.ndarray,
-    frame_len: int = 512,
-    hop: int = 128
-) -> np.ndarray:
-    rms = librosa.feature.rms(
-        y=audio, frame_length=frame_len,
-        hop_length=hop, center=True
-    )
-    return rms[0]
 
+def normalize_amplitude(audio: np.ndarray) -> np.ndarray:
+    peak = float(np.max(np.abs(audio))) if audio.size else 0.0
+    if peak > 1e-8:
+        return (audio / peak).astype(np.float32)
+    return audio.astype(np.float32)
+
+
+def prepare_audio(audio: np.ndarray, sr: int = 22050) -> np.ndarray:
+    """Denoise then normalize. Validation always runs on the raw signal."""
+    return normalize_amplitude(reduce_noise(audio, sr))
+
+
+# ---------------------------------------------------------------------------
+# Validation
+# ---------------------------------------------------------------------------
+def frame_rms(audio: np.ndarray, frame_len: int = 512, hop: int = 128) -> np.ndarray:
+    rms = librosa.feature.rms(y=audio, frame_length=frame_len, hop_length=hop, center=True)
+    return rms[0].astype(np.float64)
+
+
+def signal_to_noise_db(frames: np.ndarray) -> float:
+    noise = float(np.percentile(frames, 10))
+    signal = float(np.percentile(frames, 95))
+    return 20.0 * np.log10((signal + 1e-12) / (noise + 1e-12))
+
+
+def active_frame_ratio(frames: np.ndarray) -> float:
+    if frames.size == 0:
+        return 0.0
+    peak = float(np.max(frames))
+    if peak <= 1e-12:
+        return 0.0
+    return float(np.mean(frames > ACTIVE_FRAME_RATIO * peak))
+
+
+def validate_audio(audio: np.ndarray, sr: int = 22050) -> Dict[str, float]:
+    """Reject unusable recordings before running the model (PRD §13)."""
+    duration = len(audio) / sr
+    if duration < MIN_DURATION_SEC:
+        raise AudioValidationError("AUDIO_TOO_SHORT")
+
+    frames = frame_rms(audio)
+    peak_rms = float(np.max(frames)) if frames.size else 0.0
+    if peak_rms < SILENT_RMS:
+        raise AudioValidationError("AUDIO_SILENT")
+
+    snr_db = signal_to_noise_db(frames)
+    active_ratio = active_frame_ratio(frames)
+    if snr_db < MIN_SNR_DB or active_ratio > MAX_ACTIVE_RATIO:
+        raise AudioValidationError("AUDIO_TOO_NOISY")
+
+    return {
+        "duration_sec": round(duration, 2),
+        "snr_db": round(snr_db, 2),
+        "active_ratio": round(active_ratio, 3),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Cough segmentation (no fallback to whole signal: silence/noise must fail)
+# ---------------------------------------------------------------------------
 def _extract_chunks_from_mask(
-    audio: np.ndarray, energy: np.ndarray,
-    energy_threshold: float, hop: int,
-    sr: int, min_dur: float, max_dur: float, merge_gap: float
+    audio: np.ndarray,
+    energy: np.ndarray,
+    energy_threshold: float,
+    hop: int,
+    sr: int,
+    min_dur: float,
+    max_dur: float,
+    merge_gap: float,
 ) -> List[np.ndarray]:
     active_mask = energy > energy_threshold
-    intervals_samples = []
+    intervals: List[tuple[int, int]] = []
     in_chunk = False
     chunk_start = 0
 
-    for i, is_active in enumerate(active_mask):
-        sample_pos = i * hop
+    for index, is_active in enumerate(active_mask):
+        sample_pos = index * hop
         if is_active and not in_chunk:
             chunk_start = sample_pos
             in_chunk = True
         elif not is_active and in_chunk:
-            intervals_samples.append((chunk_start, min(sample_pos, len(audio))))
+            intervals.append((chunk_start, min(sample_pos, len(audio))))
             in_chunk = False
     if in_chunk:
-        intervals_samples.append((chunk_start, len(audio)))
-
-    if not intervals_samples:
+        intervals.append((chunk_start, len(audio)))
+    if not intervals:
         return []
 
     gap_samples = int(merge_gap * sr)
-    merged = [intervals_samples[0]]
-    for start, end in intervals_samples[1:]:
+    merged = [intervals[0]]
+    for start, end in intervals[1:]:
         prev_start, prev_end = merged[-1]
         if start - prev_end <= gap_samples:
             merged[-1] = (prev_start, end)
@@ -100,229 +165,166 @@ def _extract_chunks_from_mask(
 
     min_samples = int(min_dur * sr)
     max_samples = int(max_dur * sr)
-    chunks = []
+    chunks: List[np.ndarray] = []
     for start, end in merged:
-        dur = end - start
-        if dur < min_samples:
+        if end - start < min_samples:
             continue
-        if dur > max_samples:
+        if end - start > max_samples:
             center = (start + end) // 2
             start = max(0, center - max_samples // 2)
-            end   = min(len(audio), start + max_samples)
+            end = min(len(audio), start + max_samples)
         chunks.append(audio[start:end].astype(np.float32))
-
     return chunks
+
 
 def segment_cough_chunks(
     audio: np.ndarray,
     sr: int = 22050,
     adaptive_ratio: float = 0.20,
-    fallback_ratio: float = 0.05,
     frame_len: int = 512,
     hop: int = 128,
     min_dur: float = 0.1,
     max_dur: float = 2.0,
-    merge_gap: float = 0.05
+    merge_gap: float = 0.05,
 ) -> List[np.ndarray]:
-    energy = compute_frame_energy(audio, frame_len, hop)
-    max_energy = np.max(energy)
-
-    if max_energy < 1e-8:
-        logger.warning("Energi sinyal sangat rendah, gunakan seluruh sinyal")
-        return [audio]
-
-    threshold = adaptive_ratio * max_energy
-    chunks = _extract_chunks_from_mask(
+    energy = frame_rms(audio, frame_len, hop)
+    peak = float(np.max(energy)) if energy.size else 0.0
+    if peak <= 1e-8:
+        return []
+    threshold = adaptive_ratio * peak
+    return _extract_chunks_from_mask(
         audio, energy, threshold, hop, sr, min_dur, max_dur, merge_gap
     )
 
-    if not chunks:
-        threshold_fb = fallback_ratio * max_energy
-        logger.warning(
-            f"Adaptive thr={threshold:.4f} → 0 chunk. "
-            f"Fallback thr={threshold_fb:.4f}"
-        )
-        chunks = _extract_chunks_from_mask(
-            audio, energy, threshold_fb, hop, sr, min_dur, max_dur, merge_gap
-        )
 
-    if not chunks:
-        logger.warning("Tetap 0 chunk setelah fallback, gunakan seluruh sinyal")
-        return [audio]
-
-    return chunks
-
-# ---------------------------------------------
-# FEATURE EXTRACTION (80-dim)
-# ---------------------------------------------
+# ---------------------------------------------------------------------------
+# Feature extraction (80-dim: mean/std/skew/kurtosis of 20 MFCCs)
+# ---------------------------------------------------------------------------
 def pad_or_crop_chunk(chunk: np.ndarray, target_len: int = 22050) -> np.ndarray:
     if len(chunk) >= target_len:
         start = (len(chunk) - target_len) // 2
-        return chunk[start:start + target_len]
-    else:
-        return np.pad(chunk, (0, target_len - len(chunk)), mode='constant').astype(np.float32)
+        return chunk[start : start + target_len]
+    return np.pad(chunk, (0, target_len - len(chunk)), mode="constant").astype(np.float32)
+
 
 def extract_mfcc_matrix(
     chunk: np.ndarray,
     sr: int = 22050,
     n_mfcc: int = 20,
-    fixed_len: int = 22050
+    fixed_len: int = 22050,
 ) -> np.ndarray:
     chunk_fixed = pad_or_crop_chunk(chunk, fixed_len)
     mfcc = librosa.feature.mfcc(
-        y=chunk_fixed, sr=sr, n_mfcc=n_mfcc,
-        n_fft=2048, hop_length=512,
-        fmin=50, fmax=8000
+        y=chunk_fixed,
+        sr=sr,
+        n_mfcc=n_mfcc,
+        n_fft=2048,
+        hop_length=512,
+        fmin=50,
+        fmax=8000,
     )
     return mfcc.astype(np.float32)
 
+
 def mfcc_to_80dim_vector(mfcc_matrix: np.ndarray) -> np.ndarray:
-    mean_vec = np.mean(mfcc_matrix, axis=1)             # (20,)
-    std_vec  = np.std(mfcc_matrix, axis=1)              # (20,)
-    skew_vec = skew(mfcc_matrix, axis=1)                # (20,)
-    kurt_vec = kurtosis(mfcc_matrix, axis=1)            # (20,)
-    return np.concatenate([mean_vec, std_vec, skew_vec, kurt_vec]).astype(np.float32)  # (80,)
+    mean_vec = np.mean(mfcc_matrix, axis=1)
+    std_vec = np.std(mfcc_matrix, axis=1)
+    skew_vec = skew(mfcc_matrix, axis=1)
+    kurt_vec = kurtosis(mfcc_matrix, axis=1)
+    return np.concatenate([mean_vec, std_vec, skew_vec, kurt_vec]).astype(np.float32)
+
 
 def aggregate_mfcc_chunks(mfcc_list: List[np.ndarray]) -> np.ndarray:
     if not mfcc_list:
-        raise ValueError("mfcc_list kosong")
-    stacked = np.stack(mfcc_list, axis=0)    # (N, 20, T)
-    return np.mean(stacked, axis=0).astype(np.float32)   # (20, T)
+        raise AudioValidationError("NO_COUGH_DETECTED")
+    stacked = np.stack(mfcc_list, axis=0)
+    return np.mean(stacked, axis=0).astype(np.float32)
 
-# ---------------------------------------------
-# PREDICTION FUNCTION
-# ---------------------------------------------
-def predict_new_audio(
-    filepath: str,
-    encoder_model: Model,
-    svm_model: OneClassSVM,
-    feat_scaler: MinMaxScaler,
-    latent_scaler: StandardScaler,
-    ae_model: Model,
-    ae_threshold: float,
-    sr: int = 22050,
-    verbose: bool = True
+
+def extract_features(chunks: List[np.ndarray], sr: int = 22050, n_mfcc: int = 20) -> np.ndarray:
+    if not chunks:
+        raise AudioValidationError("NO_COUGH_DETECTED")
+    mfcc_list = [extract_mfcc_matrix(chunk, sr, n_mfcc) for chunk in chunks]
+    min_t = min(matrix.shape[1] for matrix in mfcc_list)
+    trimmed = [matrix[:, :min_t] for matrix in mfcc_list]
+    aggregated = aggregate_mfcc_chunks(trimmed)
+    return mfcc_to_80dim_vector(aggregated).reshape(1, -1)
+
+
+# ---------------------------------------------------------------------------
+# Inference
+# ---------------------------------------------------------------------------
+def run_models(
+    feature: np.ndarray,
+    encoder_model: Any,
+    svm_model: Any,
+    feat_scaler: Any,
+    latent_scaler: Any,
+    ae_model: Any,
 ) -> Dict[str, Any]:
-    """
-    Inferensi end-to-end.
-    """
+    feat_scaled = feat_scaler.transform(feature)
 
-    result = {
-        "filepath": filepath,
-        "status": "error",
-        "n_chunks": 0,
-        "svm_label": None,
-        "svm_score": None,
-        "ae_label": None,
-        "ae_error": None,
-        "ae_threshold": float(ae_threshold),
-        "final_label": None,
-        "confidence": None,
+    reconstruction = ae_model.predict(feat_scaled, verbose=0)
+    ae_error = float(np.mean(np.square(feat_scaled - reconstruction)))
+
+    latent = encoder_model.predict(feat_scaled, verbose=0)
+    latent_scaled = latent_scaler.transform(latent)
+    svm_pred = int(svm_model.predict(latent_scaled)[0])
+    svm_score = float(svm_model.score_samples(latent_scaled)[0])
+
+    return {
+        "ae_error": ae_error,
+        "svm_label": "Pneumonia" if svm_pred == 1 else "Bukan Pneumonia",
+        "svm_score": svm_score,
     }
 
-    try:
-        audio = preprocess_audio(filepath, sr)
 
-        if audio is None:
-            raise ValueError("Gagal memproses audio.")
+def decide(ae_error: float, ae_threshold: float, svm_label: str) -> Dict[str, Any]:
+    ae_label = "Pneumonia" if ae_error <= ae_threshold else "Bukan Pneumonia"
+    votes = [svm_label, ae_label]
+    pneumonia_votes = votes.count("Pneumonia")
+    normal_votes = votes.count("Bukan Pneumonia")
 
-        chunks = segment_cough_chunks(audio, sr)
+    raw_label = "Pneumonia" if pneumonia_votes >= normal_votes else "Bukan Pneumonia"
+    return {
+        "raw_label": raw_label,
+        "result": "risk" if raw_label == "Pneumonia" else "normal",
+        "agreement": ae_label == svm_label,
+        "votes": {
+            "autoencoder": "risk" if ae_label == "Pneumonia" else "normal",
+            "ocsvm": "risk" if svm_label == "Pneumonia" else "normal",
+        },
+        "vote_confidence": max(pneumonia_votes, normal_votes) / len(votes),
+    }
 
-        if len(chunks) == 0:
-            raise ValueError("Tidak ditemukan segmen batuk.")
 
-        result["n_chunks"] = len(chunks)
+# ---------------------------------------------------------------------------
+# UI helpers
+# ---------------------------------------------------------------------------
+def waveform_envelope(audio: np.ndarray, points: int = WAVEFORM_POINTS) -> List[float]:
+    """RMS envelope normalized to 0..1 for the result chart."""
+    if audio.size == 0:
+        return [0.0] * points
+    frames = np.array_split(np.abs(audio), points)
+    envelope = np.array([float(np.sqrt(np.mean(frame**2))) if frame.size else 0.0 for frame in frames])
+    peak = float(np.max(envelope))
+    if peak > 1e-8:
+        envelope = envelope / peak
+    return [round(float(value), 4) for value in envelope]
 
-        # ==========================
-        # MFCC
-        # ==========================
-        mfcc_list = [extract_mfcc_matrix(chunk, sr) for chunk in chunks]
-        min_T = min(m.shape[1] for m in mfcc_list)
-        mfcc_trim = [m[:, :min_T] for m in mfcc_list]
-        agg = aggregate_mfcc_chunks(mfcc_trim)
-        feat = mfcc_to_80dim_vector(agg).reshape(1, -1)
 
-        # ==========================
-        # Feature Scaling
-        # ==========================
-        feat_scaled = feat_scaler.transform(feat)
-
-        # ==========================
-        # AutoEncoder
-        # ==========================
-        feat_recon = ae_model.predict(feat_scaled, verbose=0)
-        ae_error = float(
-            np.mean(np.square(feat_scaled - feat_recon))
+def build_summary(result: str, agreement: bool) -> str:
+    if not agreement:
+        return (
+            "Kedua model memberi penilaian berbeda. Hasil ini perlu perhatian; "
+            "pertimbangkan rekam ulang atau konsultasi ke tenaga kesehatan."
         )
-
-        ae_label = (
-            "Pneumonia"
-            if ae_error <= ae_threshold
-            else "Bukan Pneumonia"
+    if result == "risk":
+        return (
+            "Pola batuk menyerupai data latih pneumonia. Ini bukan diagnosis; "
+            "segera konsultasikan ke tenaga kesehatan untuk pemeriksaan lanjutan."
         )
-
-        # ==========================
-        # Encoder + OneClassSVM
-        # ==========================
-        latent = encoder_model.predict(
-            feat_scaled,
-            verbose=0
-        )
-        latent_scaled = latent_scaler.transform(latent)
-        svm_pred = svm_model.predict(latent_scaled)[0]
-        svm_score = float(
-            svm_model.score_samples(latent_scaled)[0]
-        )
-
-        svm_label = (
-            "Pneumonia"
-            if svm_pred == 1
-            else "Bukan Pneumonia"
-        )
-
-        # ==========================
-        # Voting
-        # ==========================
-        votes = [svm_label, ae_label]
-        pneumonia_votes = votes.count("Pneumonia")
-        normal_votes = votes.count("Bukan Pneumonia")
-
-        final = (
-            "Pneumonia"
-            if pneumonia_votes >= normal_votes
-            else "Bukan Pneumonia"
-        )
-
-        confidence = max(
-            pneumonia_votes,
-            normal_votes
-        ) / len(votes)
-
-        result.update({
-            "status": "success",
-            "svm_label": svm_label,
-            "svm_score": svm_score,
-            "ae_label": ae_label,
-            "ae_error": ae_error,
-            "final_label": final,
-            "confidence": confidence
-        })
-
-        if verbose:
-            emoji = "🫁" if final == "Pneumonia" else "✅"
-            print("=" * 60)
-            print(f"File       : {Path(filepath).name}")
-            print(f"Chunks     : {len(chunks)}")
-            print(f"SVM        : {svm_label} ({svm_score:.4f})")
-            print(f"AE         : {ae_label} ({ae_error:.6f})")
-            print(f"HASIL      : {emoji} {final}")
-            print(f"Confidence : {confidence:.0%}")
-            print("=" * 60)
-
-    except Exception as e:
-        logger.exception("Prediction Error")
-        result["error_msg"] = str(e)
-        if verbose:
-            print(e)
-
-    return result
+    return (
+        "Tidak ditemukan pola batuk yang menyerupai data latih pneumonia. "
+        "Tetap pantau kondisi anak dan konsultasikan bila gejala berlanjut."
+    )
