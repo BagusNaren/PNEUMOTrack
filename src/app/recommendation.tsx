@@ -1,15 +1,13 @@
 // src/app/recommendation.tsx
-// Recommended Actions screen — matches recommendations page_user.png.
+// Recommended Actions screen — matches recommendations page_user.png exactly.
 
 import { router } from 'expo-router';
-import { Image, Linking, ScrollView, Text, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Disclaimer } from '@/components/ui/disclaimer';
 import { ScreenHeader } from '@/components/ui/screen-header';
-import { StatusBanner } from '@/components/ui/status-banner';
 
 export default function RecommendationScreen() {
   const insets = useSafeAreaInsets();
@@ -28,103 +26,107 @@ export default function RecommendationScreen() {
       }}
       showsVerticalScrollIndicator={false}
     >
-      <ScreenHeader title="Rekomendasi Tindakan" />
+      {/* Header with back and kebab menu (recommendations page_user.png) */}
+      <ScreenHeader
+        title="Recommended Action"
+        rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
+      />
 
-      {/* Summary Risk Banner */}
-      <View className="my-3">
-        <StatusBanner
-          variant="risk"
-          message="Indikasi risiko pneumonia terdeteksi — Perlu Perhatian Medis"
+      {/* Card 1: Risk Notice & Child Photo (recommendations page_user.png) */}
+      <View className="my-3 rounded-2xl bg-risk-surface p-4 flex-row items-center justify-between">
+        <View className="flex-1 pr-3 gap-2.5">
+          <View className="flex-row items-center gap-1.5">
+            <View className="h-2.5 w-2.5 rounded-full bg-risk" />
+            <Text className="text-caption font-bold text-risk">
+              Pneumonia risk detected{'\n'}needs attention
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => router.push('/history')}
+            className="self-start rounded-pill bg-risk px-4 py-1.5 active:opacity-80"
+          >
+            <Text className="text-caption font-bold text-white">
+              View Detail
+            </Text>
+          </Pressable>
+        </View>
+
+        <Image
+          source={require('@/assets/images/image_children.png')}
+          style={{ width: 74, height: 74, borderRadius: 20 }}
+          resizeMode="cover"
         />
       </View>
 
-      {/* Recommendation 1: Konsultasi Dokter */}
-      <Card variant="risk" className="mb-4 gap-3 bg-risk-surface border-risk-border">
-        <View className="flex-row items-center gap-3">
-          <Image
-            source={require('@/assets/images/image_doctor.png')}
-            style={{ width: 68, height: 68, borderRadius: 18 }}
-          />
-          <View className="flex-1">
-            <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
-              Konsultasi dengan Dokter
-            </Text>
-            <Text className="text-caption text-ink-muted leading-4 mt-0.5">
-              Diskusikan hasil rekaman batuk anak dengan dokter spesialis anak atau paru via chat/telepon.
-            </Text>
-          </View>
-        </View>
-
-        <Button
-          label="Mulai Konsultasi Dokter"
-          size="md"
-          variant="danger"
-          onPress={() => router.push('/doctors')}
+      {/* Card 2: Consult with a Doctor (Doctor Photo on LEFT) (recommendations page_user.png) */}
+      <View className="mb-4 rounded-2xl bg-risk-surface p-4 flex-row items-center justify-between">
+        <Image
+          source={require('@/assets/images/image_doctor.png')}
+          style={{ width: 80, height: 80, borderRadius: 20 }}
+          resizeMode="cover"
         />
-      </Card>
 
-      {/* Recommendation 2: Kunjungi Fasilitas Kesehatan */}
-      <Card variant="default" className="mb-4 gap-3">
-        <View className="flex-row items-center gap-3">
-          <View className="h-16 w-16 items-center justify-center rounded-2xl bg-surface-brand">
-            <Text className="text-3xl">🏥</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
-              Kunjungi Faskes Terdekat
-            </Text>
-            <Text className="text-caption text-ink-muted leading-4 mt-0.5">
-              Periksakan fisik langsung ke Puskesmas atau RS dengan poli/IGD anak terdekat.
-            </Text>
-          </View>
-        </View>
-
-        <Button
-          label="Lihat Daftar & Peta Rumah Sakit"
-          size="md"
-          variant="primary"
-          onPress={() => router.push('/hospitals')}
-        />
-      </Card>
-
-      {/* Danger Signs & Emergency 119 Box */}
-      <Card variant="default" className="mb-5 border-risk-border bg-risk-surface/40 p-4 gap-3">
-        <View className="flex-row items-center gap-2">
-          <Text className="text-2xl">🚨</Text>
+        <View className="flex-1 pl-4 gap-2.5 items-start">
           <Text className="text-subtitle font-bold text-risk">
-            Kondisi Darurat (Segera ke IGD)
+            Consult with a{'\n'}doctor
           </Text>
+
+          <Pressable
+            onPress={() => router.push('/doctors')}
+            className="rounded-pill bg-risk px-5 py-2 active:opacity-80"
+          >
+            <Text className="text-caption font-bold text-white">
+              Contact Doctor
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Card 3: Visit the Nearest Health Facility (recommendations page_user.png) */}
+      <View className="mb-4 rounded-2xl bg-risk-surface p-4 flex-row items-center justify-between">
+        <View className="flex-1 pr-3 gap-2.5 items-start">
+          <Text className="text-subtitle font-bold text-risk">
+            Visit the nearest{'\n'}health facility
+          </Text>
+
+          <Pressable
+            onPress={() => router.push('/hospitals')}
+            className="rounded-pill bg-risk px-5 py-2 active:opacity-80"
+          >
+            <Text className="text-caption font-bold text-white">
+              Find for Hospital
+            </Text>
+          </Pressable>
         </View>
 
-        <View className="gap-1 pl-1">
-          <Text className="text-caption text-ink leading-5">
-            • Anak bernapas sangat cepat atau terengah-engah.
-          </Text>
-          <Text className="text-caption text-ink leading-5">
-            • Kulit dada atau leher tertarik ke dalam saat bernapas.
-          </Text>
-          <Text className="text-caption text-ink leading-5">
-            • Bibir, lidah, atau kuku berwarna abu-abu atau kebiruan.
-          </Text>
-          <Text className="text-caption text-ink leading-5">
-            • Anak tidak dapat minum, muntah terus-menerus, atau sangat lemas.
-          </Text>
+        <View className="h-20 w-24 rounded-2xl bg-surface items-center justify-center shadow-sm overflow-hidden">
+          <Text className="text-4xl">🏥</Text>
         </View>
+      </View>
 
-        <Button
-          label="Hubungi Layanan Darurat 119"
-          size="md"
-          variant="danger"
-          icon={<Text className="text-lg">📞</Text>}
-          onPress={handleCallEmergency}
-        />
+      {/* Emergency 119 Box */}
+      <Card variant="default" className="mb-4 border-risk-border bg-risk-surface/30 p-4 gap-2">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-label font-bold text-risk">
+            Layanan Darurat Medis
+          </Text>
+          <Pressable
+            onPress={handleCallEmergency}
+            className="rounded-pill bg-risk px-3 py-1 active:opacity-80"
+          >
+            <Text className="text-caption font-bold text-white">📞 Hubungi 119</Text>
+          </Pressable>
+        </View>
+        <Text className="text-caption text-ink leading-4">
+          Segera bawa anak ke IGD bila napas sangat cepat, dinding dada cekung ke dalam, atau bibir kebiruan.
+        </Text>
       </Card>
 
-      {/* Mandatory Medical Disclaimer */}
+      {/* Mandatory Disclaimer */}
       <View className="mb-4">
         <Disclaimer />
       </View>
     </ScrollView>
   );
 }
-

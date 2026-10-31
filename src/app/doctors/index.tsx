@@ -1,10 +1,11 @@
 // src/app/doctors/index.tsx
-// Doctor directory — matches doctor page_user.png.
+// Doctor directory — matches doctor page_user.png exactly.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Image,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -13,10 +14,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ListRow } from '@/components/ui/list-row';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { doctorsService } from '@/services/doctors';
 import type { Doctor } from '@/types/domain';
@@ -26,7 +25,6 @@ export default function DoctorsScreen() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   const loadDoctors = useCallback(async (query?: string) => {
     try {
@@ -35,7 +33,6 @@ export default function DoctorsScreen() {
     } catch {
       // fallback
     } finally {
-      setIsLoading(false);
       setIsRefreshing(false);
     }
   }, []);
@@ -60,79 +57,83 @@ export default function DoctorsScreen() {
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       showsVerticalScrollIndicator={false}
     >
+      {/* Header with back and kebab menu (doctor page_user.png) */}
       <ScreenHeader
-        title="Dokter Spesialis"
-        subtitle="Konsultasi kesehatan anak & pernapasan"
+        title="Doctor"
+        rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
       />
 
       {/* Search Bar */}
-      <View className="my-4">
-        <View className="h-12 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 dark:border-border-dark dark:bg-surface-card-dark">
-          <Text className="mr-2.5 text-base text-icon-muted">🔍</Text>
+      <View className="my-3">
+        <View className="h-11 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 dark:border-border-dark dark:bg-surface-card-dark">
+          <Text className="mr-2 text-icon-muted">🔍</Text>
           <TextInput
-            className="flex-1 text-body text-ink dark:text-ink-dark"
-            placeholder="Cari dokter spesialis atau RS…"
+            className="flex-1 text-label text-ink dark:text-ink-dark"
+            placeholder="Search doctor or specialty…"
             placeholderTextColor="#AEB7C2"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          {searchQuery ? (
-            <Text
-              onPress={() => setSearchQuery('')}
-              className="text-sm text-ink-muted px-2"
-            >
-              ✕
-            </Text>
-          ) : null}
         </View>
       </View>
 
-      {/* Doctors List */}
+      {/* Doctors List in Individual Cards (doctor page_user.png) */}
       {doctors.length === 0 ? (
         <EmptyState
-          title="Dokter Tidak Ditemukan"
-          body="Tidak ada dokter yang cocok dengan kata kunci pencarian Anda."
-          actionLabel="Tampilkan Semua Dokter"
+          title="Doctor Not Found"
+          body="No doctors found matching your search query."
+          actionLabel="Show All Doctors"
           onAction={() => setSearchQuery('')}
           className="my-8"
         />
       ) : (
-        <Card variant="default" className="p-1 mb-4">
-          {doctors.map((doc, idx) => (
-            <ListRow
-              key={doc.id}
-              onPress={() => router.push(`/doctors/${doc.id}` as any)}
-              leading={
-                <Image
-                  source={require('@/assets/images/image_doctor.png')}
-                  style={{ width: 52, height: 52, borderRadius: 16 }}
-                />
-              }
-              title={doc.name}
-              subtitle={
-                <View className="gap-0.5">
-                  <Text numberOfLines={1} className="text-caption text-ink-muted">
-                    {doc.specialty} • {doc.hospital_name}
+        <View className="gap-3.5 my-2">
+          {doctors.map((doc, idx) => {
+            const distance = `${120 + idx * 80}m away`;
+
+            return (
+              <Pressable
+                key={doc.id}
+                onPress={() => router.push(`/doctors/${doc.id}` as any)}
+                className="flex-row items-center gap-3.5 rounded-2xl border border-border bg-surface-card p-3.5 active:opacity-75 dark:border-border-dark dark:bg-surface-card-dark"
+              >
+                {/* Doctor Photo on Light Blue Square Background (doctor page_user.png) */}
+                <View className="h-20 w-20 items-center justify-center rounded-2xl bg-surface-brand-soft overflow-hidden">
+                  <Image
+                    source={require('@/assets/images/image_doctor.png')}
+                    style={{ width: 72, height: 72 }}
+                    resizeMode="contain"
+                  />
+                </View>
+
+                {/* Info Column */}
+                <View className="flex-1 gap-1">
+                  <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
+                    {doc.name}
                   </Text>
+                  <Text className="text-caption text-ink-muted">
+                    {doc.specialty}
+                  </Text>
+
+                  {/* Rating Pill with Star */}
                   <View className="flex-row items-center gap-2 mt-0.5">
-                    <Text className="text-caption font-semibold text-amber-500">
-                      ★ {doc.rating?.toFixed(1) ?? '4.9'}
-                    </Text>
-                    <View className="flex-row items-center gap-1">
-                      <View className="h-1.5 w-1.5 rounded-full bg-safe" />
-                      <Text className="text-caption font-medium text-safe">
-                        Tersedia
+                    <View className="flex-row items-center gap-1 rounded-pill bg-surface-brand-soft px-2.5 py-0.5">
+                      <Text className="text-xs text-amber-500">★</Text>
+                      <Text className="text-caption font-bold text-brand">
+                        {doc.rating?.toFixed(1) ?? '4.7'}
                       </Text>
                     </View>
+
+                    <Text className="text-caption text-ink-muted">
+                      📍 {distance}
+                    </Text>
                   </View>
                 </View>
-              }
-              className={idx === doctors.length - 1 ? 'border-b-0' : ''}
-            />
-          ))}
-        </Card>
+              </Pressable>
+            );
+          })}
+        </View>
       )}
     </ScrollView>
   );
 }
-

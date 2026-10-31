@@ -1,16 +1,21 @@
 // src/app/(tabs)/monitoring.tsx
-// Live Monitoring screen — matches cough analysis_user.png.
+// Live Monitoring screen — matches cough analysis_user.png exactly.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { HeartGauge } from '@/components/ui/heart-gauge';
 import { ScreenHeader } from '@/components/ui/screen-header';
-import { StatusBanner } from '@/components/ui/status-banner';
 import { Waveform } from '@/components/ui/waveform';
 import { useActiveChild } from '@/hooks/use-active-child';
 import { screeningsService } from '@/services/screenings';
@@ -57,114 +62,168 @@ export default function MonitoringScreen() {
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       showsVerticalScrollIndicator={false}
     >
-      <ScreenHeader title="Monitoring Batuk" showBack={false} />
+      <ScreenHeader
+        title="Monitoring"
+        showBack={false}
+        rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
+      />
 
-      {/* Child Name & Mode Badge */}
-      <View className="mb-4 flex-row items-center justify-between">
-        <View>
-          <Text className="text-caption text-ink-muted">Anak yang Dipantau</Text>
-          <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
-            {activeChild ? activeChild.name : 'Belum Ada Anak Dipilih'}
-          </Text>
+      {/* 1. Top Card: Mode Switcher & Child Photo (cough analysis_user.png) */}
+      <Card variant={isRisk ? 'risk' : 'brand'} className="mb-4 rounded-2xl p-4">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1 pr-3 gap-2">
+            <View className="flex-row items-center gap-2">
+              <View className="rounded-pill bg-brand px-3 py-1 shadow-sm">
+                <Text className="text-caption font-bold text-on-brand">
+                  Live Monitoring
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => router.push('/history')}
+                className="rounded-pill bg-white/70 px-3 py-1 active:opacity-75 dark:bg-black/20"
+              >
+                <Text className="text-caption font-semibold text-ink-muted">
+                  History
+                </Text>
+              </Pressable>
+            </View>
+
+            <View className="flex-row items-center gap-1.5 mt-1">
+              <View
+                className={`h-2.5 w-2.5 rounded-full ${
+                  isRisk ? 'bg-risk' : 'bg-safe'
+                }`}
+              />
+              <Text
+                className={`text-caption font-bold ${
+                  isRisk ? 'text-risk' : 'text-brand dark:text-brand-light'
+                }`}
+              >
+                {isRisk
+                  ? 'Pneumonia risk detected - needs attention'
+                  : 'No Sign of Pneumonia detected'}
+              </Text>
+            </View>
+          </View>
+
+          <Image
+            source={require('@/assets/images/image_children.png')}
+            style={{ width: 72, height: 72, borderRadius: 18 }}
+          />
         </View>
-        <View className="flex-row items-center gap-1.5 rounded-pill bg-safe/10 px-3 py-1">
-          <View className="h-2 w-2 rounded-full bg-safe" />
-          <Text className="text-caption font-semibold text-safe">Live Monitor</Text>
-        </View>
-      </View>
-
-      {/* Status Banner */}
-      <View className="mb-4">
-        <StatusBanner
-          variant={!latestScreening ? 'pending' : isRisk ? 'risk' : 'normal'}
-          message={
-            !latestScreening
-              ? 'Belum ada data skrining untuk anak ini'
-              : isRisk
-              ? 'Indikasi pola batuk tidak biasa terdeteksi — Perlu Perhatian'
-              : 'Pola batuk anak dalam kondisi normal'
-          }
-        />
-      </View>
-
-      {/* Status Summary Card */}
-      <Card variant="default" className="mb-4 items-center py-5">
-        <HeartGauge
-          variant={!latestScreening ? 'pending' : isRisk ? 'risk' : 'normal'}
-          size={120}
-        />
-        <Text className="mt-3 text-subtitle font-bold text-ink dark:text-ink-dark">
-          {!latestScreening
-            ? 'Menunggu Skrining'
-            : isRisk
-            ? 'Risiko Pneumonia Terdeteksi'
-            : 'Pola Batuk Normal'}
-        </Text>
-        <Text className="mt-1 text-center text-caption text-ink-muted px-4">
-          {!latestScreening
-            ? 'Mulai skrining batuk si kecil untuk melihat grafik frekuensi dan analisis AI.'
-            : isRisk
-            ? 'Pola batuk menunjukkan anomali yang menyerupai batuk pneumonia. Konsultasikan dengan tenaga medis.'
-            : 'Sinyal akustik batuk cocok dengan profil pernapasan sehat.'}
-        </Text>
       </Card>
 
-      {/* Acoustic Waveform Card */}
-      {latestScreening?.waveform ? (
-        <Card variant={isRisk ? 'risk' : 'brand'} className="mb-4">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-label font-bold text-ink dark:text-ink-dark">
-              Sinyal Akustik Batuk Terakhir
-            </Text>
-            <Text className="text-caption text-ink-muted">
-              {latestScreening.duration_sec?.toFixed(1)}s • {latestScreening.chunks} segmen
+      {/* 2. Middle Card: Vitals Rows + Button + Concentric Heart Gauge (cough analysis_user.png) */}
+      <Card variant={isRisk ? 'risk' : 'brand'} className="mb-4 rounded-2xl p-5">
+        <View className="items-center mb-3">
+          <View className="h-1 w-12 rounded-full bg-border/60" />
+        </View>
+
+        <View className="flex-row items-center justify-between">
+          {/* Left Rows */}
+          <View className="flex-1 pr-3 gap-2.5">
+            <View className="flex-row items-center gap-2.5">
+              <Text className="text-base">{isRisk ? '⚠️' : '🫁'}</Text>
+              <Text
+                className={`text-caption font-bold ${
+                  isRisk ? 'text-risk' : 'text-safe'
+                }`}
+              >
+                {isRisk ? 'Pneumonia Indicated' : 'All Good'}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center gap-2.5">
+              <Text className="text-base">🫁</Text>
+              <Text className="text-caption font-semibold text-ink">
+                {isRisk ? '55 /min' : '27 /min'}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center gap-2.5">
+              <Text className="text-base">🌡️</Text>
+              <Text className="text-caption font-semibold text-ink">
+                {isRisk ? '38.1°C' : '36.6°C'}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center gap-2.5">
+              <Text className="text-base">💓</Text>
+              <Text className="text-caption font-semibold text-ink">
+                {isRisk ? '120 bpm' : '90 bpm'}
+              </Text>
+            </View>
+
+            {/* Buttons */}
+            <View className="mt-2 flex-row items-center gap-2">
+              <Pressable
+                onPress={() =>
+                  latestScreening
+                    ? router.push(`/history/${latestScreening.id}` as any)
+                    : router.push('/history')
+                }
+                className={`rounded-pill px-4 py-2 active:opacity-80 ${
+                  isRisk ? 'bg-risk' : 'bg-brand'
+                }`}
+              >
+                <Text className="text-caption font-bold text-white">
+                  View Detail
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={onRefresh}
+                className={`h-8 w-8 items-center justify-center rounded-full ${
+                  isRisk ? 'bg-risk' : 'bg-brand'
+                } active:opacity-80`}
+              >
+                <Text className="text-xs text-white">🔄</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.push('/screening/guide' as any)}
+                className={`h-8 w-8 items-center justify-center rounded-full ${
+                  isRisk ? 'bg-risk' : 'bg-brand'
+                } active:opacity-80`}
+              >
+                <Text className="text-xs text-white">🎙️</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Right Heart Gauge */}
+          <View className="items-center justify-center">
+            <HeartGauge
+              variant={!latestScreening ? 'pending' : isRisk ? 'risk' : 'normal'}
+              size={110}
+            />
+            <Text
+              className={`mt-2 text-center text-caption font-bold ${
+                isRisk ? 'text-risk' : 'text-brand dark:text-brand-light'
+              }`}
+            >
+              {isRisk ? 'At Risk of\nPneumonia' : 'No Sign of\nPneumonia'}
             </Text>
           </View>
-          <Waveform
-            samples={latestScreening.waveform}
-            variant={isRisk ? 'risk' : 'normal'}
-            height={80}
-          />
-        </Card>
-      ) : null}
-
-      {/* Observational Guidelines */}
-      <Card variant="default" className="mb-5 gap-2">
-        <Text className="text-label font-bold text-ink dark:text-ink-dark">
-          Tanda Bahaya yang Wajib Diwaspadai:
-        </Text>
-        <View className="gap-1.5 pl-1">
-          <Text className="text-caption text-ink leading-5">
-            • <Text className="font-semibold">Napas cepat atau sesak:</Text> Anak bernapas lebih cepat dari biasanya saat istirahat.
-          </Text>
-          <Text className="text-caption text-ink leading-5">
-            • <Text className="font-semibold">Tarikan dinding dada:</Text> Kulit di antara iga atau bawah dada tertarik ke dalam saat menarik napas.
-          </Text>
-          <Text className="text-caption text-ink leading-5">
-            • <Text className="font-semibold">Bibir atau kuku kebiruan (Sianosis):</Text> Segera bawa ke IGD RS terdekat.
-          </Text>
         </View>
       </Card>
 
-      {/* Action CTA */}
-      <View className="gap-2.5">
-        <Button
-          label="Mulai Skrining Batuk Sekarang"
-          size="lg"
-          variant="primary"
-          icon={<Text className="text-xl">🎙</Text>}
-          onPress={() => router.push('/screening/guide' as any)}
-        />
-        {isRisk && (
-          <Button
-            label="Lihat Rekomendasi Dokter & RS"
-            size="md"
-            variant="danger"
-            onPress={() => router.push('/recommendation')}
+      {/* 3. Bottom Waveform Card (cough analysis_user.png) */}
+      <Card variant="brand" className="mb-4 rounded-2xl p-4">
+        <Text className="text-caption font-bold text-brand mb-2">
+          Real-time Acoustic Waveform
+        </Text>
+        <View className="rounded-xl bg-white p-3 dark:bg-surface-card-dark">
+          <Waveform
+            samples={
+              latestScreening?.waveform ??
+              Array.from({ length: 60 }, (_, i) => Math.sin(i * 0.3) * 0.5 + 0.5)
+            }
+            variant={isRisk ? 'risk' : 'normal'}
+            height={90}
           />
-        )}
-      </View>
+        </View>
+      </Card>
     </ScrollView>
   );
 }
-
