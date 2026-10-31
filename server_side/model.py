@@ -31,6 +31,8 @@ MODEL_DIR = BASE_DIR / "deployment_v3"
 _config = joblib.load(MODEL_DIR / "config_v3.pkl")
 MODEL_VERSION: str = str(_config.get("version", "v3"))
 AE_THRESHOLD: float = float(_config["ae_threshold"])
+# config_v3.pkl only stores version, ae_threshold, and n_mfcc; lock fallback at 22,050 Hz
+# to match the v3 training pipeline and ffmpeg resampling target.
 SAMPLE_RATE: int = int(_config.get("sample_rate", 22050))
 N_MFCC: int = int(_config.get("n_mfcc", 20))
 

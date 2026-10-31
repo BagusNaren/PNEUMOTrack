@@ -9,7 +9,8 @@ export type AudioErrorCode =
   | 'NO_COUGH_DETECTED'
   | 'AUDIO_TOO_NOISY'
   | 'UNSUPPORTED_FORMAT'
-  | 'FILE_TOO_LARGE';
+  | 'FILE_TOO_LARGE'
+  | 'INVALID_REQUEST';
 
 /** Kontrak POST /predict v2; skor model bukan probabilitas medis. */
 export interface PredictSuccessResponse {
@@ -171,6 +172,7 @@ function isPredictErrorCode(value: unknown): value is PredictErrorResponse['code
     value === 'AUDIO_TOO_NOISY' ||
     value === 'UNSUPPORTED_FORMAT' ||
     value === 'FILE_TOO_LARGE' ||
+    value === 'INVALID_REQUEST' ||
     value === 'INTERNAL_ERROR'
   );
 }

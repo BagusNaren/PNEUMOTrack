@@ -12,6 +12,7 @@ export const mockScenarios = [
   "AUDIO_TOO_NOISY",
   "UNSUPPORTED_FORMAT",
   "FILE_TOO_LARGE",
+  "INVALID_REQUEST",
   "offline",
   "timeout",
   "server",

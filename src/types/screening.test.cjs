@@ -124,7 +124,7 @@ test('rejects invalid discriminants, empty summaries, and contradictory predicti
 test('accepts every documented error code with an optional message', () => {
   for (const code of [
     'AUDIO_TOO_SHORT', 'AUDIO_SILENT', 'NO_COUGH_DETECTED', 'AUDIO_TOO_NOISY',
-    'UNSUPPORTED_FORMAT', 'FILE_TOO_LARGE', 'INTERNAL_ERROR',
+    'UNSUPPORTED_FORMAT', 'FILE_TOO_LARGE', 'INVALID_REQUEST', 'INTERNAL_ERROR',
   ]) {
     assert.equal(isPredictErrorResponse({ status: 'error', code }), true);
     assert.equal(isPredictErrorResponse({ status: 'error', code, message: 'Contoh pesan.' }), true);

@@ -127,6 +127,9 @@ export class ScreeningSession {
       if (input.audioUri) await this.dependencies.cleanup(input.audioUri);
       if (generation !== this.generation) return;
       const saveAdapter = input.save ?? this.activeSaveAdapter;
+      // Supabase RLS policy screenings_owner_insert requires child_id to reference a row
+      // in public.children owned by auth.uid(). When running in preview mode or without a
+      // valid UUID child_id, skip DB persistence so the screening result still renders cleanly.
       const shouldSave = Boolean(saveAdapter) && validChildId(input.childId);
       const savePayload =
         shouldSave && input.childId
