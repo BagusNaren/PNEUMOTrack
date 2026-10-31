@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+tensorflow
+numpy
+scikit-learn
+joblib
+librosa
+soundfile
+python-multipart
+noisereduce
+scipy
