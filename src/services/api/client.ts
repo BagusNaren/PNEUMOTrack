@@ -7,8 +7,11 @@ import {
 } from "@/types/screening";
 
 export class ScreeningFailure extends Error {
-  constructor(readonly detail: ScreeningError) {
+  readonly detail: ScreeningError;
+
+  constructor(detail: ScreeningError) {
     super(detail.userMessage);
+    this.detail = detail;
     this.name = "ScreeningFailure";
   }
 }

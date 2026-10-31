@@ -4,18 +4,24 @@ import { Icon } from "./icon";
 
 export type StateProps = {
   title: string;
-  description: string;
+  description?: string;
+  body?: string;
   actionLabel?: string;
   onAction?: () => void;
+  className?: string;
 };
+
 export function EmptyState({
   title,
   description,
+  body,
   actionLabel,
   onAction,
+  className = "",
 }: StateProps) {
+  const detail = description ?? body;
   return (
-    <View className="items-center gap-4 py-6">
+    <View className={`items-center gap-4 py-6 ${className}`}>
       <Icon name="empty" tone="muted" />
       <Text
         accessibilityRole="header"
@@ -23,9 +29,11 @@ export function EmptyState({
       >
         {title}
       </Text>
-      <Text className="text-center text-body text-ink-muted dark:text-ink-dark-muted">
-        {description}
-      </Text>
+      {detail ? (
+        <Text className="text-center text-body text-ink-muted dark:text-ink-dark-muted">
+          {detail}
+        </Text>
+      ) : null}
       {actionLabel && onAction && (
         <Button label={actionLabel} onPress={onAction} />
       )}
