@@ -2,7 +2,7 @@
 // Persists the "active child" selection in AsyncStorage and exposes it via Context.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, createElement, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { childrenService } from '@/services/children';
 import type { Child } from '@/types/domain';
@@ -32,6 +32,7 @@ export function ActiveChildProvider({
 
   const refresh = useCallback(async () => {
     if (!parentId) {
+      await Promise.resolve();
       setChildList([]);
       setActiveChildState(null);
       setIsLoading(false);
@@ -46,33 +47,59 @@ export function ActiveChildProvider({
       const restored = list.find((c) => c.id === storedId) ?? list[0] ?? null;
       setActiveChildState(restored);
     } catch {
-      // silently fail — UI handles empty state
+      // Empty state handled by UI
     } finally {
       setIsLoading(false);
     }
   }, [parentId]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    let active = true;
+    (async () => {
+      if (!parentId) {
+        await Promise.resolve();
+        if (active) {
+          setChildList([]);
+          setActiveChildState(null);
+          setIsLoading(false);
+        }
+        return;
+      }
+      try {
+        const list = await childrenService.list(parentId);
+        const storedId = await AsyncStorage.getItem(STORAGE_KEY);
+        if (!active) return;
+        setChildList(list);
+        const restored = list.find((c) => c.id === storedId) ?? list[0] ?? null;
+        setActiveChildState(restored);
+      } catch {
+        // Empty state handled by UI
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [parentId]);
 
   const setActiveChild = useCallback((child: Child) => {
     setActiveChildState(child);
     AsyncStorage.setItem(STORAGE_KEY, child.id).catch(() => {});
   }, []);
 
-  return (
-    <ActiveChildContext.Provider
-      value={{
+  return createElement(
+    ActiveChildContext.Provider,
+    {
+      value: {
         activeChild,
         children: childList,
         isLoading,
         setActiveChild,
         refresh,
-      }}
-    >
-      {reactChildren}
-    </ActiveChildContext.Provider>
+      },
+    },
+    reactChildren,
   );
 }
 

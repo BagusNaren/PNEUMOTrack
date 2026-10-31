@@ -4,7 +4,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Image,
   Linking,
   ScrollView,
   Text,
@@ -58,7 +57,6 @@ export default function ArticleDetailScreen() {
     >
       <ScreenHeader title="Baca Artikel" />
 
-      {/* Hero Header */}
       <View className="my-3 gap-2">
         <View className="flex-row items-center gap-2">
           <Badge label={article.category} variant="brand" />
@@ -80,7 +78,6 @@ export default function ArticleDetailScreen() {
         </Text>
       </View>
 
-      {/* Article Cover Graphic */}
       <View className="h-44 w-full rounded-2xl bg-surface-brand-soft items-center justify-center my-3 overflow-hidden border border-border">
         <Text className="text-6xl">🫁</Text>
         <Text className="mt-2 text-caption font-medium text-brand">
@@ -88,7 +85,6 @@ export default function ArticleDetailScreen() {
         </Text>
       </View>
 
-      {/* Article Body */}
       <Card variant="default" className="my-3 p-5 gap-4">
         <Text className="text-body text-ink dark:text-ink-dark leading-7">
           {article.body_md}
@@ -102,7 +98,6 @@ export default function ArticleDetailScreen() {
         </View>
       </Card>
 
-      {/* CTA to Consultation */}
       <View className="my-4 gap-3">
         <Button
           label="Konsultasi dengan Dokter Spesialis"
@@ -121,4 +116,3 @@ export default function ArticleDetailScreen() {
     </ScrollView>
   );
 }
-

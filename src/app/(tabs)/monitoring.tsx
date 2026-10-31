@@ -1,5 +1,5 @@
 // src/app/(tabs)/monitoring.tsx
-// Live Monitoring screen — matches cough analysis_user.png exactly.
+// Live Monitoring screen — matches cough analysis_user.png.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -29,24 +29,37 @@ export default function MonitoringScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadLatest = useCallback(async () => {
-    if (!activeChild) return;
+    if (!activeChild) {
+      setIsRefreshing(false);
+      return;
+    }
     try {
       const scr = await screeningsService.latest(activeChild.id);
       setLatestScreening(scr);
     } catch {
-      // ignore
+      // Fallback handled by empty/default states
     } finally {
       setIsRefreshing(false);
     }
   }, [activeChild]);
 
   useEffect(() => {
-    loadLatest();
-  }, [loadLatest]);
+    if (!activeChild) return;
+    let active = true;
+    screeningsService
+      .latest(activeChild.id)
+      .then((scr) => {
+        if (active) setLatestScreening(scr);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [activeChild]);
 
   const onRefresh = () => {
     setIsRefreshing(true);
-    loadLatest();
+    void loadLatest();
   };
 
   const isRisk = latestScreening?.result === 'risk';
@@ -68,7 +81,6 @@ export default function MonitoringScreen() {
         rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
       />
 
-      {/* 1. Top Card: Mode Switcher & Child Photo (cough analysis_user.png) */}
       <Card variant={isRisk ? 'risk' : 'brand'} className="mb-4 rounded-2xl p-4">
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3 gap-2">
@@ -113,14 +125,12 @@ export default function MonitoringScreen() {
         </View>
       </Card>
 
-      {/* 2. Middle Card: Vitals Rows + Button + Concentric Heart Gauge (cough analysis_user.png) */}
       <Card variant={isRisk ? 'risk' : 'brand'} className="mb-4 rounded-2xl p-5">
         <View className="items-center mb-3">
           <View className="h-1 w-12 rounded-full bg-border/60" />
         </View>
 
         <View className="flex-row items-center justify-between">
-          {/* Left Rows */}
           <View className="flex-1 pr-3 gap-2.5">
             <View className="flex-row items-center gap-2.5">
               <Text className="text-base">{isRisk ? '⚠️' : '🫁'}</Text>
@@ -154,7 +164,6 @@ export default function MonitoringScreen() {
               </Text>
             </View>
 
-            {/* Buttons */}
             <View className="mt-2 flex-row items-center gap-2">
               <Pressable
                 onPress={() =>
@@ -191,7 +200,6 @@ export default function MonitoringScreen() {
             </View>
           </View>
 
-          {/* Right Heart Gauge */}
           <View className="items-center justify-center">
             <HeartGauge
               variant={!latestScreening ? 'pending' : isRisk ? 'risk' : 'normal'}
@@ -208,7 +216,6 @@ export default function MonitoringScreen() {
         </View>
       </Card>
 
-      {/* 3. Bottom Waveform Card (cough analysis_user.png) */}
       <Card variant="brand" className="mb-4 rounded-2xl p-4">
         <Text className="text-caption font-bold text-brand mb-2">
           Real-time Acoustic Waveform

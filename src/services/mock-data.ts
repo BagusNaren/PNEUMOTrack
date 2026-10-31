@@ -4,11 +4,9 @@
 
 import type { Article, Child, Conversation, Doctor, Hospital, Message, Screening } from '@/types/domain';
 
-// ─── Children ─────────────────────────────────────────────────────────────────
-
 export const MOCK_CHILDREN: Child[] = [
   {
-    id: 'child-001',
+    id: '00000000-0000-4000-8000-000000000001',
     parent_id: 'user-demo',
     name: 'Budi Santoso',
     birth_date: '2022-04-10',
@@ -16,7 +14,7 @@ export const MOCK_CHILDREN: Child[] = [
     created_at: '2025-01-15T10:00:00Z',
   },
   {
-    id: 'child-002',
+    id: '00000000-0000-4000-8000-000000000002',
     parent_id: 'user-demo',
     name: 'Ayu Lestari',
     birth_date: '2023-08-22',
@@ -25,10 +23,8 @@ export const MOCK_CHILDREN: Child[] = [
   },
 ];
 
-// ─── Screenings ────────────────────────────────────────────────────────────────
-
 const makeWaveform = (length = 80, risk = false) =>
-  Array.from({ length }, (_, i) => {
+  Array.from({ length }, () => {
     const base = risk ? 0.5 + Math.random() * 0.5 : 0.1 + Math.random() * 0.5;
     return Math.min(1, Math.max(0, base + (Math.random() - 0.5) * 0.2));
   });
@@ -36,7 +32,7 @@ const makeWaveform = (length = 80, risk = false) =>
 export const MOCK_SCREENINGS: Screening[] = [
   {
     id: 'scr-001',
-    child_id: 'child-001',
+    child_id: '00000000-0000-4000-8000-000000000001',
     result: 'normal',
     agreement: true,
     ae_error: 0.0012,
@@ -52,7 +48,7 @@ export const MOCK_SCREENINGS: Screening[] = [
   },
   {
     id: 'scr-002',
-    child_id: 'child-001',
+    child_id: '00000000-0000-4000-8000-000000000001',
     result: 'risk',
     agreement: true,
     ae_error: 0.0412,
@@ -68,7 +64,7 @@ export const MOCK_SCREENINGS: Screening[] = [
   },
   {
     id: 'scr-003',
-    child_id: 'child-001',
+    child_id: '00000000-0000-4000-8000-000000000001',
     result: 'normal',
     agreement: false,
     ae_error: 0.0298,
@@ -84,7 +80,7 @@ export const MOCK_SCREENINGS: Screening[] = [
   },
   {
     id: 'scr-004',
-    child_id: 'child-001',
+    child_id: '00000000-0000-4000-8000-000000000001',
     result: 'normal',
     agreement: true,
     ae_error: 0.0089,
@@ -100,7 +96,7 @@ export const MOCK_SCREENINGS: Screening[] = [
   },
   {
     id: 'scr-005',
-    child_id: 'child-001',
+    child_id: '00000000-0000-4000-8000-000000000001',
     result: 'risk',
     agreement: true,
     ae_error: 0.0521,
@@ -116,7 +112,7 @@ export const MOCK_SCREENINGS: Screening[] = [
   },
   {
     id: 'scr-006',
-    child_id: 'child-002',
+    child_id: '00000000-0000-4000-8000-000000000002',
     result: 'normal',
     agreement: true,
     ae_error: 0.0055,
@@ -131,8 +127,6 @@ export const MOCK_SCREENINGS: Screening[] = [
     created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ];
-
-// ─── Doctors ───────────────────────────────────────────────────────────────────
 
 export const MOCK_DOCTORS: Doctor[] = [
   {
@@ -239,9 +233,6 @@ export const MOCK_DOCTORS: Doctor[] = [
   },
 ];
 
-// ─── Hospitals ─────────────────────────────────────────────────────────────────
-// Real lat/lng in Denpasar, Bali
-
 export const MOCK_HOSPITALS: Hospital[] = [
   {
     id: 'hosp-001',
@@ -345,8 +336,6 @@ export const MOCK_HOSPITALS: Hospital[] = [
   },
 ];
 
-// ─── Articles ─────────────────────────────────────────────────────────────────
-
 export const MOCK_ARTICLES: Article[] = [
   {
     id: 'art-001',
@@ -354,7 +343,7 @@ export const MOCK_ARTICLES: Article[] = [
     category: 'Gejala',
     cover_url: null,
     body_md:
-      '## Gejala Utama Pneumonia pada Anak\n\nPneumonia adalah infeksi serius yang menyerang paru-paru. Berikut gejala yang perlu diwaspadai:\n\n1. **Napas cepat atau sesak** — frekuensi napas melebihi normal untuk usia anak\n2. **Tarikan dinding dada** — dada tampak "tertarik ke dalam" saat bernapas\n3. **Demam tinggi** — suhu di atas 38,5°C\n4. **Batuk persisten** — batuk yang tidak membaik setelah beberapa hari\n5. **Bibir atau kuku kebiruan** — tanda kekurangan oksigen, darurat medis\n\nJika anak Anda menunjukkan gejala-gejala ini, segera konsultasikan ke dokter anak.',
+      '## Gejala Utama Pneumonia pada Anak\n\nPneumonia adalah infeksi serius yang menyerang paru-paru. Berikut gejala yang perlu diwaspadai:\n\n1. **Napas cepat atau sesak** - frekuensi napas melebihi normal untuk usia anak\n2. **Tarikan dinding dada** - dada tampak "tertarik ke dalam" saat bernapas\n3. **Demam tinggi** - suhu di atas 38,5°C\n4. **Batuk persisten** - batuk yang tidak membaik setelah beberapa hari\n5. **Bibir atau kuku kebiruan** - tanda kekurangan oksigen, darurat medis\n\nJika anak Anda menunjukkan gejala-gejala ini, segera konsultasikan ke dokter anak.',
     source: 'WHO & Kemenkes RI',
     published_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -364,7 +353,7 @@ export const MOCK_ARTICLES: Article[] = [
     category: 'Pencegahan',
     cover_url: null,
     body_md:
-      '## Pencegahan Pneumonia\n\nPneumonia dapat dicegah dengan langkah-langkah sederhana:\n\n- **Vaksinasi lengkap** — Pastikan anak mendapat imunisasi PCV, Hib, dan campak\n- **ASI eksklusif** — Berikan ASI minimal 6 bulan untuk membangun kekebalan\n- **Gizi seimbang** — Nutrisi yang cukup memperkuat sistem imun\n- **Lingkungan bersih** — Hindari asap rokok dan polusi dalam ruangan\n- **Cuci tangan** — Biasakan cuci tangan dengan sabun secara teratur\n\nVaksinasi adalah cara paling efektif mencegah pneumonia bakteri.',
+      '## Pencegahan Pneumonia\n\nPneumonia dapat dicegah dengan langkah-langkah sederhana:\n\n- **Vaksinasi lengkap** - Pastikan anak mendapat imunisasi PCV, Hib, dan campak\n- **ASI eksklusif** - Berikan ASI minimal 6 bulan untuk membangun kekebalan\n- **Gizi seimbang** - Nutrisi yang cukup memperkuat sistem imun\n- **Lingkungan bersih** - Hindari asap rokok dan polusi dalam ruangan\n- **Cuci tangan** - Biasakan cuci tangan dengan sabun secara teratur\n\nVaksinasi adalah cara paling efektif mencegah pneumonia bakteri.',
     source: 'IDAI (Ikatan Dokter Anak Indonesia)',
     published_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -384,7 +373,7 @@ export const MOCK_ARTICLES: Article[] = [
     category: 'Edukasi',
     cover_url: null,
     body_md:
-      '## Apa itu Pneumonia?\n\nPneumonia adalah infeksi yang menyebabkan peradangan pada kantong udara di paru-paru (alveoli). Alveoli dapat terisi cairan atau nanah, membuat pernapasan sulit dan menyakitkan.\n\n## Penyebab\n- **Bakteri** — Streptococcus pneumoniae (paling umum)\n- **Virus** — RSV, influenza, COVID-19\n- **Jamur** — pada anak dengan imunitas rendah\n\n## Faktor Risiko\n- Usia di bawah 2 tahun\n- Gizi buruk atau stunting\n- Tidak mendapat ASI\n- Paparan asap rokok\n- Tinggal di daerah padat dengan sanitasi buruk',
+      '## Apa itu Pneumonia?\n\nPneumonia adalah infeksi yang menyebabkan peradangan pada kantong udara di paru-paru (alveoli). Alveoli dapat terisi cairan atau nanah, membuat pernapasan sulit dan menyakitkan.\n\n## Penyebab\n- **Bakteri** - Streptococcus pneumoniae (paling umum)\n- **Virus** - RSV, influenza, COVID-19\n- **Jamur** - pada anak dengan imunitas rendah\n\n## Faktor Risiko\n- Usia di bawah 2 tahun\n- Gizi buruk atau stunting\n- Tidak mendapat ASI\n- Paparan asap rokok\n- Tinggal di daerah padat dengan sanitasi buruk',
     source: 'WHO',
     published_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -409,8 +398,6 @@ export const MOCK_ARTICLES: Article[] = [
     published_at: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ];
-
-// ─── Conversations & Messages ─────────────────────────────────────────────────
 
 export const MOCK_CONVERSATIONS: Conversation[] = [
   {

@@ -1,39 +1,44 @@
-// src/constants/config.ts
-// Read and validate all EXPO_PUBLIC_* env variables. Never import secrets here.
+export const MIN_RECORD_DURATION_SEC = 3;
+export const MAX_RECORD_DURATION_SEC = 30;
+export const API_TIMEOUT_MS = 60_000;
+export const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+export const DEFAULT_LAT = -8.6705;
+export const DEFAULT_LNG = 115.2126;
 
-const requireEnv = (key: string, fallback?: string): string => {
-  const value = process.env[key] ?? fallback;
-  if (!value && !fallback) {
-    console.warn(`[config] Missing env var: ${key}`);
+function readFlag(value: string | undefined): boolean {
+  return value === undefined ? __DEV__ : value === "true";
+}
+
+function readApiUrl(value: string | undefined): string | null {
+  const candidate = value?.trim() || (__DEV__ ? "http://10.0.2.2:8000" : "");
+  try {
+    const url = new URL(candidate);
+    if (
+      !["http:", "https:"].includes(url.protocol) ||
+      url.username ||
+      url.password
+    )
+      return null;
+    if (!__DEV__ && url.protocol !== "https:") return null;
+    if (url.search || url.hash) return null;
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return null;
   }
-  return value ?? '';
-};
+}
 
-export const Config = {
-  /** FastAPI backend URL. Required for prediction. */
-  apiUrl: requireEnv('EXPO_PUBLIC_API_URL', 'http://localhost:8000'),
-
-  /** Supabase project URL */
-  supabaseUrl: requireEnv('EXPO_PUBLIC_SUPABASE_URL', ''),
-
-  /** Supabase anon (public) key */
-  supabaseAnonKey: requireEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
-
-  /** Use mock API instead of real backend */
-  useMockApi: process.env.EXPO_PUBLIC_USE_MOCK_API === 'true',
-
-  /** Use mock data for Supabase tables */
-  useMockData: process.env.EXPO_PUBLIC_USE_MOCK_DATA === 'true',
-
-  /** Default demo city for location fallback */
-  defaultLat: -8.6705, // Denpasar, Bali
-  defaultLng: 115.2126,
-
-  /** Screening limits */
-  minRecordingSeconds: 3,
-  maxRecordingSeconds: 30,
+export const config = {
+  apiUrl: readApiUrl(process.env.EXPO_PUBLIC_API_URL),
+  supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL?.trim() ?? "",
+  supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "",
+  useMockApi: readFlag(process.env.EXPO_PUBLIC_USE_MOCK_API),
+  useMockData: readFlag(process.env.EXPO_PUBLIC_USE_MOCK_DATA),
+  defaultLat: DEFAULT_LAT,
+  defaultLng: DEFAULT_LNG,
+  minRecordingSeconds: MIN_RECORD_DURATION_SEC,
+  maxRecordingSeconds: MAX_RECORD_DURATION_SEC,
   maxFileSizeMb: 10,
-
-  /** API timeout */
-  apiTimeoutMs: 60_000,
+  apiTimeoutMs: API_TIMEOUT_MS,
 } as const;
+
+export const Config = config;

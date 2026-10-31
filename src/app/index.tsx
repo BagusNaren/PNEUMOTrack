@@ -1,47 +1,32 @@
-// src/app/index.tsx
-// Splash and Auth Gate — redirects to (tabs) if authenticated, or (auth)/sign-in.
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import { useEffect } from "react";
+import { Text, View } from "react-native";
+import { Screen } from "@/components/ui/screen";
+import { copy } from "@/constants/copy";
+import { UI } from "@/constants/theme";
 
-import { router } from 'expo-router';
-import { useEffect } from 'react';
-import { Image, Text, View } from 'react-native';
-
-import { copy } from '@/constants/copy';
-import { useSession } from '@/hooks/use-session';
-
-export default function IndexScreen() {
-  const { session, isLoading } = useSession();
-
+export default function EntryScreen() {
   useEffect(() => {
-    if (isLoading) return;
-
-    // Small delay for smooth splash impression
-    const timer = setTimeout(() => {
-      if (session) {
-        router.replace('/(tabs)');
-      } else {
-        // Fallback to sign-in or demo tabs
-        router.replace('/(auth)/sign-in');
-      }
-    }, 800);
-
+    const timer = setTimeout(() => router.replace("/(tabs)"), 700);
     return () => clearTimeout(timer);
-  }, [session, isLoading]);
-
+  }, []);
   return (
-    <View className="flex-1 items-center justify-center bg-surface px-6 dark:bg-surface-dark">
-      <View className="items-center gap-4">
+    <Screen scroll={false}>
+      <View className="items-center gap-6">
         <Image
-          source={require('@/assets/images/logo.png')}
-          style={{ width: 150, height: 150 }}
-          resizeMode="contain"
+          source={require("../../UI_reference/logo.png")}
+          accessibilityLabel={copy.common.appName}
+          contentFit="contain"
+          style={{ width: UI.logoSize, height: UI.logoSize }}
         />
-        <Text className="text-display font-bold text-brand dark:text-brand-light">
-          {copy.app.name}
+        <Text className="text-title font-bold text-brand dark:text-brand-light">
+          {copy.common.appName}
         </Text>
-        <Text className="text-center text-body text-ink-muted dark:text-ink-dark-muted">
-          {copy.app.tagline}
+        <Text className="text-center text-title font-bold text-brand dark:text-brand-light">
+          {copy.common.tagline}
         </Text>
       </View>
-    </View>
+    </Screen>
   );
 }

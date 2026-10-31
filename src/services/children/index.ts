@@ -12,9 +12,15 @@ export interface CreateChildInput {
   sex: Sex;
 }
 
-export interface UpdateChildInput extends Partial<CreateChildInput> {}
+export type UpdateChildInput = Partial<CreateChildInput>;
 
-// Mock implementation
+function createMockUuid(): string {
+  const hex = Math.floor(Math.random() * 0xffffffffffff)
+    .toString(16)
+    .padStart(12, '0');
+  return `00000000-0000-4000-8000-${hex}`;
+}
+
 const mockService = {
   list: async (_parentId: string): Promise<Child[]> => {
     await new Promise((r) => setTimeout(r, 300));
@@ -27,7 +33,7 @@ const mockService = {
   create: async (parentId: string, input: CreateChildInput): Promise<Child> => {
     await new Promise((r) => setTimeout(r, 400));
     const child: Child = {
-      id: `child-${Date.now()}`,
+      id: createMockUuid(),
       parent_id: parentId,
       ...input,
       created_at: new Date().toISOString(),
@@ -49,7 +55,6 @@ const mockService = {
   },
 };
 
-// Supabase implementation
 const supabaseService = {
   list: async (parentId: string): Promise<Child[]> => {
     const { data, error } = await supabase

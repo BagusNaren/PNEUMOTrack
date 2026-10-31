@@ -1,60 +1,114 @@
-// src/app/_layout.tsx
-// Root Layout for PNEUMOTrack with Providers and Stack Navigation.
+import "@/global.css";
 
-import '@/global.css';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { type PropsWithChildren, useMemo } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ActiveChildProvider, useActiveChild } from "@/hooks/use-active-child";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import {
+  type ActiveChildAdapter,
+  ScreeningProvider,
+} from "@/hooks/use-screening";
+import { SessionProvider, useSession } from "@/hooks/use-session";
+import { useTheme } from "@/hooks/use-theme";
+import { screeningsService } from "@/services/screenings";
 
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+function formatChildAgeLabel(birthDateStr: string): string {
+  const birth = new Date(birthDateStr);
+  if (Number.isNaN(birth.getTime())) return birthDateStr;
+  const now = new Date();
+  const totalMonths = Math.max(
+    0,
+    (now.getFullYear() - birth.getFullYear()) * 12 +
+      (now.getMonth() - birth.getMonth()),
+  );
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  if (years > 0 && months > 0) return `${years} tahun ${months} bulan`;
+  if (years > 0) return `${years} tahun`;
+  return `${months} bulan`;
+}
 
-import { ActiveChildProvider } from '@/hooks/use-active-child';
-import { SessionProvider, useSession } from '@/hooks/use-session';
-
-function RootNavigator() {
-  const { user } = useSession();
+function ScreeningBridge({ children }: PropsWithChildren) {
+  const { activeChild, isLoading } = useActiveChild();
+  const adapter = useMemo<ActiveChildAdapter>(() => {
+    if (isLoading) {
+      return { status: "loading", child: null };
+    }
+    if (!activeChild) {
+      return { status: "empty", child: null };
+    }
+    return {
+      status: "ready",
+      child: {
+        id: activeChild.id,
+        name: activeChild.name,
+        ageLabel: formatChildAgeLabel(activeChild.birth_date),
+      },
+    };
+  }, [activeChild, isLoading]);
 
   return (
-    <ActiveChildProvider parentId={user?.id ?? 'user-demo'}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          contentStyle: { backgroundColor: '#FFFFFF' },
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-        <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-        <Stack.Screen name="children/new" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="history/index" />
-        <Stack.Screen name="history/[id]" />
-        <Stack.Screen name="doctors/index" />
-        <Stack.Screen name="doctors/[id]" />
-        <Stack.Screen name="chats/index" />
-        <Stack.Screen name="chats/[id]" />
-        <Stack.Screen name="hospitals/index" />
-        <Stack.Screen name="hospitals/map" />
-        <Stack.Screen name="articles/index" />
-        <Stack.Screen name="articles/[id]" />
-        <Stack.Screen name="recommendation" />
-      </Stack>
+    <ScreeningProvider
+      activeChild={adapter}
+      saveScreening={screeningsService.save}
+    >
+      {children}
+    </ScreeningProvider>
+  );
+}
+
+function SessionBoundProviders({ children }: PropsWithChildren) {
+  const { user } = useSession();
+  return (
+    <ActiveChildProvider parentId={user?.id ?? "user-demo"}>
+      <ScreeningBridge>{children}</ScreeningBridge>
     </ActiveChildProvider>
   );
 }
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
+function AppProviders({ children }: PropsWithChildren) {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <SessionProvider>
-          <RootNavigator />
-        </SessionProvider>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <SessionProvider>
+      <SessionBoundProviders>{children}</SessionBoundProviders>
+    </SessionProvider>
+  );
+}
+
+export default function RootLayout() {
+  const scheme = useColorScheme();
+  const colors = useTheme();
+  const base = scheme === "dark" ? DarkTheme : DefaultTheme;
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AppProviders>
+          <ThemeProvider
+            value={{
+              ...base,
+              colors: {
+                ...base.colors,
+                background: colors.surface,
+                card: colors.surfaceCard,
+                text: colors.ink,
+                primary: colors.brand,
+                border: colors.border,
+              },
+            }}
+          >
+            <StatusBar style="auto" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: "none",
+                contentStyle: { backgroundColor: colors.surface },
+              }}
+            />
+          </ThemeProvider>
+        </AppProviders>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

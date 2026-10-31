@@ -21,7 +21,7 @@ export function useLocation() {
   const [state, setState] = useState<LocationState>({
     lat: Config.defaultLat,
     lng: Config.defaultLng,
-    status: 'idle',
+    status: 'requesting',
     isDefaultFallback: true,
   });
 
@@ -53,8 +53,36 @@ export function useLocation() {
   }, []);
 
   useEffect(() => {
-    requestLocation();
-  }, [requestLocation]);
+    let active = true;
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (!active) return;
+        if (status !== 'granted') {
+          setState((s) => ({ ...s, status: 'denied', isDefaultFallback: true }));
+          return;
+        }
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 5000,
+        });
+        if (!active) return;
+        setState({
+          lat: loc.coords.latitude,
+          lng: loc.coords.longitude,
+          status: 'granted',
+          isDefaultFallback: false,
+        });
+      } catch {
+        if (active) {
+          setState((s) => ({ ...s, status: 'error', isDefaultFallback: true }));
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return {
     ...state,

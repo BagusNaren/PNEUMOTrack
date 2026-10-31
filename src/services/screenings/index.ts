@@ -1,37 +1,48 @@
-// src/services/screenings/index.ts
-// Screenings service — saves and retrieves skrining results.
-// Note: Audio is never stored; only the structured result is persisted (PRD §13).
-
-import { Config } from '@/constants/config';
-import { supabase } from '@/services/supabase/client';
-import type { Screening } from '@/types/domain';
-import type { PredictResponse } from '@/types/screening';
-import { MOCK_SCREENINGS } from '../mock-data';
+import { Config } from "@/constants/config";
+import { supabase } from "@/services/supabase/client";
+import type { Screening } from "@/types/domain";
+import type {
+  PredictSuccessResponse,
+  SaveScreeningPayload,
+} from "@/types/screening";
+import { toSaveScreeningPayload } from "@/types/screening";
+import { MOCK_SCREENINGS } from "../mock-data";
 
 export interface SaveScreeningInput {
   child_id: string;
-  response: PredictResponse;
+  response: PredictSuccessResponse;
+}
+
+function normalizePayload(
+  input: SaveScreeningPayload | SaveScreeningInput,
+): SaveScreeningPayload {
+  if ("response" in input) {
+    return toSaveScreeningPayload(input.child_id, input.response);
+  }
+  return input;
 }
 
 const mockScreenings = [...MOCK_SCREENINGS];
 
-// Mock implementation
 const mockService = {
-  save: async (input: SaveScreeningInput): Promise<Screening> => {
+  save: async (
+    input: SaveScreeningPayload | SaveScreeningInput,
+  ): Promise<Screening> => {
     await new Promise((r) => setTimeout(r, 300));
+    const payload = normalizePayload(input);
     const screening: Screening = {
       id: `scr-${Date.now()}`,
-      child_id: input.child_id,
-      result: input.response.result,
-      agreement: input.response.agreement,
-      ae_error: input.response.autoencoder.error,
-      ae_threshold: input.response.autoencoder.threshold,
-      ocsvm_score: input.response.ocsvm.score,
-      chunks: input.response.chunks,
-      duration_sec: input.response.duration_sec,
-      waveform: input.response.waveform,
-      summary: input.response.summary,
-      model_version: input.response.model_version,
+      child_id: payload.child_id,
+      result: payload.result,
+      agreement: payload.agreement,
+      ae_error: payload.ae_error,
+      ae_threshold: payload.ae_threshold,
+      ocsvm_score: payload.ocsvm_score,
+      chunks: payload.chunks,
+      duration_sec: payload.duration_sec,
+      waveform: payload.waveform,
+      summary: payload.summary,
+      model_version: payload.model_version,
       created_at: new Date().toISOString(),
     };
     mockScreenings.unshift(screening);
@@ -42,7 +53,10 @@ const mockService = {
     return mockScreenings
       .filter((s) => s.child_id === childId)
       .slice(0, limit)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
   },
   get: async (id: string): Promise<Screening | null> => {
     await new Promise((r) => setTimeout(r, 200));
@@ -52,28 +66,33 @@ const mockService = {
     await new Promise((r) => setTimeout(r, 200));
     const results = mockScreenings
       .filter((s) => s.child_id === childId)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
     return results[0] ?? null;
   },
 };
 
-// Supabase implementation
 const supabaseService = {
-  save: async (input: SaveScreeningInput): Promise<Screening> => {
+  save: async (
+    input: SaveScreeningPayload | SaveScreeningInput,
+  ): Promise<Screening> => {
+    const payload = normalizePayload(input);
     const { data, error } = await supabase
-      .from('screenings')
+      .from("screenings")
       .insert({
-        child_id: input.child_id,
-        result: input.response.result,
-        agreement: input.response.agreement,
-        ae_error: input.response.autoencoder.error,
-        ae_threshold: input.response.autoencoder.threshold,
-        ocsvm_score: input.response.ocsvm.score,
-        chunks: input.response.chunks,
-        duration_sec: input.response.duration_sec,
-        waveform: input.response.waveform,
-        summary: input.response.summary,
-        model_version: input.response.model_version,
+        child_id: payload.child_id,
+        result: payload.result,
+        agreement: payload.agreement,
+        ae_error: payload.ae_error,
+        ae_threshold: payload.ae_threshold,
+        ocsvm_score: payload.ocsvm_score,
+        chunks: payload.chunks,
+        duration_sec: payload.duration_sec,
+        waveform: payload.waveform,
+        summary: payload.summary,
+        model_version: payload.model_version,
       })
       .select()
       .single();
@@ -82,25 +101,29 @@ const supabaseService = {
   },
   listByChild: async (childId: string, limit = 50): Promise<Screening[]> => {
     const { data, error } = await supabase
-      .from('screenings')
-      .select('*')
-      .eq('child_id', childId)
-      .order('created_at', { ascending: false })
+      .from("screenings")
+      .select("*")
+      .eq("child_id", childId)
+      .order("created_at", { ascending: false })
       .limit(limit);
     if (error) throw error;
     return data ?? [];
   },
   get: async (id: string): Promise<Screening | null> => {
-    const { data, error } = await supabase.from('screenings').select('*').eq('id', id).single();
+    const { data, error } = await supabase
+      .from("screenings")
+      .select("*")
+      .eq("id", id)
+      .single();
     if (error) return null;
     return data;
   },
   latest: async (childId: string): Promise<Screening | null> => {
     const { data, error } = await supabase
-      .from('screenings')
-      .select('*')
-      .eq('child_id', childId)
-      .order('created_at', { ascending: false })
+      .from("screenings")
+      .select("*")
+      .eq("child_id", childId)
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     if (error) return null;
@@ -108,4 +131,6 @@ const supabaseService = {
   },
 };
 
-export const screeningsService = Config.useMockData ? mockService : supabaseService;
+export const screeningsService = Config.useMockData
+  ? mockService
+  : supabaseService;

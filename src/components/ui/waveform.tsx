@@ -1,49 +1,171 @@
-// src/components/ui/waveform.tsx
-// Static waveform strip from amplitude data. Used in result and history screens.
+import { memo, useEffect } from "react";
+import { Text, View } from "react-native";
+import Animated, {
+  cancelAnimation,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from "react-native-reanimated";
+import {
+  CSS_EASE_OUT,
+  EASE_OUT,
+  MOTION_DURATION_MS,
+  useMotionAllowed,
+} from "@/components/screening/motion";
+import { copy } from "@/constants/copy";
 
-import { View } from 'react-native';
+const BAR_COUNT = 32;
+const BAR_HEIGHT = 72;
+const MIN_SCALE = 2 / BAR_HEIGHT;
+const BAR_INDICES = Array.from({ length: BAR_COUNT }, (_, index) => index);
 
-type WaveformVariant = 'normal' | 'risk';
+const LiveWaveformBar = memo(function LiveWaveformBar({
+  index,
+  liveSamples,
+  animate,
+  variant,
+}: {
+  index: number;
+  liveSamples: SharedValue<readonly number[]>;
+  animate: boolean;
+  variant: "normal" | "risk";
+}) {
+  const scaleY = useSharedValue(MIN_SCALE);
 
-interface WaveformProps {
-  data?: number[]; // 0..1 normalized amplitude values
-  samples?: number[]; // alias for data
-  variant?: WaveformVariant;
+  useEffect(() => {
+    if (!animate) {
+      cancelAnimation(scaleY);
+    }
+    return () => cancelAnimation(scaleY);
+  }, [animate, scaleY]);
+
+  useAnimatedReaction(
+    () => {
+      const list = liveSamples.get();
+      if (!list.length) return MIN_SCALE;
+      const step = Math.max(1, Math.ceil(list.length / BAR_COUNT));
+      const sampleIndex = index * step;
+      const raw = sampleIndex < list.length ? list[sampleIndex] : 0;
+      const clamped = Number.isFinite(raw)
+        ? Math.max(0, Math.min(1, raw))
+        : 0;
+      return Math.max(MIN_SCALE, clamped);
+    },
+    (target, previous) => {
+      if (target === previous) return;
+      if (animate) {
+        scaleY.set(
+          withTiming(target, {
+            duration: MOTION_DURATION_MS,
+            easing: EASE_OUT,
+          }),
+        );
+      } else {
+        cancelAnimation(scaleY);
+        scaleY.set(target);
+      }
+    },
+    [animate, index, liveSamples],
+  );
+
+  const style = useAnimatedStyle(() => ({
+    height: BAR_HEIGHT,
+    transform: [{ scaleY: scaleY.get() }],
+  }));
+
+  return (
+    <View className="min-w-0 flex-1">
+      <Animated.View style={style}>
+        <View
+          className={`w-full rounded-pill ${variant === "risk" ? "bg-risk dark:bg-risk-light" : "bg-brand dark:bg-brand-light"}`}
+          style={{ height: BAR_HEIGHT }}
+        />
+      </Animated.View>
+    </View>
+  );
+});
+
+export const Waveform = memo(function Waveform({
+  samples,
+  data,
+  liveSamples,
+  mode = "static",
+  variant = "normal",
+}: {
+  samples?: readonly number[];
+  data?: readonly number[];
   height?: number;
-}
+  liveSamples?: SharedValue<readonly number[]>;
+  mode?: "static" | "live";
+  variant?: "normal" | "risk";
+}) {
+  const resolvedSamples = samples ?? data ?? [];
+  const motionAllowed = useMotionAllowed();
+  const animateLive = mode === "live" && motionAllowed;
+  const useSharedLiveBars = mode === "live" && liveSamples !== undefined;
 
-export function Waveform({ data, samples, variant = 'normal', height = 64 }: WaveformProps) {
-  const points = data ?? samples ?? Array(60).fill(0.1);
-  const barColor = variant === 'risk' ? '#A33A3A' : '#1F4B75';
-  const bgClass = variant === 'risk' ? 'bg-risk-surface' : 'bg-surface-brand';
-  // Downsample to ≤ 80 bars
-  const maxBars = 80;
-  const step = Math.max(1, Math.floor(points.length / maxBars));
-  const bars = points.filter((_, i) => i % step === 0).slice(0, maxBars);
+  // Limit bars to keep each sample visible on narrow screens.
+  const step = Math.max(1, Math.ceil(resolvedSamples.length / BAR_COUNT));
+  const bars = resolvedSamples.length
+    ? resolvedSamples.filter((_, index) => index % step === 0)
+    : Array.from({ length: BAR_COUNT }, () => 0);
 
   return (
     <View
-      className={`w-full flex-row items-center justify-between overflow-hidden rounded-card px-2 py-2 ${bgClass}`}
-      style={{ height }}
-      accessibilityLabel="Waveform batuk"
+      className={`gap-2 rounded-card p-4 ${variant === "risk" ? "bg-risk-surface dark:bg-risk-surface-dark" : "bg-surface-brand dark:bg-surface-brand-dark"}`}
     >
-      {bars.map((amp, i) => (
-        <View
-          key={i}
-          style={{
-            width: 2,
-            height: Math.max(3, amp * (height - 16)),
-            backgroundColor: barColor,
-            borderRadius: 1,
-            opacity: 0.7 + amp * 0.3,
-          }}
-        />
-      ))}
+      <View
+        accessible
+        accessibilityLabel={
+          mode === "live" ? copy.ui.liveWaveform : copy.ui.waveform
+        }
+        className="h-20 flex-row items-center justify-center gap-1"
+      >
+        {useSharedLiveBars
+          ? BAR_INDICES.map((index) => (
+              <LiveWaveformBar
+                key={index}
+                index={index}
+                liveSamples={liveSamples}
+                animate={animateLive}
+                variant={variant}
+              />
+            ))
+          : bars.map((sample, index) => (
+              <View key={index} className="min-w-0 flex-1">
+                <Animated.View
+                  style={{
+                    height: BAR_HEIGHT,
+                    transform: [
+                      {
+                        scaleY: Math.max(
+                          MIN_SCALE,
+                          Number.isFinite(sample)
+                            ? Math.max(0, Math.min(1, sample))
+                            : 0,
+                        ),
+                      },
+                    ],
+                    transitionProperty: "transform",
+                    transitionDuration: animateLive ? MOTION_DURATION_MS : 0,
+                    transitionTimingFunction: CSS_EASE_OUT,
+                  }}
+                >
+                  <View
+                    className={`w-full rounded-pill ${variant === "risk" ? "bg-risk dark:bg-risk-light" : "bg-brand dark:bg-brand-light"}`}
+                    style={{ height: BAR_HEIGHT }}
+                  />
+                </Animated.View>
+              </View>
+            ))}
+      </View>
+      {!useSharedLiveBars && !resolvedSamples.length && (
+        <Text className="text-caption text-ink dark:text-ink-dark">
+          {copy.ui.noSamples}
+        </Text>
+      )}
     </View>
   );
-}
-
-export function FlatWaveform({ variant = 'normal', height = 64 }: Omit<WaveformProps, 'data'>) {
-  const flatData = Array(60).fill(0.05);
-  return <Waveform data={flatData} variant={variant} height={height} />;
-}
+});

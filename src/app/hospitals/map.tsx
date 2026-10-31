@@ -1,7 +1,6 @@
 // src/app/hospitals/map.tsx
-// Hospital map screen — matches hospital map_user.png exactly.
+// Hospital map screen — matches hospital map_user.png.
 
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Linking,
@@ -42,7 +41,6 @@ export default function HospitalMapScreen() {
 
   return (
     <View className="flex-1 bg-surface dark:bg-surface-dark">
-      {/* Top Header: < Hospital : (hospital map_user.png) */}
       <View
         style={{ paddingTop: insets.top }}
         className="bg-surface px-4 pb-2 z-10 dark:bg-surface-card-dark"
@@ -52,7 +50,6 @@ export default function HospitalMapScreen() {
           rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
         />
 
-        {/* Search Bar: "Search location, ZIP code..." */}
         <View className="my-2 h-11 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 dark:border-border-dark dark:bg-surface-dark">
           <Text className="mr-2 text-icon-muted">🔍</Text>
           <TextInput
@@ -65,19 +62,15 @@ export default function HospitalMapScreen() {
         </View>
       </View>
 
-      {/* Map Area with Location Circle & Hospital Pins (hospital map_user.png) */}
       <View className="flex-1 bg-surface-brand-soft items-center justify-center overflow-hidden">
-        {/* Radius Circle */}
         <View className="h-72 w-72 rounded-full border border-brand/20 bg-brand/5 items-center justify-center">
           <View className="h-44 w-44 rounded-full border border-brand/30 bg-brand/10 items-center justify-center">
-            {/* Center User Location Pin */}
             <View className="h-7 w-7 rounded-full border-2 border-white bg-brand items-center justify-center shadow-md">
               <View className="h-2.5 w-2.5 rounded-full bg-white" />
             </View>
           </View>
         </View>
 
-        {/* Hospital Pins */}
         {hospitals.slice(0, 5).map((h, idx) => {
           const isSelected = selectedHospital?.id === h.id;
           const positions = [
@@ -94,7 +87,7 @@ export default function HospitalMapScreen() {
               key={h.id}
               onPress={() => setSelectedHospital(h)}
               style={pos as any}
-              className={`absolute items-center active:scale-110`}
+              className="absolute items-center active:scale-110"
             >
               <View
                 className={`flex-row items-center gap-1 rounded-pill px-2.5 py-1 shadow-md ${
@@ -123,7 +116,6 @@ export default function HospitalMapScreen() {
         })}
       </View>
 
-      {/* Bottom Sheet Card: Hospital Name, Address, "See Detail" Button (hospital map_user.png) */}
       {selectedHospital && (
         <View
           style={{ paddingBottom: insets.bottom + 16 }}
@@ -144,7 +136,6 @@ export default function HospitalMapScreen() {
               </Text>
             </View>
 
-            {/* Dark Navy Pill Button "See Detail" (hospital map_user.png) */}
             <Pressable
               onPress={() => handleNavigate(selectedHospital)}
               className="h-12 w-full items-center justify-center rounded-pill bg-brand active:opacity-80 mt-1"
