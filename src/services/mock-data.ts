@@ -1,0 +1,517 @@
+// src/services/mock-data.ts
+// Isolated mock data for all domains. Switch off with EXPO_PUBLIC_USE_MOCK_DATA=false.
+// Denpasar, Bali as the demo city.
+
+import type { Article, Child, Conversation, Doctor, Hospital, Message, Screening } from '@/types/domain';
+
+// ─── Children ─────────────────────────────────────────────────────────────────
+
+export const MOCK_CHILDREN: Child[] = [
+  {
+    id: 'child-001',
+    parent_id: 'user-demo',
+    name: 'Budi Santoso',
+    birth_date: '2022-04-10',
+    sex: 'male',
+    created_at: '2025-01-15T10:00:00Z',
+  },
+  {
+    id: 'child-002',
+    parent_id: 'user-demo',
+    name: 'Ayu Lestari',
+    birth_date: '2023-08-22',
+    sex: 'female',
+    created_at: '2025-01-15T10:00:00Z',
+  },
+];
+
+// ─── Screenings ────────────────────────────────────────────────────────────────
+
+const makeWaveform = (length = 80, risk = false) =>
+  Array.from({ length }, (_, i) => {
+    const base = risk ? 0.5 + Math.random() * 0.5 : 0.1 + Math.random() * 0.5;
+    return Math.min(1, Math.max(0, base + (Math.random() - 0.5) * 0.2));
+  });
+
+export const MOCK_SCREENINGS: Screening[] = [
+  {
+    id: 'scr-001',
+    child_id: 'child-001',
+    result: 'normal',
+    agreement: true,
+    ae_error: 0.0012,
+    ae_threshold: 0.0389,
+    ocsvm_score: 0.41,
+    chunks: 5,
+    duration_sec: 7.2,
+    waveform: makeWaveform(80, false),
+    summary:
+      '• Pola batuk terdeteksi normal, tidak ditemukan tanda-tanda pola batuk tidak biasa.\n• Kualitas rekaman baik dengan 5 segmen batuk terdeteksi.\n• Lanjutkan pemantauan secara berkala untuk kondisi optimal.',
+    model_version: 'v3',
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'scr-002',
+    child_id: 'child-001',
+    result: 'risk',
+    agreement: true,
+    ae_error: 0.0412,
+    ae_threshold: 0.0389,
+    ocsvm_score: -0.23,
+    chunks: 4,
+    duration_sec: 6.0,
+    waveform: makeWaveform(80, true),
+    summary:
+      '• Pola batuk tidak biasa terdeteksi pada rekaman ini.\n• Terdapat ketidaksesuaian dengan pola batuk normal dalam analisis AI.\n• Disarankan untuk berkonsultasi dengan dokter anak atau dokter paru.',
+    model_version: 'v3',
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'scr-003',
+    child_id: 'child-001',
+    result: 'normal',
+    agreement: false,
+    ae_error: 0.0298,
+    ae_threshold: 0.0389,
+    ocsvm_score: -0.05,
+    chunks: 3,
+    duration_sec: 4.8,
+    waveform: makeWaveform(80, false),
+    summary:
+      '• Hasil dua model AI menunjukkan perbedaan pendapat.\n• Autoencoder mendeteksi pola normal, namun OC-SVM menunjukkan pola yang perlu diperhatikan.\n• Disarankan rekam ulang untuk hasil yang lebih akurat.',
+    model_version: 'v3',
+    created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'scr-004',
+    child_id: 'child-001',
+    result: 'normal',
+    agreement: true,
+    ae_error: 0.0089,
+    ae_threshold: 0.0389,
+    ocsvm_score: 0.62,
+    chunks: 6,
+    duration_sec: 8.4,
+    waveform: makeWaveform(80, false),
+    summary:
+      '• Pola batuk terdeteksi normal.\n• Kualitas rekaman sangat baik dengan 6 segmen batuk.\n• Tidak ditemukan tanda pola batuk tidak biasa.',
+    model_version: 'v3',
+    created_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'scr-005',
+    child_id: 'child-001',
+    result: 'risk',
+    agreement: true,
+    ae_error: 0.0521,
+    ae_threshold: 0.0389,
+    ocsvm_score: -0.45,
+    chunks: 3,
+    duration_sec: 5.1,
+    waveform: makeWaveform(80, true),
+    summary:
+      '• Pola batuk tidak biasa terdeteksi pada rekaman ini.\n• Kedua model AI sepakat mendeteksi pola yang memerlukan perhatian.\n• Segera konsultasikan ke dokter anak.',
+    model_version: 'v3',
+    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'scr-006',
+    child_id: 'child-002',
+    result: 'normal',
+    agreement: true,
+    ae_error: 0.0055,
+    ae_threshold: 0.0389,
+    ocsvm_score: 0.78,
+    chunks: 4,
+    duration_sec: 6.2,
+    waveform: makeWaveform(80, false),
+    summary:
+      '• Pola batuk normal terdeteksi.\n• Hasil skrining menunjukkan kondisi pernapasan yang baik.\n• Lanjutkan pemantauan secara berkala.',
+    model_version: 'v3',
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
+
+// ─── Doctors ───────────────────────────────────────────────────────────────────
+
+export const MOCK_DOCTORS: Doctor[] = [
+  {
+    id: 'doc-001',
+    name: 'Dr. I Gusti Ngurah Anom, Sp.A',
+    specialty: 'Spesialis Anak',
+    hospital_id: 'hosp-001',
+    hospital_name: 'RSUP Sanglah Denpasar',
+    photo_url: null,
+    phone: '+6281234560001',
+    whatsapp: '+6281234560001',
+    bio: 'Dokter spesialis anak dengan pengalaman lebih dari 15 tahun di bidang pediatri. Ahli dalam penanganan penyakit pernapasan anak termasuk pneumonia, asma, dan bronkitis.',
+    rating: 4.9,
+    schedule: [
+      { day: 'Senin', time: '08:00 - 12:00' },
+      { day: 'Rabu', time: '08:00 - 12:00' },
+      { day: 'Jumat', time: '13:00 - 17:00' },
+    ],
+  },
+  {
+    id: 'doc-002',
+    name: 'Dr. Ni Made Dewi Sari, Sp.A',
+    specialty: 'Spesialis Anak',
+    hospital_id: 'hosp-002',
+    hospital_name: 'RS Bali Mandara',
+    photo_url: null,
+    phone: '+6281234560002',
+    whatsapp: '+6281234560002',
+    bio: 'Berpengalaman dalam penanganan infeksi saluran pernapasan bawah pada anak. Lulusan FK Universitas Udayana dengan fellowship pediatri respirologi.',
+    rating: 4.8,
+    schedule: [
+      { day: 'Selasa', time: '09:00 - 14:00' },
+      { day: 'Kamis', time: '09:00 - 14:00' },
+      { day: 'Sabtu', time: '08:00 - 12:00' },
+    ],
+  },
+  {
+    id: 'doc-003',
+    name: 'Dr. Putu Bagus Wibawa, Sp.P',
+    specialty: 'Spesialis Paru',
+    hospital_id: 'hosp-001',
+    hospital_name: 'RSUP Sanglah Denpasar',
+    photo_url: null,
+    phone: '+6281234560003',
+    whatsapp: '+6281234560003',
+    bio: 'Spesialis paru dengan fokus pada penyakit infeksi paru termasuk pneumonia, tuberkulosis, dan PPOK. Anggota aktif PDPI (Perhimpunan Dokter Paru Indonesia).',
+    rating: 4.7,
+    schedule: [
+      { day: 'Senin', time: '13:00 - 17:00' },
+      { day: 'Rabu', time: '13:00 - 17:00' },
+      { day: 'Kamis', time: '08:00 - 12:00' },
+    ],
+  },
+  {
+    id: 'doc-004',
+    name: 'Dr. Ni Nyoman Tri Agustini, Sp.A',
+    specialty: 'Spesialis Anak',
+    hospital_id: 'hosp-003',
+    hospital_name: 'RS Kasih Ibu Denpasar',
+    photo_url: null,
+    phone: '+6281234560004',
+    whatsapp: '+6281234560004',
+    bio: 'Dokter anak yang ramah dengan pendekatan child-friendly. Berpengalaman dalam tumbuh kembang anak dan penyakit infeksi pada balita.',
+    rating: 4.9,
+    schedule: [
+      { day: 'Senin', time: '08:00 - 14:00' },
+      { day: 'Selasa', time: '13:00 - 17:00' },
+      { day: 'Jumat', time: '08:00 - 12:00' },
+    ],
+  },
+  {
+    id: 'doc-005',
+    name: 'Dr. I Wayan Suryawan, Sp.A(K)',
+    specialty: 'Konsultan Respirologi Anak',
+    hospital_id: 'hosp-001',
+    hospital_name: 'RSUP Sanglah Denpasar',
+    photo_url: null,
+    phone: '+6281234560005',
+    whatsapp: '+6281234560005',
+    bio: 'Dokter anak konsultan bidang respirologi dengan sub-spesialisasi pneumonia dan asma pada anak. Peneliti aktif di bidang penyakit pernapasan pediatri.',
+    rating: 5.0,
+    schedule: [
+      { day: 'Selasa', time: '08:00 - 12:00' },
+      { day: 'Kamis', time: '08:00 - 12:00' },
+    ],
+  },
+  {
+    id: 'doc-006',
+    name: 'Dr. Desak Made Putri, Sp.P',
+    specialty: 'Spesialis Paru',
+    hospital_id: 'hosp-004',
+    hospital_name: 'RS Siloam Denpasar',
+    photo_url: null,
+    phone: '+6281234560006',
+    whatsapp: '+6281234560006',
+    bio: 'Spesialis paru berpengalaman dalam penanganan pneumonia komunitas dan pneumonia nosokomial. Tersedia untuk konsultasi dan tindak lanjut hasil skrining.',
+    rating: 4.6,
+    schedule: [
+      { day: 'Senin', time: '09:00 - 13:00' },
+      { day: 'Rabu', time: '09:00 - 13:00' },
+      { day: 'Jumat', time: '09:00 - 13:00' },
+      { day: 'Sabtu', time: '09:00 - 12:00' },
+    ],
+  },
+];
+
+// ─── Hospitals ─────────────────────────────────────────────────────────────────
+// Real lat/lng in Denpasar, Bali
+
+export const MOCK_HOSPITALS: Hospital[] = [
+  {
+    id: 'hosp-001',
+    name: 'RSUP Prof. Dr. I.G.N.G. Ngoerah (Sanglah)',
+    address: 'Jl. Diponegoro, Dauh Puri Klod, Denpasar Barat',
+    lat: -8.6653,
+    lng: 115.2128,
+    phone: '+62361244038',
+    type: 'RS',
+    has_pediatric: true,
+  },
+  {
+    id: 'hosp-002',
+    name: 'RS Bali Mandara',
+    address: 'Jl. By Pass Ngurah Rai No.548, Sanur',
+    lat: -8.7033,
+    lng: 115.2506,
+    phone: '+62361462531',
+    type: 'RS',
+    has_pediatric: true,
+  },
+  {
+    id: 'hosp-003',
+    name: 'RS Kasih Ibu Denpasar',
+    address: 'Jl. Teuku Umar No.120, Dauh Puri Kaja, Denpasar Utara',
+    lat: -8.6584,
+    lng: 115.2133,
+    phone: '+62361223036',
+    type: 'RS',
+    has_pediatric: true,
+  },
+  {
+    id: 'hosp-004',
+    name: 'RS Siloam Denpasar',
+    address: 'Jl. Sunset Road No.818, Kuta, Badung',
+    lat: -8.7201,
+    lng: 115.1730,
+    phone: '+62361779900',
+    type: 'RS',
+    has_pediatric: true,
+  },
+  {
+    id: 'hosp-005',
+    name: 'Puskesmas Denpasar Barat I',
+    address: 'Jl. Gunung Soputan No.1, Pemecutan Kaja, Denpasar Utara',
+    lat: -8.6512,
+    lng: 115.2011,
+    phone: '+62361414932',
+    type: 'Puskesmas',
+    has_pediatric: false,
+  },
+  {
+    id: 'hosp-006',
+    name: 'Puskesmas II Denpasar Selatan',
+    address: 'Jl. Bypass Ngurah Rai, Pemogan, Denpasar Selatan',
+    lat: -8.7280,
+    lng: 115.1987,
+    phone: '+62361724638',
+    type: 'Puskesmas',
+    has_pediatric: false,
+  },
+  {
+    id: 'hosp-007',
+    name: 'RS Surya Husadha',
+    address: 'Jl. Pulau Serangan No.7, Dangin Puri Kaja, Denpasar Utara',
+    lat: -8.6476,
+    lng: 115.2244,
+    phone: '+62361233787',
+    type: 'RS',
+    has_pediatric: true,
+  },
+  {
+    id: 'hosp-008',
+    name: 'Klinik Kimia Farma Gatot Subroto',
+    address: 'Jl. Gatot Subroto Barat No.271, Denpasar',
+    lat: -8.6714,
+    lng: 115.1896,
+    phone: '+62361417748',
+    type: 'Klinik',
+    has_pediatric: false,
+  },
+  {
+    id: 'hosp-009',
+    name: 'RSUD Wangaya Denpasar',
+    address: 'Jl. Kartini No.133, Dangin Puri, Denpasar Barat',
+    lat: -8.6551,
+    lng: 115.2068,
+    phone: '+62361222141',
+    type: 'RS',
+    has_pediatric: true,
+  },
+  {
+    id: 'hosp-010',
+    name: 'RS Balimed Denpasar',
+    address: 'Jl. Mahendradatta No.57X, Pemecutan Kaja, Denpasar Utara',
+    lat: -8.6450,
+    lng: 115.1960,
+    phone: '+62361484748',
+    type: 'RS',
+    has_pediatric: true,
+  },
+];
+
+// ─── Articles ─────────────────────────────────────────────────────────────────
+
+export const MOCK_ARTICLES: Article[] = [
+  {
+    id: 'art-001',
+    title: 'Kenali 5 Gejala Pneumonia pada Anak yang Wajib Diwaspadai',
+    category: 'Gejala',
+    cover_url: null,
+    body_md:
+      '## Gejala Utama Pneumonia pada Anak\n\nPneumonia adalah infeksi serius yang menyerang paru-paru. Berikut gejala yang perlu diwaspadai:\n\n1. **Napas cepat atau sesak** — frekuensi napas melebihi normal untuk usia anak\n2. **Tarikan dinding dada** — dada tampak "tertarik ke dalam" saat bernapas\n3. **Demam tinggi** — suhu di atas 38,5°C\n4. **Batuk persisten** — batuk yang tidak membaik setelah beberapa hari\n5. **Bibir atau kuku kebiruan** — tanda kekurangan oksigen, darurat medis\n\nJika anak Anda menunjukkan gejala-gejala ini, segera konsultasikan ke dokter anak.',
+    source: 'WHO & Kemenkes RI',
+    published_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'art-002',
+    title: 'Cara Efektif Mencegah Pneumonia pada Balita',
+    category: 'Pencegahan',
+    cover_url: null,
+    body_md:
+      '## Pencegahan Pneumonia\n\nPneumonia dapat dicegah dengan langkah-langkah sederhana:\n\n- **Vaksinasi lengkap** — Pastikan anak mendapat imunisasi PCV, Hib, dan campak\n- **ASI eksklusif** — Berikan ASI minimal 6 bulan untuk membangun kekebalan\n- **Gizi seimbang** — Nutrisi yang cukup memperkuat sistem imun\n- **Lingkungan bersih** — Hindari asap rokok dan polusi dalam ruangan\n- **Cuci tangan** — Biasakan cuci tangan dengan sabun secara teratur\n\nVaksinasi adalah cara paling efektif mencegah pneumonia bakteri.',
+    source: 'IDAI (Ikatan Dokter Anak Indonesia)',
+    published_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'art-003',
+    title: 'Penanganan Awal Pneumonia Anak di Rumah Sebelum ke Dokter',
+    category: 'Penanganan',
+    cover_url: null,
+    body_md:
+      '## Apa yang Bisa Dilakukan di Rumah?\n\nSaat menunggu atau dalam perjalanan ke dokter:\n\n- Posisikan anak **setengah duduk** agar napas lebih mudah\n- Pastikan anak **tetap terhidrasi** dengan banyak minum\n- Turunkan demam dengan **paracetamol** sesuai dosis\n- **Jangan beri antibiotik** tanpa resep dokter\n- Pantau frekuensi napas dan warna bibir\n\n⚠️ **Segera ke IGD** jika anak tampak sesak berat, bibir kebiruan, atau tidak sadar.',
+    source: 'Kemenkes RI',
+    published_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'art-004',
+    title: 'Mengenal Pneumonia: Penyebab, Risiko, dan Fakta Penting',
+    category: 'Edukasi',
+    cover_url: null,
+    body_md:
+      '## Apa itu Pneumonia?\n\nPneumonia adalah infeksi yang menyebabkan peradangan pada kantong udara di paru-paru (alveoli). Alveoli dapat terisi cairan atau nanah, membuat pernapasan sulit dan menyakitkan.\n\n## Penyebab\n- **Bakteri** — Streptococcus pneumoniae (paling umum)\n- **Virus** — RSV, influenza, COVID-19\n- **Jamur** — pada anak dengan imunitas rendah\n\n## Faktor Risiko\n- Usia di bawah 2 tahun\n- Gizi buruk atau stunting\n- Tidak mendapat ASI\n- Paparan asap rokok\n- Tinggal di daerah padat dengan sanitasi buruk',
+    source: 'WHO',
+    published_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'art-005',
+    title: 'Kapan Anak Harus Dirawat Inap karena Pneumonia?',
+    category: 'Penanganan',
+    cover_url: null,
+    body_md:
+      '## Indikasi Rawat Inap\n\nDokter biasanya merekomendasikan rawat inap jika:\n\n- Saturasi oksigen di bawah 92%\n- Sesak napas berat\n- Anak tidak bisa minum atau makan\n- Tidak ada perbaikan setelah 48 jam antibiotik\n- Usia di bawah 3 bulan\n- Ada komplikasi seperti efusi pleura\n\n## Pengobatan di Rumah Sakit\nMeliputi antibiotik intravena, oksigen tambahan, dan pemantauan intensif.',
+    source: 'IDAI',
+    published_at: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'art-006',
+    title: 'Beban Pneumonia di Indonesia: Data dan Upaya Pencegahan',
+    category: 'Edukasi',
+    cover_url: null,
+    body_md:
+      '## Situasi di Indonesia\n\nPneumonia merupakan salah satu penyebab utama kematian anak di Indonesia:\n\n- Sekitar **19.000 kematian anak** akibat pneumonia di 2018\n- Menjadi penyakit **paling mahal** bagi BPJS Kesehatan (Rp 8,7 triliun di 2023)\n- Di Surakarta, hanya **46,4%** kasus terdeteksi melalui layanan kesehatan\n\n## Mengapa Deteksi Dini Penting?\nDeteksi dini memungkinkan penanganan lebih awal, biaya lebih rendah, dan prognosis lebih baik. Teknologi skrining berbasis suara batuk seperti PNEUMOTrack dirancang untuk membantu deteksi dini di rumah.',
+    source: 'Kemenkes RI & BPJS Kesehatan',
+    published_at: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
+
+// ─── Conversations & Messages ─────────────────────────────────────────────────
+
+export const MOCK_CONVERSATIONS: Conversation[] = [
+  {
+    id: 'conv-001',
+    doctor_id: 'doc-001',
+    parent_id: 'user-demo',
+    doctor: MOCK_DOCTORS[0],
+    last_message: {
+      id: 'msg-004',
+      conversation_id: 'conv-001',
+      sender_id: 'doc-001',
+      sender_role: 'doctor',
+      content: 'Baik, silakan bawa anak Anda untuk pemeriksaan lebih lanjut besok.',
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    },
+    unread_count: 1,
+  },
+  {
+    id: 'conv-002',
+    doctor_id: 'doc-002',
+    parent_id: 'user-demo',
+    doctor: MOCK_DOCTORS[1],
+    last_message: {
+      id: 'msg-008',
+      conversation_id: 'conv-002',
+      sender_id: 'user-demo',
+      sender_role: 'parent',
+      content: 'Terima kasih dok atas sarannya.',
+      created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    unread_count: 0,
+  },
+];
+
+export const MOCK_MESSAGES: Record<string, Message[]> = {
+  'conv-001': [
+    {
+      id: 'msg-001',
+      conversation_id: 'conv-001',
+      sender_id: 'user-demo',
+      sender_role: 'parent',
+      content: 'Selamat siang dok. Anak saya Budi mengalami batuk sudah 3 hari ini dan aplikasi mendeteksi pola yang tidak biasa.',
+      created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'msg-002',
+      conversation_id: 'conv-001',
+      sender_id: 'doc-001',
+      sender_role: 'doctor',
+      content: 'Selamat siang. Terima kasih sudah menghubungi saya. Boleh ceritakan lebih detail gejala yang dialami? Apakah ada demam?',
+      created_at: new Date(Date.now() - 4.5 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'msg-003',
+      conversation_id: 'conv-001',
+      sender_id: 'user-demo',
+      sender_role: 'parent',
+      content: 'Ada dok, suhu sekitar 37,8°C. Napasnya juga agak cepat menurut saya.',
+      created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'msg-004',
+      conversation_id: 'conv-001',
+      sender_id: 'doc-001',
+      sender_role: 'doctor',
+      content: 'Baik, silakan bawa anak Anda untuk pemeriksaan lebih lanjut besok.',
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    },
+  ],
+  'conv-002': [
+    {
+      id: 'msg-005',
+      conversation_id: 'conv-002',
+      sender_id: 'user-demo',
+      sender_role: 'parent',
+      content: 'Dok, anak saya sudah membaik setelah minum obat yang diresepkan.',
+      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'msg-006',
+      conversation_id: 'conv-002',
+      sender_id: 'doc-002',
+      sender_role: 'doctor',
+      content: 'Syukurlah! Tetap lanjutkan obatnya sampai habis ya, jangan dihentikan meskipun sudah merasa baikan.',
+      created_at: new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'msg-007',
+      conversation_id: 'conv-002',
+      sender_id: 'doc-002',
+      sender_role: 'doctor',
+      content: 'Kalau dalam 3 hari ke depan ada gejala yang memburuk, segera hubungi saya atau ke IGD.',
+      created_at: new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'msg-008',
+      conversation_id: 'conv-002',
+      sender_id: 'user-demo',
+      sender_role: 'parent',
+      content: 'Terima kasih dok atas sarannya.',
+      created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ],
+};
