@@ -7,19 +7,25 @@ import { Icon } from "./icon";
 export function ScreenHeader({
   title,
   subtitle,
-  back = true,
+  back,
+  showBack,
   onBack,
   action,
+  rightAction,
 }: {
   title: string;
   subtitle?: string;
   back?: boolean;
+  showBack?: boolean;
   onBack?: () => void;
   action?: ReactNode;
+  rightAction?: ReactNode;
 }) {
+  const canShowBack = back ?? showBack ?? true;
+  const trailingAction = action ?? rightAction;
   return (
     <View className="min-h-14 flex-row flex-wrap items-center gap-2 py-1">
-      {back ? (
+      {canShowBack ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={copy.common.back}
@@ -54,7 +60,7 @@ export function ScreenHeader({
           </Text>
         )}
       </View>
-      <View className="min-w-11 shrink-0 items-center">{action}</View>
+      <View className="min-w-11 shrink-0 items-center">{trailingAction}</View>
     </View>
   );
 }

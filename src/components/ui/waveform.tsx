@@ -88,24 +88,28 @@ const LiveWaveformBar = memo(function LiveWaveformBar({
 });
 
 export const Waveform = memo(function Waveform({
-  samples = [],
+  samples,
+  data,
   liveSamples,
   mode = "static",
   variant = "normal",
 }: {
   samples?: readonly number[];
+  data?: readonly number[];
+  height?: number;
   liveSamples?: SharedValue<readonly number[]>;
   mode?: "static" | "live";
   variant?: "normal" | "risk";
 }) {
+  const resolvedSamples = samples ?? data ?? [];
   const motionAllowed = useMotionAllowed();
   const animateLive = mode === "live" && motionAllowed;
   const useSharedLiveBars = mode === "live" && liveSamples !== undefined;
 
   // Limit bars to keep each sample visible on narrow screens.
-  const step = Math.max(1, Math.ceil(samples.length / BAR_COUNT));
-  const bars = samples.length
-    ? samples.filter((_, index) => index % step === 0)
+  const step = Math.max(1, Math.ceil(resolvedSamples.length / BAR_COUNT));
+  const bars = resolvedSamples.length
+    ? resolvedSamples.filter((_, index) => index % step === 0)
     : Array.from({ length: BAR_COUNT }, () => 0);
 
   return (
@@ -157,7 +161,7 @@ export const Waveform = memo(function Waveform({
               </View>
             ))}
       </View>
-      {!useSharedLiveBars && !samples.length && (
+      {!useSharedLiveBars && !resolvedSamples.length && (
         <Text className="text-caption text-ink dark:text-ink-dark">
           {copy.ui.noSamples}
         </Text>

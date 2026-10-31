@@ -6,6 +6,7 @@ const variants = {
   brand: "border-transparent bg-surface-brand dark:bg-surface-brand-dark",
   soft: "border-transparent bg-surface-brand-soft dark:bg-surface-brand-soft-dark",
   risk: "border-risk-border bg-risk-surface dark:border-risk-border-dark dark:bg-risk-surface-dark",
+  safe: "border-transparent bg-surface-safe dark:bg-surface-safe-dark",
 } as const;
 
 export function Card({
