@@ -215,7 +215,7 @@ export default function MonitoringScreen() {
         </Text>
         <View className="rounded-xl bg-white p-3 dark:bg-surface-card-dark">
           <Waveform
-            samples={
+            data={
               latestScreening?.waveform ??
               Array.from({ length: 60 }, (_, i) => Math.sin(i * 0.3) * 0.5 + 0.5)
             }

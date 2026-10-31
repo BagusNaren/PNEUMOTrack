@@ -11,9 +11,18 @@ export interface DoctorFilter {
   query?: string;
 }
 
+export type DoctorFilterParam = DoctorFilter | string;
+
+function normalizeFilter(filter?: DoctorFilterParam): DoctorFilter | undefined {
+  if (!filter) return undefined;
+  if (typeof filter === 'string') return { query: filter };
+  return filter;
+}
+
 // Mock implementation
 const mockService = {
-  list: async (filter?: DoctorFilter): Promise<Doctor[]> => {
+  list: async (filterParam?: DoctorFilterParam): Promise<Doctor[]> => {
+    const filter = normalizeFilter(filterParam);
     await new Promise((r) => setTimeout(r, 400));
     let results = [...MOCK_DOCTORS];
     if (filter?.specialty) {
@@ -38,7 +47,8 @@ const mockService = {
 
 // Supabase implementation
 const supabaseService = {
-  list: async (filter?: DoctorFilter): Promise<Doctor[]> => {
+  list: async (filterParam?: DoctorFilterParam): Promise<Doctor[]> => {
+    const filter = normalizeFilter(filterParam);
     let query = supabase.from('doctors').select('*, hospitals(name)');
     if (filter?.query) {
       query = query.or(`name.ilike.%${filter.query}%,specialty.ilike.%${filter.query}%`);

@@ -50,9 +50,22 @@ export default function ArticlesScreen() {
 
   const categories: ArticleCategoryKey[] = ['Pneumonia', 'Lung', 'Breath'];
 
-  const filtered = articles.filter((a) =>
-    a.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = articles.filter((a) => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q || a.title.toLowerCase().includes(q) || a.body_md.toLowerCase().includes(q);
+    if (!matchesSearch) return false;
+
+    if (selectedCat === 'Pneumonia') {
+      return a.title.toLowerCase().includes('pneumonia');
+    }
+    if (selectedCat === 'Lung') {
+      return a.title.toLowerCase().includes('paru') || a.title.toLowerCase().includes('pneumonia');
+    }
+    if (selectedCat === 'Breath') {
+      return a.title.toLowerCase().includes('napas') || a.category === 'Gejala' || a.category === 'Pencegahan';
+    }
+    return true;
+  });
 
   return (
     <ScrollView

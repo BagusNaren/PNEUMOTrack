@@ -56,5 +56,10 @@ export function useLocation() {
     requestLocation();
   }, [requestLocation]);
 
-  return { ...state, requestLocation, openSettings };
+  return {
+    ...state,
+    coords: { lat: state.lat, lng: state.lng },
+    requestLocation,
+    openSettings,
+  };
 }
