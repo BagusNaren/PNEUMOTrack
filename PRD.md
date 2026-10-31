@@ -38,14 +38,50 @@ Aligned with SDG 3: Good Health and Well-Being.
 
 ## 6. User flow
 
+```mermaid
+flowchart TD
+    A[Splash] --> B{Sudah punya akun?}
+    B -- Belum --> C[Masuk / Daftar]
+    B -- Sudah --> D[Dashboard]
+    C --> D
+
+    D --> E[Pilih profil anak]
+    E --> E2[Tambah profil anak]
+    E2 --> E
+    E --> F[Rekam batuk]
+    F --> G[Menganalisis audio batuk]
+    G --> H{Batuk terdeteksi?}
+    H -- Tidak / terlalu berisik --> F
+    H -- Ya --> I{Hasil skrining}
+
+    I -- Tidak ada indikasi --> J[Hasil: tidak terdeteksi indikasi pneumonia]
+    I -- Indikasi risiko --> K[Hasil: indikasi risiko pneumonia]
+
+    J --> D
+    J --> L[Riwayat]
+    K --> M[Rekomendasi tindakan]
+    M --> N[Konsultasi dokter]
+    M --> O[Fasilitas kesehatan terdekat]
+
+    N --> N1[Daftar dokter] --> N2[Detail dokter] --> N3[Chat]
+    O --> O1[Daftar rumah sakit] --> O2[Peta]
+
+    D --> L
+    D --> P[Monitoring]
+    D --> Q[Artikel & Berita]
+    L --> D
+    P --> D
+    Q --> D
 ```
-Splash → (Auth) → Dashboard
-Dashboard → Record Cough → Analyzing… → Cough Analysis result
-Result (no pneumonia pattern)    → back to Dashboard / History
-Result (anomaly / risk detected) → Recommended Action
-Recommended Action → Consult a Doctor (doctor list → detail → chat)
-                   → Visit nearest health facility (hospital list → map)
-Also: Monitoring, History, Articles & News, Add child profile
+
+Bottom navigation (icon-only, lihat `design.md` §7.18):
+
+```mermaid
+flowchart LR
+    T1[Beranda] --> S1[Dashboard]
+    T2[Riwayat] --> S2[History]
+    T3[Profil] --> S3[Profil anak & pengaturan]
+    T4[Menu] --> S4[Bottom sheet: Profil Anak, Pengaturan, Tentang Aplikasi, Bantuan]
 ```
 
 After screening, the system branches in parallel to three outputs: **Dashboard** (visual status), **Recommendation**, and **History** (log for follow-up monitoring). Recommendation leads to Doctor Consultation and Hospital Recommendation.

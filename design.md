@@ -297,6 +297,47 @@ Icon-only tab bar shown on the four root screens. Anatomy and states are specifi
 
 Baseline frame: 390×844. Content is centered with `max-w-content` on tablets/web.
 
+### 7.0 Navigation map (routes)
+
+Route-level flow, matching `src/app/` structure. Product flow lives in `PRD.md` §6.
+
+```mermaid
+flowchart TD
+    subgraph Shell["Bottom nav shell — src/app/(tabs)"]
+        HOME["/ — Beranda"]
+        HIST["/history — Riwayat"]
+        PROF["/profile — Profil"]
+        MENU["Menu (bottom sheet)"]
+    end
+
+    HOME --> CHILD["/children/new — Tambah anak"]
+    HOME --> REC["/screening/record — Rekam batuk"]
+    REC --> GUIDE["/screening/guidance — Panduan & cek noise"]
+    GUIDE --> ANA["/screening/analyzing"]
+    ANA --> RES_N["/screening/result — normal"]
+    ANA --> RES_R["/screening/result — risiko"]
+
+    RES_N --> HIST
+    RES_R --> RECO["/recommendation — Rekomendasi tindakan"]
+    RECO --> DOCS["/doctors — Daftar dokter"]
+    DOCS --> DOCD["/doctors/[id] — Detail dokter"]
+    DOCD --> CHATS["/chats — Pesan"]
+    CHATS --> CHAT["/chats/[id] — Chat room"]
+    RECO --> HOSPS["/hospitals — Daftar rumah sakit"]
+    HOSPS --> MAP["/hospitals/map — Peta"]
+
+    HOME --> ART["/articles — Artikel & Berita"]
+    ART --> ARTD["/articles/[id] — Detail artikel"]
+    HOME --> MON["/monitoring — Monitoring"]
+```
+
+Rules:
+
+- Tab bar visible only on `HOME`, `HIST`, `PROF`, and the articles/menu entry points. Hidden on `CHILD`, `REC`, `GUIDE`, `ANA`, `RES_*`, `RECO`, `CHAT`, and `MAP`.
+- Back from any focused flow returns to where the user came from (record → dashboard, result → dashboard/history).
+- Result and recommendation are separate routes so the risk CTA can be deep-linked; both render the disclaimer.
+
+
 ### 7.1 Splash
 
 - Full-bleed `bg-surface`, centered logo (lungs + baby face) at 160–186px wide.
