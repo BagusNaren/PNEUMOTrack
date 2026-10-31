@@ -1,58 +1,55 @@
-# PNEUMOTrack — API Contract v2 (draft)
+# PNEUMOTrack — API Contract v2
 
-Status: **usulan Sprint 0, menunggu persetujuan tim.** Backend saat ini masih berperilaku v1 (lihat §6). Dokumen ini menjadi acuan tetap untuk `docs/api.md` setelah disetujui; sinkronkan dengan `PRD.md` §12.
+Status: **implemented** in `server_side/` (commit on `feat/a-backend-v2`). Team sign-off for `PRD.md` §12 is still pending; the backend already behaves exactly as described here.
 
-Owner: Member A.
+Owner: Member A. Source of truth for Member B/C when building the API client and result screens.
 
 ---
 
-## 1. Fakta model & konfigurasi
+## 1. Model facts
 
-Dibaca langsung dari `server_side/deployment_v3/config_v3.pkl` dan pickle lainnya.
+Read from `server_side/deployment_v3/config_v3.pkl` and the model artifacts.
 
-| Item | Nilai | Catatan |
+| Item | Value | Note |
 |---|---|---|
-| `model_version` | `v3` | dari `config["version"]` |
-| `ae_threshold` | `0.03890753` | ambang MSE autoencoder (`np.float32`) |
-| `sample_rate` | **tidak ada di config** | kode memakai fallback `22050 Hz` (`config.get("sample_rate", 22050)`). Perlu keputusan: tambahkan ke config atau dokumentasikan 22.050 Hz sebagai tetap. |
-| `n_mfcc` | `20` | 20 koefisien MFCC |
-| `latent_dim` | `4` | output encoder |
+| `model_version` | `v3` | from `config["version"]` |
+| `ae_threshold` | `0.03890753164887428` | autoencoder MSE threshold |
+| `sample_rate` | **not in config** | code uses 22,050 Hz fallback; add it to config or treat 22.05 kHz as fixed |
+| `n_mfcc` | `20` | |
+| `latent_dim` | `4` | encoder output |
 | `feature_dim` | `80` | mean/std/skew/kurtosis × 20 |
-| Library pembuat pickle | `scikit-learn==1.6.1` | memuat dengan versi lain memunculkan `InconsistentVersionWarning` |
-| Model files | `encoder_v3.h5`, `autoencoder_full_v3.h5` | dimuat dengan TensorFlow 2.21 / Keras 3 (`compile=False`) |
+| Pickle authoring version | `scikit-learn==1.6.1` | pinned in `requirements.txt` |
+| Keras models | `encoder_v3.h5`, `autoencoder_full_v3.h5` | load on TensorFlow 2.21 / Keras 3, `compile=False` |
 
-Konfigurasi model tidak boleh diubah tanpa persetujuan pemilik model.
+Do not change model artifacts without the model owner's approval.
 
 ---
 
-## 2. Mapping label (keputusan yang diminta)
+## 2. Label mapping
 
-Model dilatih **one-class hanya pada sampel pneumonia**. Skor "mirip pola pneumonia" karena itu bermakna **risiko**, bukan diagnosis.
+The model is one-class, trained **only on pneumonia samples**. Similarity to that training distribution therefore means **risk**, never diagnosis.
 
-| Raw label (kode) | `result` (API v2) | Warna UI | Wording UI |
-|---|---|---|---|
-| `Pneumonia` | `risk` | pink/merah | "Indikasi risiko pneumonia, perlu perhatian" |
-| `Bukan Pneumonia` | `normal` | biru/teal | "Tidak ditemukan tanda pola batuk pneumonia" |
+| Raw label | `result` | UI |
+|---|---|---|
+| `Pneumonia` | `risk` | pink/red, "Indikasi risiko pneumonia, perlu perhatian" |
+| `Bukan Pneumonia` | `normal` | blue/teal, "Tidak ditemukan tanda pola batuk pneumonia" |
 
-Aturan tambahan:
-
-- `agreement = (svm_vote == autoencoder_vote)`.
-- `confidence` = proporsi vote (0.5 atau 1.0). **Bukan** probabilitas klinis dan tidak boleh ditampilkan sebagai persentase akurasi.
-- Voting seri (1–1) jatuh ke `risk` (`pneumonia_votes >= normal_votes`). UI menampilkan "perlu perhatian" dan menyarankan rekam ulang.
-- Angka 96,3% dari proposal **tidak boleh** muncul sebagai akurasi klinis.
+- `agreement = (autoencoder vote == ocsvm vote)`.
+- Tie (1–1) → `risk`.
+- `confidence` is **not** in the response. Internally it is the vote share (0.5 / 1.0) and must never be shown as clinical accuracy. The 96.3% proposal figure is not a clinical metric.
 
 ---
 
 ## 3. `POST /predict`
 
-`Content-Type: multipart/form-data`
+`multipart/form-data`
 
-| Field | Tipe | Wajib | Batas |
+| Field | Type | Required | Notes |
 |---|---|---|---|
-| `audio` | file | ya | `m4a`, `mp4`, `aac`, `wav`; ≤ 10 MB |
-| `child_id` | string (UUID) | tidak | tidak pernah di-log; hanya untuk korelasi di klien |
+| `audio` | file | yes | `.wav`, `.m4a`, `.mp4`, `.aac`, `.mp3`, `.ogg`, `.flac`; max 10 MB |
+| `child_id` | UUID string | no | accepted and ignored by the model; never logged |
 
-Catatan format: rekaman Android (expo-audio) menghasilkan **m4a/AAC**. Backend harus mengonversi ke WAV mono 22.050 Hz dengan ffmpeg sebelum `librosa.load`. `librosa`/`soundfile` tidak membuka m4a secara langsung.
+Formats are decoded with the bundled ffmpeg binary (`imageio-ffmpeg`) to mono 22.05 kHz WAV before feature extraction.
 
 ### 200 OK
 
@@ -63,7 +60,7 @@ Catatan format: rekaman Android (expo-audio) menghasilkan **m4a/AAC**. Backend h
   "raw_label": "Pneumonia",
   "agreement": true,
   "votes": { "autoencoder": "risk", "ocsvm": "risk" },
-  "autoencoder": { "error": 0.0012, "threshold": 0.03890753 },
+  "autoencoder": { "error": 0.0012, "threshold": 0.03890753164887428 },
   "ocsvm": { "score": 0.41 },
   "chunks": 4,
   "duration_sec": 6.2,
@@ -73,42 +70,38 @@ Catatan format: rekaman Android (expo-audio) menghasilkan **m4a/AAC**. Backend h
 }
 ```
 
-| Field | Tipe | Keterangan |
+| Field | Type | Meaning |
 |---|---|---|
-| `status` | `"success"` | |
-| `result` | `"risk" \| "normal"` | dipakai UI untuk warna & CTA |
-| `raw_label` | `"Pneumonia" \| "Bukan Pneumonia"` | transparansi model |
-| `agreement` | boolean | kedua model sepakat |
-| `votes.autoencoder` / `votes.ocsvm` | `"risk" \| "normal"` | vote per model |
-| `autoencoder.error` | number | MSE rekonstruksi |
-| `autoencoder.threshold` | number | `0.03890753` |
-| `ocsvm.score` | number | `score_samples`, bukan probabilitas |
-| `chunks` | integer | jumlah segmen batuk yang lolos segmentasi |
-| `duration_sec` | number | durasi audio setelah decode |
-| `waveform` | number[] | envelope RMS ±100 titik, 0..1, untuk grafik |
-| `summary` | string | template non-diagnostik, Indonesia |
+| `result` | `"risk" \| "normal"` | drives UI color and CTA |
+| `raw_label` | `"Pneumonia" \| "Bukan Pneumonia"` | model transparency |
+| `agreement` | boolean | both models agree |
+| `votes.*` | `"risk" \| "normal"` | per-model vote |
+| `autoencoder.error` | number | reconstruction MSE |
+| `autoencoder.threshold` | number | fixed threshold |
+| `ocsvm.score` | number | `score_samples`, not a probability |
+| `chunks` | integer | cough segments found |
+| `duration_sec` | number | duration after decoding |
+| `waveform` | number[100] | RMS envelope, 0..1 |
+| `summary` | string | Indonesian, non-diagnostic, no fake vitals |
 | `model_version` | `"v3"` | |
 
-Skor teknis (`autoencoder`, `ocsvm`) boleh dipakai untuk debug/collapsible, bukan headline UI.
-
-### 422 — audio tidak layak
+### 422 — audio not usable (no result returned)
 
 ```json
 { "status": "error", "code": "AUDIO_TOO_SHORT", "message": "Rekaman terlalu pendek. Rekam minimal 3 detik." }
 ```
 
-| `code` | Pemicu | Aksi UI |
+| Code | Trigger | App behavior |
 |---|---|---|
-| `AUDIO_TOO_SHORT` | durasi < 3 dtk | minta rekam ulang |
-| `AUDIO_SILENT` | RMS maksimum di bawah ambang (sebelum normalisasi) | minta rekam ulang |
-| `NO_COUGH_DETECTED` | segmentasi menghasilkan 0 chunk (fallback dimatikan) | minta rekam ulang |
-| `AUDIO_TOO_NOISY` | SNR rendah / frame aktif > 80% | minta rekam ulang di tempat tenang |
-| `UNSUPPORTED_FORMAT` | MIME/ekstensi di luar daftar | minta rekam ulang |
-| `FILE_TOO_LARGE` | > 10 MB | minta rekaman lebih pendek |
+| `AUDIO_TOO_SHORT` | duration < 3 s | re-record |
+| `AUDIO_SILENT` | peak RMS < 1e-4 before normalization | re-record |
+| `NO_COUGH_DETECTED` | segmentation returns 0 chunks (fallback removed) | re-record while coughing |
+| `AUDIO_TOO_NOISY` | SNR < 3 dB or active frames > 80% | re-record in a quieter room |
+| `UNSUPPORTED_FORMAT` | suffix outside the allow-list or ffmpeg decode failure | re-record |
+| `FILE_TOO_LARGE` | > 10 MB | record a shorter clip |
+| `INVALID_REQUEST` | missing `audio` field | fix the request |
 
-Semua 422 **tidak** mengembalikan hasil prediksi. App tidak boleh menampilkan hasil dari respons ini.
-
-### 500 — kesalahan server
+### 500
 
 ```json
 { "status": "error", "code": "INTERNAL_ERROR", "message": "Terjadi kesalahan. Coba lagi." }
@@ -120,82 +113,83 @@ Semua 422 **tidak** mengembalikan hasil prediksi. App tidak boleh menampilkan ha
 { "status": "ok", "model_version": "v3" }
 ```
 
-Dipakai untuk cek kesiapan sebelum upload dan oleh monitoring VPS.
+---
+
+## 4. Client contract
+
+- Upload timeout 60 s; retry only on network/timeout/500, never on 422.
+- `child_id` optional; send it only if the app already has the active child.
+- Audio is deleted server-side after inference; the app should delete its local file after upload.
+- Server logs contain: request id, status, result, agreement, chunks, byte size, duration. **No filenames, paths, `child_id`, or audio.**
 
 ---
 
-## 4. Kontrak perilaku klien
+## 5. Verification evidence
 
-- Timeout upload 60 dtk; retry hanya untuk network/timeout/500, **bukan** 422.
-- `child_id` opsional; app boleh mengirim tanpa menyimpan audio.
-- Audio tidak disimpan server (dihapus di `finally`) dan tidak disimpan app setelah hasil tampil.
-- Log server tidak boleh memuat nama file asli, path, atau `child_id`.
+### Backend tests (`server_side/tests/test_api.py`)
+
+`pytest -q` → **11 passed**.
+
+| Test | Expected | Result |
+|---|---|---|
+| `/health` | 200 `{ok, v3}` | pass |
+| cough-like WAV | 200 with full contract, waveform 100 points | pass |
+| cough-like M4A | 200 (ffmpeg decode) | pass |
+| `child_id` sent | 200, not echoed | pass |
+| silent WAV | 422 `AUDIO_SILENT` | pass |
+| 1 s WAV | 422 `AUDIO_TOO_SHORT` | pass |
+| white noise | 422 `AUDIO_TOO_NOISY` or `NO_COUGH_DETECTED` | pass |
+| `.txt` | 422 `UNSUPPORTED_FORMAT` | pass |
+| 11 MB WAV | 422 `FILE_TOO_LARGE` | pass |
+| no `audio` field | 422 `INVALID_REQUEST` | pass |
+| temp files | removed after requests | pass |
+
+### Quality-gate calibration
+
+| Fixture | Duration | Result |
+|---|---|---|
+| cough-like bursts (3 bursts, 6 s) | 6.0 s | accepted |
+| digital silence | 5.0 s | `AUDIO_SILENT` |
+| tone / white noise | 1–5 s | `AUDIO_TOO_SHORT` or `AUDIO_TOO_NOISY` |
+| short burst | 1.0 s | `AUDIO_TOO_SHORT` |
+
+**Still required:** 10 real recordings (silence, speech, fan/TV, adult cough, dataset samples) to confirm the thresholds. Synthetic fixtures only prove the gate works mechanically.
+
+### Supabase RLS (`server_side/scripts/rls-test.mjs`)
+
+Two real accounts against local Supabase:
+
+| Check | Result |
+|---|---|
+| B reads A's `children` | 0 rows (pass) |
+| B reads A's `screenings` | 0 rows (pass) |
+| B inserts screening for A's child | `403` (pass) |
+| A reads own children/screenings | 1 each (pass) |
+| anon reads doctors/hospitals/articles | 6 / 10 / 6 rows (pass) |
+
+### Deployment
+
+Dockerfile, smoke scripts, nginx/systemd templates, and checklist live in `docs/deploy.md`. **VPS deployment not executed** — no server/domain access.
+
+Local LAN check: server bound to `0.0.0.0`, `curl http://192.168.18.6:8000/health` → `200` from another interface on the same machine. A physical-phone request over Wi-Fi is still untested.
 
 ---
 
-## 5. Keputusan yang dibutuhkan tim
+## 6. Decisions still needed from the team
 
-| # | Pertanyaan | Usulan | Status |
+| # | Question | Proposal | Status |
 |---|---|---|---|
-| 1 | `Pneumonia` = `risk`? | Ya | menunggu konfirmasi pemilik model |
-| 2 | Endpoint final | `POST /predict` v2 (bukan `/screen`) | menunggu persetujuan |
-| 3 | `sample_rate` | tambahkan ke `config_v3.pkl` atau kunci 22.050 Hz di kode | perlu keputusan A |
-| 4 | Nama field `result` vs `label` | `result` (sesuai task.md §4.1) | menunggu |
-| 5 | Batas durasi minimum | 3 dtk (samakan app & backend) | menunggu |
+| 1 | `Pneumonia` = `risk`? | yes | awaiting model owner |
+| 2 | Final endpoint | `POST /predict` v2 | awaiting sign-off |
+| 3 | `sample_rate` | add to `config_v3.pkl` or keep 22,050 Hz fixed | Member A decision |
+| 4 | Minimum duration | 3 s in app and backend | align with B |
+| 5 | Quality thresholds | keep current values until real recordings are collected | needs dataset |
 
 ---
 
-## 6. Perilaku implementasi saat ini (v1) — baseline
-
-Diuji pada 2026-10-31 dengan `uvicorn app:app` (Python 3.12, TensorFlow 2.21, scikit-learn 1.6.1). Sampel sintetis, bukan rekaman batuk asli.
-
-| Input | HTTP | Respons | Masalah |
-|---|---|---|---|
-| `tone5s.wav` (nada 440 Hz, 5 dtk) | 200 | `prediction: "Bukan Pneumonia"` | audio bukan batuk tetap dinilai |
-| `tone1s.wav` (1 dtk) | 200 | `prediction: "Bukan Pneumonia"` | tidak ada batas durasi minimum |
-| `noise5s.wav` (white noise) | 200 | `prediction: "Bukan Pneumonia"` | noise tetap dinilai |
-| `silent.wav` (5 dtk hening) | **500** | `Internal Server Error` (bukan JSON) | `NaN` di skor → `ValueError: Out of range float values are not JSON compliant` |
-| `notaudio.txt` | 200 | `status: "error"`, `prediction: null` | error tidak memakai HTTP 4xx |
-| tanpa field `audio` | 422 | format validasi FastAPI default | bentuk error beda dari kontrak |
-
-Gap lain yang terkonfirmasi:
-
-- Tidak ada `GET /health` (404).
-- Tidak ada CORS.
-- Tidak ada batas 10 MB / validasi MIME.
-- File sementara memakai ekstensi `.wav` apa pun input aslinya.
-- Log memuat nama file asli dan path (`Received audio 'tone1s.wav' → temp\...`) — melanggar aturan privasi.
-- `segment_cough_chunks` memakai fallback seluruh sinyal saat 0 chunk → PRD §13 dilanggar.
-- `m4a/AAC` belum didukung (ffmpeg belum terpasang).
-- `confidence` = proporsi vote; bukan probabilitas.
-
-Semua item di atas menjadi scope Sprint 1 Member A.
-
----
-
-## 7. Rencana verifikasi Sprint 1
-
-1. `curl -F audio=@sample.m4a http://localhost:8000/predict` → 200 sesuai §3.
-2. Rekaman hening → 422 `AUDIO_SILENT`.
-3. Rekaman < 3 dtk → 422 `AUDIO_TOO_SHORT`.
-4. Bicara tanpa batuk → 422 `NO_COUGH_DETECTED`.
-5. File > 10 MB → 422 `FILE_TOO_LARGE`.
-6. `.txt` → 422 `UNSUPPORTED_FORMAT`.
-7. `GET /health` → 200 `{ "status": "ok", "model_version": "v3" }`.
-8. Log tidak memuat nama file/`child_id`.
-
----
-
-## 8. Contoh pemanggilan
-
-```bash
-curl -X POST http://127.0.0.1:8000/predict \
-  -F "audio=@sample.m4a" \
-  -F "child_id=00000000-0000-0000-0000-000000000000"
-```
+## 7. TypeScript types for the app
 
 ```ts
-// bentuk tipe untuk Member B (src/types/screening.ts)
 type ScreeningResult = 'normal' | 'risk';
 type AudioErrorCode =
   | 'AUDIO_TOO_SHORT'
@@ -203,5 +197,16 @@ type AudioErrorCode =
   | 'NO_COUGH_DETECTED'
   | 'AUDIO_TOO_NOISY'
   | 'UNSUPPORTED_FORMAT'
-  | 'FILE_TOO_LARGE';
+  | 'FILE_TOO_LARGE'
+  | 'INVALID_REQUEST';
+```
+
+## 8. Examples
+
+```bash
+curl http://127.0.0.1:8000/health
+
+curl -X POST http://127.0.0.1:8000/predict \
+  -F "audio=@sample.m4a" \
+  -F "child_id=00000000-0000-0000-0000-000000000000"
 ```
