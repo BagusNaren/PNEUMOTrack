@@ -1,11 +1,14 @@
-fastapi
-uvicorn
-tensorflow
-numpy
-scikit-learn
-joblib
-librosa
-soundfile
-python-multipart
-noisereduce
-scipy
+# Runtime dependencies — pinned to the versions verified with the v3 models.
+# Python 3.12 (see docs/backend-local.md).
+fastapi==0.162.0
+uvicorn==0.54.0
+tensorflow==2.21.0
+numpy==2.5.4
+scikit-learn==1.6.1
+joblib==1.6.0
+librosa==1.0.0
+soundfile==0.14.0
+python-multipart==0.0.32
+noisereduce==3.0.3
+scipy==1.18.1
+imageio-ffmpeg==0.7.0
