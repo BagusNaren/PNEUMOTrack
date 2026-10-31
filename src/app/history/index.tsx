@@ -1,9 +1,10 @@
 // src/app/history/index.tsx
-// Screening history list with trend charts — matches cough history_user.png & Recording List.png.
+// History screen — matches cough history_user.png and Recording List.png.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -12,32 +13,23 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ListRow } from '@/components/ui/list-row';
 import { ScreenHeader } from '@/components/ui/screen-header';
-import { SegmentedTabs } from '@/components/ui/segmented-tabs';
 import { useActiveChild } from '@/hooks/use-active-child';
 import { screeningsService } from '@/services/screenings';
 import type { Screening } from '@/types/domain';
-
-type TimeFilter = '7d' | '30d' | 'all';
 
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const { activeChild } = useActiveChild();
 
   const [screenings, setScreenings] = useState<Screening[]>([]);
-  const [filter, setFilter] = useState<TimeFilter>('7d');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     if (!activeChild) {
       setScreenings([]);
-      setIsLoading(false);
       return;
     }
     try {
@@ -46,7 +38,6 @@ export default function HistoryScreen() {
     } catch {
       // fallback
     } finally {
-      setIsLoading(false);
       setIsRefreshing(false);
     }
   }, [activeChild]);
@@ -60,178 +51,258 @@ export default function HistoryScreen() {
     loadData();
   };
 
-  // Filter list
-  const filteredList = screenings.filter((s) => {
-    if (filter === 'all') return true;
-    const diffDays =
-      (Date.now() - new Date(s.created_at).getTime()) / (1000 * 60 * 60 * 24);
-    if (filter === '7d') return diffDays <= 7;
-    if (filter === '30d') return diffDays <= 30;
-    return true;
-  });
-
-  const normalCount = filteredList.filter((s) => s.result === 'normal').length;
-  const riskCount = filteredList.filter((s) => s.result === 'risk').length;
+  const latest = screenings[0];
+  const isRisk = latest?.result === 'risk';
 
   return (
-    <ScrollView
-      className="flex-1 bg-surface dark:bg-surface-dark"
-      contentContainerStyle={{
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom + 24,
-        paddingHorizontal: 20,
-      }}
-      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
-      showsVerticalScrollIndicator={false}
-    >
-      <ScreenHeader
-        title="Riwayat Skrining"
-        subtitle={`${screenings.length} Rekaman Terdaftar`}
-      />
-
-      {/* Child Summary Card */}
-      <Card variant="brand" className="mb-4 flex-row items-center justify-between">
-        <View>
-          <Text className="text-caption text-ink-muted">Riwayat untuk Anak:</Text>
-          <Text className="text-subtitle font-bold text-brand dark:text-brand-light">
-            {activeChild ? activeChild.name : 'Semua Anak'}
-          </Text>
-        </View>
-        <Pressable
-          onPress={() => router.push('/(tabs)/children')}
-          className="rounded-pill bg-white/80 px-3 py-1 dark:bg-black/20"
-        >
-          <Text className="text-caption font-semibold text-brand">Ganti Anak</Text>
-        </Pressable>
-      </Card>
-
-      {/* Filter Tabs */}
-      <View className="mb-4">
-        <SegmentedTabs
-          options={[
-            { key: '7d', label: '7 Hari Terakhir' },
-            { key: '30d', label: '30 Hari' },
-            { key: 'all', label: 'Semua' },
-          ]}
-          value={filter}
-          onChange={(v) => setFilter(v as TimeFilter)}
+    <View className="flex-1 bg-surface dark:bg-surface-dark">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom + 90,
+          paddingHorizontal: 20,
+        }}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header with back and kebab menu (cough history_user.png & Recording List.png) */}
+        <ScreenHeader
+          title="All Recordings"
+          subtitle={`${screenings.length} Recordings`}
+          rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
         />
-      </View>
 
-      {/* Trend & Statistic Card */}
-      <Card variant="default" className="mb-5">
-        <Text className="text-label font-bold text-ink dark:text-ink-dark mb-2">
-          Statistik Skrining Periode Ini
-        </Text>
-        <View className="flex-row items-center justify-around py-2">
-          <View className="items-center">
-            <Text className="text-2xl font-bold text-ink dark:text-ink-dark">
-              {filteredList.length}
-            </Text>
-            <Text className="text-caption text-ink-muted">Total Skrining</Text>
-          </View>
-          <View className="h-8 w-px bg-border" />
-          <View className="items-center">
-            <Text className="text-2xl font-bold text-safe">
-              {normalCount}
-            </Text>
-            <Text className="text-caption text-ink-muted">Pola Normal</Text>
-          </View>
-          <View className="h-8 w-px bg-border" />
-          <View className="items-center">
-            <Text className="text-2xl font-bold text-risk">
-              {riskCount}
-            </Text>
-            <Text className="text-caption text-ink-muted">Perlu Perhatian</Text>
-          </View>
-        </View>
+        {/* 1. Top Card: Pills + Status + Child Photo (cough history_user.png & Recording List.png) */}
+        <Card variant={isRisk ? 'risk' : 'brand'} className="my-3 rounded-2xl p-4">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1 pr-3 gap-2">
+              <View className="flex-row items-center gap-2">
+                <View className="rounded-pill bg-white/70 px-3 py-1 dark:bg-black/20">
+                  <Text className="text-caption font-semibold text-brand">
+                    Live Monitoring
+                  </Text>
+                </View>
+                <View className="rounded-pill bg-brand px-3 py-1">
+                  <Text className="text-caption font-bold text-on-brand">
+                    Match
+                  </Text>
+                </View>
+              </View>
 
-        {/* Visual Activity Bar */}
-        {filteredList.length > 0 && (
-          <View className="mt-3 pt-3 border-t border-border">
-            <View className="h-3 w-full flex-row rounded-full overflow-hidden bg-border/40">
-              <View
-                style={{
-                  flex: normalCount || 1,
-                  backgroundColor: '#1F7A5C',
-                }}
-              />
-              <View
-                style={{
-                  flex: riskCount || 0,
-                  backgroundColor: '#A33A3A',
-                }}
-              />
-            </View>
-            <View className="flex-row justify-between mt-1.5">
-              <Text className="text-caption text-safe">
-                ● Normal ({normalCount})
-              </Text>
-              <Text className="text-caption text-risk">
-                ● Risiko ({riskCount})
-              </Text>
-            </View>
-          </View>
-        )}
-      </Card>
-
-      {/* Screenings List */}
-      <View className="mb-2">
-        <Text className="text-subtitle font-bold text-ink dark:text-ink-dark mb-2">
-          Daftar Catatan Skrining
-        </Text>
-
-        {filteredList.length === 0 ? (
-          <EmptyState
-            title="Belum Ada Riwayat"
-            body="Belum ada riwayat skrining batuk pada rentang waktu ini."
-            actionLabel="Mulai Skrining Sekarang"
-            onAction={() => router.push('/screening/guide' as any)}
-            className="my-6"
-          />
-        ) : (
-          <Card variant="default" className="p-1">
-            {filteredList.map((item, index) => {
-              const isRisk = item.result === 'risk';
-              const dateStr = new Date(item.created_at).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              });
-              const timeStr = new Date(item.created_at).toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
-
-              return (
-                <ListRow
-                  key={item.id}
-                  onPress={() => router.push(`/history/${item.id}` as any)}
-                  leading={
-                    <View
-                      className={`h-11 w-11 items-center justify-center rounded-xl ${
-                        isRisk ? 'bg-risk-surface' : 'bg-surface-safe'
-                      }`}
-                    >
-                      <Text className="text-lg">{isRisk ? '⚠' : '✓'}</Text>
-                    </View>
-                  }
-                  title={`${dateStr}, ${timeStr}`}
-                  subtitle={`${item.duration_sec?.toFixed(1) ?? '6.0'} dtk • ${item.chunks ?? 4} batuk terdeteksi`}
-                  trailing={
-                    <Badge
-                      label={isRisk ? 'Perlu Perhatian' : 'Pola Normal'}
-                      variant={isRisk ? 'risk' : 'safe'}
-                    />
-                  }
-                  className={index === filteredList.length - 1 ? 'border-b-0' : ''}
+              <View className="flex-row items-center gap-1.5 mt-1">
+                <View
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    isRisk ? 'bg-risk' : 'bg-safe'
+                  }`}
                 />
-              );
-            })}
-          </Card>
-        )}
+                <Text
+                  className={`text-caption font-bold ${
+                    isRisk ? 'text-risk' : 'text-brand dark:text-brand-light'
+                  }`}
+                >
+                  {isRisk
+                    ? 'Pneumonia risk detected'
+                    : 'No Sign of Pneumonia detected'}
+                </Text>
+              </View>
+            </View>
+
+            <Image
+              source={require('@/assets/images/image_children.png')}
+              style={{ width: 72, height: 72, borderRadius: 18 }}
+            />
+          </View>
+        </Card>
+
+        {/* 2. Middle Card: 24 Hours Trends (cough history_user.png) */}
+        <Card variant="brand" className="mb-4 rounded-2xl p-4 gap-2">
+          <View className="flex-row items-center justify-between">
+            <View className="rounded-pill bg-brand px-3 py-1 self-start">
+              <Text className="text-caption font-bold text-on-brand">
+                24 Hours
+              </Text>
+            </View>
+            <Text className="text-caption text-ink-muted">Acoustic Activity</Text>
+          </View>
+
+          {/* 4 Mini Trend Charts Visual (3 lines + 1 bar) */}
+          <View className="flex-row flex-wrap gap-2 pt-2">
+            {/* Box 1 */}
+            <View className="h-20 flex-1 rounded-xl bg-white p-2 justify-between dark:bg-surface-card-dark">
+              <Text className="text-xs text-ink-muted">Cough Freq</Text>
+              <View className="flex-row items-end justify-between h-8 px-1">
+                <View className="h-3 w-1.5 rounded-full bg-brand" />
+                <View className="h-6 w-1.5 rounded-full bg-brand" />
+                <View className="h-4 w-1.5 rounded-full bg-brand" />
+                <View className="h-7 w-1.5 rounded-full bg-brand" />
+                <View className="h-5 w-1.5 rounded-full bg-brand" />
+              </View>
+            </View>
+
+            {/* Box 2 */}
+            <View className="h-20 flex-1 rounded-xl bg-white p-2 justify-between dark:bg-surface-card-dark">
+              <Text className="text-xs text-ink-muted">Breath Rate</Text>
+              <View className="flex-row items-end justify-between h-8 px-1">
+                <View className="h-4 w-1.5 rounded-full bg-safe" />
+                <View className="h-5 w-1.5 rounded-full bg-safe" />
+                <View className="h-7 w-1.5 rounded-full bg-safe" />
+                <View className="h-4 w-1.5 rounded-full bg-safe" />
+                <View className="h-6 w-1.5 rounded-full bg-safe" />
+              </View>
+            </View>
+          </View>
+
+          <View className="flex-row flex-wrap gap-2">
+            {/* Box 3 */}
+            <View className="h-20 flex-1 rounded-xl bg-white p-2 justify-between dark:bg-surface-card-dark">
+              <Text className="text-xs text-ink-muted">Temp Trend</Text>
+              <View className="flex-row items-end justify-between h-8 px-1">
+                <View className="h-5 w-1.5 rounded-full bg-amber-500" />
+                <View className="h-5 w-1.5 rounded-full bg-amber-500" />
+                <View className="h-6 w-1.5 rounded-full bg-amber-500" />
+                <View className="h-5 w-1.5 rounded-full bg-amber-500" />
+                <View className="h-5 w-1.5 rounded-full bg-amber-500" />
+              </View>
+            </View>
+
+            {/* Box 4 */}
+            <View className="h-20 flex-1 rounded-xl bg-white p-2 justify-between dark:bg-surface-card-dark">
+              <Text className="text-xs text-ink-muted">Heart Pulse</Text>
+              <View className="flex-row items-end justify-between h-8 px-1">
+                <View className="h-4 w-1.5 rounded-full bg-risk" />
+                <View className="h-6 w-1.5 rounded-full bg-risk" />
+                <View className="h-5 w-1.5 rounded-full bg-risk" />
+                <View className="h-7 w-1.5 rounded-full bg-risk" />
+                <View className="h-5 w-1.5 rounded-full bg-risk" />
+              </View>
+            </View>
+          </View>
+        </Card>
+
+        {/* 3. AI Summary Card (cough history_user.png) */}
+        <Card variant="brand" className="mb-4 rounded-2xl p-4 gap-2">
+          <View className="flex-row items-center gap-2">
+            <Text className="text-base text-brand">✨</Text>
+            <Text className="text-label font-bold text-brand">AI Summary</Text>
+          </View>
+
+          <View className="gap-2 pl-1 pt-1">
+            <View>
+              <Text className="text-caption font-bold text-ink">
+                › Condition: {isRisk ? 'At Risk' : 'Normal'}
+              </Text>
+              <Text className="text-caption text-ink-muted pl-3">
+                {isRisk
+                  ? 'Abnormal cough patterns indicating pneumonia were detected.'
+                  : 'No patterns indicating pneumonia were detected.'}
+              </Text>
+            </View>
+
+            <View>
+              <Text className="text-caption font-bold text-ink">
+                › Cough Pattern:
+              </Text>
+              <Text className="text-caption text-ink-muted pl-3">
+                {isRisk
+                  ? 'High intensity acoustic bursts with irregular pauses.'
+                  : 'Low and stable intensity. No significant spikes in cough frequency.'}
+              </Text>
+            </View>
+
+            <View>
+              <Text className="text-caption font-bold text-ink">
+                › Breathing Rate:
+              </Text>
+              <Text className="text-caption text-ink-muted pl-3">
+                Within the normal range for a child's age. Minimal daily variation.
+              </Text>
+            </View>
+          </View>
+        </Card>
+
+        {/* 4. All Recordings List (Recording List.png) */}
+        <View className="my-2">
+          <View className="flex-row items-center justify-between mb-3 border-b border-border pb-2">
+            <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
+              Recording List
+            </Text>
+            <View className="flex-row items-center gap-3">
+              <Text className="text-base text-ink-muted">🔍</Text>
+              <Text className="text-base text-ink-muted">⋮</Text>
+            </View>
+          </View>
+
+          {screenings.length === 0 ? (
+            <EmptyState
+              title="No Recordings"
+              body="No cough recordings registered yet."
+              className="my-4"
+            />
+          ) : (
+            <View className="gap-1">
+              {screenings.map((item, idx) => {
+                const date = new Date(item.created_at);
+                const title = `Voice ${date.getFullYear().toString().slice(2)}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
+                const dateStr = date.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                });
+                const duration = `00:${Math.round(item.duration_sec ?? 6).toString().padStart(2, '0')}`;
+                const itemRisk = item.result === 'risk';
+
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => router.push(`/history/${item.id}` as any)}
+                    className="flex-row items-center justify-between py-3 border-b border-border/50 active:opacity-75 dark:border-border-dark/50"
+                  >
+                    <View className="flex-1 pr-3">
+                      <Text className="text-body font-bold text-brand dark:text-brand-light">
+                        {title}
+                      </Text>
+                      <Text className="text-caption text-ink-muted mt-0.5">
+                        {dateStr}
+                      </Text>
+                    </View>
+
+                    {/* Play Button Icon + Duration (Recording List.png) */}
+                    <View className="items-end gap-1">
+                      <View
+                        className={`h-8 w-8 items-center justify-center rounded-full ${
+                          itemRisk ? 'bg-risk-surface' : 'bg-surface-brand-soft'
+                        }`}
+                      >
+                        <Text className={`text-xs ${itemRisk ? 'text-risk' : 'text-brand'}`}>
+                          ▶
+                        </Text>
+                      </View>
+                      <Text className="text-caption text-ink-muted">{duration}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Floating Center Mic Button (Recording List.png) */}
+      <View
+        style={{ bottom: insets.bottom + 12 }}
+        className="absolute left-0 right-0 items-center"
+      >
+        <Pressable
+          onPress={() => router.push('/screening/guide' as any)}
+          className="h-16 w-16 items-center justify-center rounded-full bg-brand shadow-xl active:scale-95"
+          accessibilityLabel="Rekam Batuk"
+        >
+          <Text className="text-2xl text-on-brand">🎙️</Text>
+        </Pressable>
       </View>
-    </ScrollView>
+    </View>
   );
 }
-

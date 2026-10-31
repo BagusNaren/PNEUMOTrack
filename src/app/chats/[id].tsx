@@ -1,5 +1,5 @@
 // src/app/chats/[id].tsx
-// Interactive doctor consultation chat room — matches chat room_user.png.
+// Doctor consultation chat room — matches chat room_user.png exactly.
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -31,20 +31,17 @@ export default function ChatRoomScreen() {
   useEffect(() => {
     if (!id) return;
 
-    // Fetch doctor info
     doctorsService.get(id).then((doc) => {
       if (doc) setDoctor(doc);
     });
 
-    // Initial mock consultation history
     setMessages([
       {
         id: 'msg-1',
         conversation_id: `conv-${id}`,
         sender_id: id,
         sender_role: 'doctor',
-        content:
-          'Halo Bunda, saya sudah menerima notifikasi hasil skrining batuk ananda. Bisa ceritakan sejak kapan batuknya dimulai dan apakah disertai demam?',
+        content: 'Hello, How can I help you?',
         created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
       },
       {
@@ -53,7 +50,7 @@ export default function ChatRoomScreen() {
         sender_id: 'user-demo',
         sender_role: 'parent',
         content:
-          'Halo Dok, batuknya sudah 3 hari, semalam agak hangat dan napasnya terdengar sedikit grok-grok.',
+          'Does my son really have pneumonia? The app shows a pneumonia indication for my son.',
         created_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
       },
       {
@@ -62,8 +59,17 @@ export default function ChatRoomScreen() {
         sender_id: id,
         sender_role: 'doctor',
         content:
-          'Baik Bunda, dari hasil evaluasi akustik PNEUMOTrack terindikasi pola batuk tidak biasa. Harap perhatikan apakah ada tarikan di sela iga saat menarik napas. Jika napas anak tampak cepat atau lebih dari 40x per menit saat tidur, segera bawa ke faskes ya.',
+          'I recommend you to do further examination at nearby hospital.',
         created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+      },
+      {
+        id: 'msg-4',
+        conversation_id: `conv-${id}`,
+        sender_id: 'user-demo',
+        sender_role: 'parent',
+        content:
+          'Thank you doc! Do you have any recommendation of the hospital?',
+        created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
       },
     ]);
   }, [id]);
@@ -87,7 +93,6 @@ export default function ChatRoomScreen() {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
 
-    // Simulated doctor reply for hackathon interactive demo
     setTimeout(() => {
       const docReply: Message = {
         id: `msg-reply-${Date.now()}`,
@@ -95,14 +100,14 @@ export default function ChatRoomScreen() {
         sender_id: id ?? 'doc-1',
         sender_role: 'doctor',
         content:
-          'Terima kasih atas informasinya Bunda. Teruskan hidrasi air hangat/ASI secara berkala. Saya tetap sarankan pemeriksaan fisik langsung stetoskop ke poli anak terdekat untuk memastikan saluran napas bawah bersih.',
+          'You can visit RSUP Sanglah or RS Kasih Ibu. They have 24-hour pediatric emergency facilities.',
         created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, docReply]);
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
-    }, 1800);
+    }, 1500);
   };
 
   const handleCall = () => {
@@ -116,13 +121,13 @@ export default function ChatRoomScreen() {
       className="flex-1 bg-surface dark:bg-surface-dark"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Custom Chat Room Header */}
+      {/* Header with back, doctor name, video, phone, kebab (chat room_user.png) */}
       <View
         style={{ paddingTop: insets.top + 8 }}
         className="border-b border-border bg-surface px-4 pb-3 dark:border-border-dark dark:bg-surface-card-dark"
       >
         <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2.5">
+          <View className="flex-row items-center gap-2">
             <Pressable
               onPress={() => router.back()}
               className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
@@ -130,115 +135,126 @@ export default function ChatRoomScreen() {
               <Text className="text-2xl text-ink dark:text-ink-dark">‹</Text>
             </Pressable>
 
-            <Image
-              source={require('@/assets/images/image_doctor.png')}
-              style={{ width: 42, height: 42, borderRadius: 21 }}
-            />
-
-            <View>
-              <Text className="text-label font-bold text-ink dark:text-ink-dark">
-                {doctor?.name ?? 'dr. Sarah Sp.A'}
-              </Text>
-              <View className="flex-row items-center gap-1.5">
-                <View className="h-2 w-2 rounded-full bg-safe" />
-                <Text className="text-caption text-safe font-medium">Online</Text>
-              </View>
-            </View>
+            <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
+              {doctor?.name ?? 'Dr. Ichi Ni San'}
+            </Text>
           </View>
 
-          <Pressable
-            onPress={handleCall}
-            className="h-10 w-10 items-center justify-center rounded-full bg-surface-brand-soft active:opacity-70"
-            accessibilityLabel="Telepon Dokter"
-          >
-            <Text className="text-lg">📞</Text>
-          </Pressable>
+          <View className="flex-row items-center gap-3">
+            <Pressable
+              onPress={handleCall}
+              className="h-9 w-9 items-center justify-center rounded-full active:opacity-70"
+            >
+              <Text className="text-lg">📹</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleCall}
+              className="h-9 w-9 items-center justify-center rounded-full active:opacity-70"
+            >
+              <Text className="text-lg">📞</Text>
+            </Pressable>
+            <Pressable className="h-9 w-9 items-center justify-center rounded-full active:opacity-70">
+              <Text className="text-lg font-bold text-ink-muted">⋮</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
-      {/* Emergency Warning Banner */}
-      <View className="border-b border-risk-border bg-risk-surface px-4 py-2">
-        <Text className="text-caption font-semibold text-risk text-center">
-          ⚠️ Bukan layanan gawat darurat. Hubungi 119 jika anak sesak napas berat.
-        </Text>
-      </View>
-
-      {/* Messages Scroll Area */}
+      {/* Messages Scroll View (chat room_user.png) */}
       <ScrollView
         ref={scrollViewRef}
-        className="flex-1 px-4 py-4"
-        contentContainerStyle={{ gap: 12, paddingBottom: 16 }}
+        className="flex-1 px-4 py-3"
+        contentContainerStyle={{ gap: 14, paddingBottom: 16 }}
         keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
-        <Text className="text-center text-caption text-ink-muted my-2">
-          Konsultasi Medis Dimulai • Rekam Medis Dijaga Kerahasiaannya
-        </Text>
+        {/* "Consultation Start" Divider Block (chat room_user.png) */}
+        <View className="items-center my-2">
+          <View className="rounded-full bg-surface-brand-soft px-4 py-1.5 mb-1">
+            <Text className="text-caption font-bold text-brand">
+              Consultation Start
+            </Text>
+          </View>
+          <Text className="text-caption text-ink-muted">
+            You can consult your condition to the doctor
+          </Text>
+        </View>
 
         {messages.map((msg) => {
           const isMe = msg.sender_role === 'parent';
-          const time = new Date(msg.created_at).toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit',
-          });
 
+          if (!isMe) {
+            // Incoming message with doctor avatar and name (chat room_user.png)
+            return (
+              <View key={msg.id} className="self-start max-w-[80%] gap-1.5">
+                <View className="flex-row items-center gap-2">
+                  <Image
+                    source={require('@/assets/images/image_doctor.png')}
+                    style={{ width: 28, height: 28, borderRadius: 14 }}
+                  />
+                  <Text className="text-caption font-bold text-ink dark:text-ink-dark">
+                    {doctor?.name ?? 'Dr. Ichi Ni San'}
+                  </Text>
+                  <Text className="text-caption text-ink-muted">10:20 AM</Text>
+                </View>
+
+                <View className="rounded-2xl rounded-tl-sm bg-surface-brand px-4 py-2.5 dark:bg-surface-brand-dark">
+                  <Text className="text-body text-ink dark:text-ink-dark leading-5">
+                    {msg.content}
+                  </Text>
+                </View>
+              </View>
+            );
+          }
+
+          // Outgoing message (navy bubble with checkmark) (chat room_user.png)
           return (
             <View
               key={msg.id}
-              className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                isMe
-                  ? 'self-end bg-brand rounded-br-sm'
-                  : 'self-start bg-surface-brand rounded-bl-sm dark:bg-surface-brand-dark'
-              }`}
+              className="self-end max-w-[80%] rounded-2xl rounded-br-sm bg-brand px-4 py-2.5 shadow-sm"
             >
-              <Text
-                className={`text-body leading-5 ${
-                  isMe ? 'text-on-brand' : 'text-ink dark:text-ink-dark'
-                }`}
-              >
+              <Text className="text-body text-on-brand leading-5">
                 {msg.content}
               </Text>
-              <Text
-                className={`mt-1 text-right text-caption ${
-                  isMe ? 'text-white/70' : 'text-ink-muted'
-                }`}
-              >
-                {time}
-              </Text>
+              <View className="mt-1 flex-row items-center justify-end gap-1">
+                <Text className="text-caption text-white/70">10:21 AM</Text>
+                <Text className="text-caption text-white/80">✓✓</Text>
+              </View>
             </View>
           );
         })}
       </ScrollView>
 
-      {/* Composer Input Bar */}
+      {/* Composer Input Bar with Pill Button "Send" (chat room_user.png) */}
       <View
         style={{ paddingBottom: insets.bottom > 0 ? insets.bottom : 12 }}
         className="border-t border-border bg-surface px-4 pt-2.5 dark:border-border-dark dark:bg-surface-card-dark"
       >
-        <View className="flex-row items-center gap-2">
-          <View className="flex-1 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 py-1.5 dark:border-border-dark dark:bg-surface-dark">
+        <View className="flex-row items-center gap-2.5">
+          <View className="flex-1 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 py-2 dark:border-border-dark dark:bg-surface-dark">
             <TextInput
               className="flex-1 text-body text-ink dark:text-ink-dark"
-              placeholder="Tulis pesan konsultasi…"
+              placeholder="Type Message..."
               placeholderTextColor="#AEB7C2"
               value={inputText}
               onChangeText={setInputText}
-              multiline
             />
+            <Text className="text-base text-icon-muted ml-2">📎</Text>
           </View>
 
           <Pressable
             onPress={handleSend}
             disabled={!inputText.trim()}
-            className={`h-11 w-11 items-center justify-center rounded-full ${
-              inputText.trim() ? 'bg-brand active:opacity-80' : 'bg-surface-muted opacity-50'
+            className={`h-11 px-5 items-center justify-center rounded-pill ${
+              inputText.trim() ? 'bg-brand active:opacity-80' : 'bg-brand/50'
             }`}
           >
-            <Text className="text-lg text-on-brand">➤</Text>
+            <Text className="text-label font-bold text-on-brand">
+              Send
+            </Text>
           </Pressable>
         </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
-

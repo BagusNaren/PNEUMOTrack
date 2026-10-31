@@ -1,5 +1,5 @@
 // src/app/articles/index.tsx
-// Educational articles directory — matches article page_user.png.
+// Educational articles directory — matches article page_user.png exactly.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -13,35 +13,31 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { articlesService } from '@/services/articles';
-import type { Article, ArticleCategory } from '@/types/domain';
+import type { Article } from '@/types/domain';
 
-type CategoryFilter = 'Semua' | ArticleCategory;
+type ArticleCategoryKey = 'Pneumonia' | 'Lung' | 'Breath';
 
 export default function ArticlesScreen() {
   const insets = useSafeAreaInsets();
 
   const [articles, setArticles] = useState<Article[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('Semua');
+  const [selectedCat, setSelectedCat] = useState<ArticleCategoryKey>('Pneumonia');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   const loadArticles = useCallback(async () => {
     try {
-      const cat = selectedCategory === 'Semua' ? undefined : (selectedCategory as ArticleCategory);
-      const list = await articlesService.list(cat);
+      const list = await articlesService.list();
       setArticles(list);
     } catch {
       // fallback
     } finally {
-      setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [selectedCategory]);
+  }, []);
 
   useEffect(() => {
     loadArticles();
@@ -52,20 +48,11 @@ export default function ArticlesScreen() {
     loadArticles();
   };
 
-  const categories: CategoryFilter[] = [
-    'Semua',
-    'Gejala',
-    'Pencegahan',
-    'Penanganan',
-    'Edukasi',
-  ];
+  const categories: ArticleCategoryKey[] = ['Pneumonia', 'Lung', 'Breath'];
 
   const filtered = articles.filter((a) =>
     a.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const popularArticles = filtered.slice(0, 3);
-  const remainingArticles = filtered.slice(3);
 
   return (
     <ScrollView
@@ -78,18 +65,19 @@ export default function ArticlesScreen() {
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       showsVerticalScrollIndicator={false}
     >
+      {/* Header with back and kebab menu (article page_user.png) */}
       <ScreenHeader
-        title="Artikel & Berita"
-        subtitle="Panduan kesehatan pernapasan anak"
+        title="Article & News"
+        rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
       />
 
       {/* Search Bar */}
       <View className="my-3">
-        <View className="h-12 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 dark:border-border-dark dark:bg-surface-card-dark">
+        <View className="h-11 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 dark:border-border-dark dark:bg-surface-card-dark">
           <Text className="mr-2 text-icon-muted">🔍</Text>
           <TextInput
-            className="flex-1 text-body text-ink dark:text-ink-dark"
-            placeholder="Cari topik pneumonia anak…"
+            className="flex-1 text-label text-ink dark:text-ink-dark"
+            placeholder="Search articles, news..."
             placeholderTextColor="#AEB7C2"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -97,123 +85,125 @@ export default function ArticlesScreen() {
         </View>
       </View>
 
-      {/* Category Filter Chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="-mx-5 px-5 my-2"
-        contentContainerStyle={{ gap: 8 }}
-      >
-        {categories.map((cat) => {
-          const isActive = selectedCategory === cat;
-          return (
-            <Pressable
-              key={cat}
-              onPress={() => setSelectedCategory(cat)}
-              className={`rounded-pill px-4 py-2 border ${
-                isActive
-                  ? 'bg-brand border-brand'
-                  : 'bg-surface-card border-border dark:border-border-dark dark:bg-surface-card-dark'
-              }`}
-            >
-              <Text
-                className={`text-caption font-bold ${
-                  isActive ? 'text-on-brand' : 'text-ink-muted'
+      {/* "Popular Articles" Category Pills (article page_user.png) */}
+      <View className="my-2">
+        <Text className="text-label font-bold text-ink dark:text-ink-dark mb-2.5">
+          Popular Articles
+        </Text>
+        <View className="flex-row gap-2.5">
+          {categories.map((cat) => {
+            const isActive = selectedCat === cat;
+            return (
+              <Pressable
+                key={cat}
+                onPress={() => setSelectedCat(cat)}
+                className={`rounded-pill px-5 py-2 active:opacity-80 ${
+                  isActive ? 'bg-brand' : 'bg-surface-brand-soft'
                 }`}
               >
-                {cat}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {/* Popular Articles Carousel */}
-      {popularArticles.length > 0 && (
-        <View className="my-3">
-          <Text className="text-label font-bold text-ink dark:text-ink-dark mb-3">
-            Artikel Populer
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="-mx-5 px-5"
-            contentContainerStyle={{ gap: 14 }}
-          >
-            {popularArticles.map((item) => (
-              <Pressable
-                key={item.id}
-                onPress={() => router.push(`/articles/${item.id}` as any)}
-                className="w-56 rounded-card border border-border bg-surface-card p-3 active:opacity-75 dark:border-border-dark dark:bg-surface-card-dark"
-              >
-                <View className="h-28 w-full rounded-xl bg-surface-brand-soft items-center justify-center mb-2.5">
-                  <Text className="text-4xl">🫁</Text>
-                </View>
-                <View className="self-start rounded-pill bg-surface-brand px-2 py-0.5 mb-1.5">
-                  <Text className="text-caption font-semibold text-brand">
-                    {item.category}
-                  </Text>
-                </View>
                 <Text
-                  numberOfLines={2}
-                  className="text-body font-bold text-ink dark:text-ink-dark"
+                  className={`text-caption font-bold ${
+                    isActive ? 'text-on-brand' : 'text-brand'
+                  }`}
                 >
-                  {item.title}
-                </Text>
-                <Text className="mt-1 text-caption text-ink-muted">
-                  Sumber: {item.source ?? 'Kemenkes RI'}
+                  {cat}
                 </Text>
               </Pressable>
-            ))}
-          </ScrollView>
+            );
+          })}
         </View>
-      )}
+      </View>
 
-      {/* Related / Remaining Articles List */}
-      <View className="my-3">
-        <Text className="text-label font-bold text-ink dark:text-ink-dark mb-3">
-          Semua Artikel Terkait
-        </Text>
+      {/* Section "Trending Articles" with horizontal cards (article page_user.png) */}
+      <View className="my-4">
+        <View className="flex-row items-center justify-between mb-3">
+          <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
+            Trending Articles
+          </Text>
+          <Text className="text-caption font-semibold text-brand">See all</Text>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="-mx-5 px-5"
+          contentContainerStyle={{ gap: 14 }}
+        >
+          {filtered.slice(0, 3).map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => router.push(`/articles/${item.id}` as any)}
+              className="w-56 rounded-2xl border border-border bg-surface-card p-3 active:opacity-75 dark:border-border-dark dark:bg-surface-card-dark"
+            >
+              {/* Cover Graphic Container */}
+              <View className="h-28 w-full rounded-xl bg-surface-brand-soft items-center justify-center mb-2.5">
+                <Text className="text-4xl">💊</Text>
+              </View>
+
+              <View className="self-start rounded-pill bg-surface-brand-soft px-2.5 py-0.5 mb-1.5">
+                <Text className="text-caption font-semibold text-brand">
+                  Pneumonia
+                </Text>
+              </View>
+
+              <Text
+                numberOfLines={2}
+                className="text-body font-bold text-ink dark:text-ink-dark"
+              >
+                {item.title}
+              </Text>
+
+              <Text className="mt-1.5 text-caption text-ink-muted">
+                Nov 20, 2024 • 5 min read
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Section "Related Articles" with vertical cards (article page_user.png) */}
+      <View className="my-2">
+        <View className="flex-row items-center justify-between mb-3">
+          <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
+            Related Articles
+          </Text>
+          <Text className="text-caption font-semibold text-brand">See all</Text>
+        </View>
 
         {filtered.length === 0 ? (
           <EmptyState
-            title="Artikel Tidak Ditemukan"
-            body="Belum ada artikel yang cocok dengan filter atau kata kunci Anda."
-            actionLabel="Reset Filter"
-            onAction={() => {
-              setSelectedCategory('Semua');
-              setSearchQuery('');
-            }}
-            className="my-6"
+            title="No Articles"
+            body="No articles found matching your search."
+            className="my-4"
           />
         ) : (
           <View className="gap-3">
-            {(remainingArticles.length > 0 ? remainingArticles : filtered).map((item) => (
+            {filtered.slice(3).concat(filtered.slice(0, 2)).map((item, idx) => (
               <Pressable
-                key={item.id}
+                key={`${item.id}-${idx}`}
                 onPress={() => router.push(`/articles/${item.id}` as any)}
-                className="flex-row items-center gap-3 rounded-card border border-border bg-surface-card p-3 active:opacity-75 dark:border-border-dark dark:bg-surface-card-dark"
+                className="flex-row items-center gap-3 rounded-2xl border border-border bg-surface-card p-3 active:opacity-75 dark:border-border-dark dark:bg-surface-card-dark"
               >
+                {/* Square Thumbnail */}
                 <View className="h-16 w-16 rounded-xl bg-surface-brand-soft items-center justify-center">
-                  <Text className="text-2xl">📄</Text>
+                  <Text className="text-2xl">🥗</Text>
                 </View>
+
+                {/* Info */}
                 <View className="flex-1 pr-1">
-                  <View className="self-start rounded-pill bg-surface-brand-soft px-2 py-0.5 mb-1">
-                    <Text className="text-caption font-semibold text-brand">
-                      {item.category}
-                    </Text>
-                  </View>
                   <Text
                     numberOfLines={2}
                     className="text-label font-bold text-ink dark:text-ink-dark"
                   >
                     {item.title}
                   </Text>
-                  <Text className="mt-0.5 text-caption text-ink-muted">
-                    {item.source ?? 'IDAI'} • {new Date(item.published_at).toLocaleDateString('id-ID')}
+                  <Text className="mt-1 text-caption text-ink-muted">
+                    Jun 10, 2024 • 3 min read
                   </Text>
                 </View>
-                <Text className="text-lg text-icon-muted">›</Text>
+
+                {/* Bookmark Icon */}
+                <Text className="text-base text-brand">🔖</Text>
               </Pressable>
             ))}
           </View>
@@ -222,4 +212,3 @@ export default function ArticlesScreen() {
     </ScrollView>
   );
 }
-

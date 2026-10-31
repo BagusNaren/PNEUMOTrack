@@ -1,5 +1,5 @@
 // src/app/hospitals/map.tsx
-// Interactive hospital map screen — matches hospital map_user.png.
+// Hospital map screen — matches hospital map_user.png exactly.
 
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -7,24 +7,19 @@ import {
   Linking,
   Platform,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useLocation } from '@/hooks/use-location';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { hospitalsService } from '@/services/hospitals';
 import type { Hospital } from '@/types/domain';
 
 export default function HospitalMapScreen() {
   const insets = useSafeAreaInsets();
-  const { coords } = useLocation();
-
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,83 +40,54 @@ export default function HospitalMapScreen() {
     if (url) Linking.openURL(url).catch(() => {});
   };
 
-  const handleCall = (h: Hospital) => {
-    if (h.phone) {
-      Linking.openURL(`tel:${h.phone}`).catch(() => {});
-    }
-  };
-
   return (
-    <View className="flex-1 bg-surface-muted dark:bg-surface-muted-dark">
-      {/* Top Floating Header & Search Bar */}
+    <View className="flex-1 bg-surface dark:bg-surface-dark">
+      {/* Top Header: < Hospital : (hospital map_user.png) */}
       <View
-        style={{ paddingTop: insets.top + 8 }}
-        className="absolute top-0 left-0 right-0 z-20 px-4 pb-2 bg-gradient-to-b from-black/20 to-transparent"
+        style={{ paddingTop: insets.top }}
+        className="bg-surface px-4 pb-2 z-10 dark:bg-surface-card-dark"
       >
-        <View className="flex-row items-center gap-2 mb-2">
-          <Pressable
-            onPress={() => router.back()}
-            className="h-11 w-11 items-center justify-center rounded-full bg-surface shadow-md active:opacity-70 dark:bg-surface-card-dark"
-          >
-            <Text className="text-2xl text-ink dark:text-ink-dark">‹</Text>
-          </Pressable>
+        <ScreenHeader
+          title="Hospital"
+          rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
+        />
 
-          <View className="flex-1 h-11 flex-row items-center rounded-pill bg-surface px-4 shadow-md dark:bg-surface-card-dark">
-            <Text className="mr-2 text-icon-muted">🔍</Text>
-            <TextInput
-              className="flex-1 text-label text-ink dark:text-ink-dark"
-              placeholder="Cari faskes di peta…"
-              placeholderTextColor="#AEB7C2"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
+        {/* Search Bar: "Search location, ZIP code..." */}
+        <View className="my-2 h-11 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 dark:border-border-dark dark:bg-surface-dark">
+          <Text className="mr-2 text-icon-muted">🔍</Text>
+          <TextInput
+            className="flex-1 text-label text-ink dark:text-ink-dark"
+            placeholder="Search location, ZIP code..."
+            placeholderTextColor="#AEB7C2"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
-
-        {/* Quick Filter Chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingVertical: 4 }}
-        >
-          <View className="rounded-pill bg-brand px-3.5 py-1.5 shadow-sm">
-            <Text className="text-caption font-bold text-on-brand">Semua Faskes</Text>
-          </View>
-          <View className="rounded-pill bg-surface px-3.5 py-1.5 shadow-sm dark:bg-surface-card-dark">
-            <Text className="text-caption font-semibold text-ink">IGD Anak 24 Jam</Text>
-          </View>
-          <View className="rounded-pill bg-surface px-3.5 py-1.5 shadow-sm dark:bg-surface-card-dark">
-            <Text className="text-caption font-semibold text-ink">Puskesmas</Text>
-          </View>
-        </ScrollView>
       </View>
 
-      {/* Map Graphic Canvas / Simulated View with GPS Radar & Hospital Pins */}
-      <View className="flex-1 items-center justify-center bg-surface-brand-soft overflow-hidden">
-        {/* Radar Rings around User Location */}
-        <View className="absolute h-96 w-96 rounded-full border border-brand/10 bg-brand/5 items-center justify-center">
-          <View className="h-64 w-64 rounded-full border border-brand/20 bg-brand/10 items-center justify-center">
-            <View className="h-32 w-32 rounded-full border border-brand/30 bg-brand/15 items-center justify-center">
-              {/* User GPS Indicator */}
-              <View className="h-6 w-6 rounded-full border-2 border-white bg-brand shadow-lg items-center justify-center">
-                <View className="h-2 w-2 rounded-full bg-white" />
-              </View>
+      {/* Map Area with Location Circle & Hospital Pins (hospital map_user.png) */}
+      <View className="flex-1 bg-surface-brand-soft items-center justify-center overflow-hidden">
+        {/* Radius Circle */}
+        <View className="h-72 w-72 rounded-full border border-brand/20 bg-brand/5 items-center justify-center">
+          <View className="h-44 w-44 rounded-full border border-brand/30 bg-brand/10 items-center justify-center">
+            {/* Center User Location Pin */}
+            <View className="h-7 w-7 rounded-full border-2 border-white bg-brand items-center justify-center shadow-md">
+              <View className="h-2.5 w-2.5 rounded-full bg-white" />
             </View>
           </View>
         </View>
 
-        {/* Hospital Markers Sprinkled on Canvas */}
-        {hospitals.slice(0, 6).map((h, idx) => {
+        {/* Hospital Pins */}
+        {hospitals.slice(0, 5).map((h, idx) => {
           const isSelected = selectedHospital?.id === h.id;
-          const offsets = [
-            { top: '28%', left: '32%' },
-            { top: '35%', right: '22%' },
-            { top: '48%', left: '18%' },
-            { top: '55%', right: '35%' },
-            { top: '22%', right: '40%' },
-            { top: '65%', left: '45%' },
+          const positions = [
+            { top: '25%', left: '22%' },
+            { top: '32%', right: '20%' },
+            { bottom: '38%', left: '28%' },
+            { bottom: '28%', right: '25%' },
+            { top: '15%', right: '35%' },
           ];
-          const pos = offsets[idx % offsets.length];
+          const pos = positions[idx % positions.length];
 
           return (
             <Pressable
@@ -133,18 +99,18 @@ export default function HospitalMapScreen() {
               <View
                 className={`flex-row items-center gap-1 rounded-pill px-2.5 py-1 shadow-md ${
                   isSelected
-                    ? 'bg-brand border-2 border-white scale-110'
+                    ? 'bg-brand border-2 border-white'
                     : 'bg-surface border border-border dark:bg-surface-card-dark'
                 }`}
               >
-                <Text className="text-xs">{h.has_pediatric ? '🏥' : '🩺'}</Text>
+                <Text className="text-xs">🏥</Text>
                 <Text
                   className={`text-caption font-bold ${
                     isSelected ? 'text-on-brand' : 'text-ink dark:text-ink-dark'
                   }`}
                   numberOfLines={1}
                 >
-                  {h.name.replace('Rumah Sakit', 'RS').slice(0, 14)}…
+                  {h.name.slice(0, 10)}
                 </Text>
               </View>
               <View
@@ -157,68 +123,39 @@ export default function HospitalMapScreen() {
         })}
       </View>
 
-      {/* Selected Hospital Bottom Sheet Card */}
+      {/* Bottom Sheet Card: Hospital Name, Address, "See Detail" Button (hospital map_user.png) */}
       {selectedHospital && (
         <View
           style={{ paddingBottom: insets.bottom + 16 }}
-          className="absolute bottom-0 left-0 right-0 z-30 px-5 pt-3"
+          className="absolute bottom-0 left-0 right-0 z-20 px-5 pt-3"
         >
           <Card
             variant="default"
-            className="rounded-sheet shadow-2xl border-2 border-brand/20 p-5 gap-3"
+            className="rounded-sheet shadow-xl border border-border p-5 gap-3"
           >
-            <View className="flex-row items-start justify-between">
-              <View className="flex-1 pr-3">
-                <View className="flex-row items-center gap-2 mb-1">
-                  <Badge
-                    label={selectedHospital.type === 'RS' ? 'Rumah Sakit' : 'Puskesmas'}
-                    variant="brand"
-                  />
-                  {selectedHospital.has_pediatric && (
-                    <Badge label="IGD Anak 24 Jam" variant="risk" />
-                  )}
-                </View>
-                <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
-                  {selectedHospital.name}
-                </Text>
-                <Text className="text-caption text-ink-muted leading-4 mt-0.5">
-                  {selectedHospital.address}
-                </Text>
-              </View>
+            <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
+              {selectedHospital.name}
+            </Text>
 
-              <View className="rounded-pill bg-surface-brand px-3 py-1 items-center">
-                <Text className="text-caption font-bold text-brand">
-                  {selectedHospital.distance_km?.toFixed(1) ?? '1.2'} km
-                </Text>
-              </View>
+            <View className="flex-row items-center gap-2">
+              <Text className="text-base text-brand">📍</Text>
+              <Text className="flex-1 text-caption text-ink-muted leading-4">
+                {selectedHospital.address}
+              </Text>
             </View>
 
-            <View className="flex-row items-center gap-2.5 pt-2 border-t border-border/50">
-              <View className="flex-1">
-                <Button
-                  label="Arahkan Rute"
-                  size="md"
-                  variant="primary"
-                  icon={<Text className="text-base">🧭</Text>}
-                  onPress={() => handleNavigate(selectedHospital)}
-                />
-              </View>
-              {selectedHospital.phone && (
-                <View className="flex-1">
-                  <Button
-                    label="Telepon IGD"
-                    size="md"
-                    variant="secondary"
-                    icon={<Text className="text-base">📞</Text>}
-                    onPress={() => handleCall(selectedHospital)}
-                  />
-                </View>
-              )}
-            </View>
+            {/* Dark Navy Pill Button "See Detail" (hospital map_user.png) */}
+            <Pressable
+              onPress={() => handleNavigate(selectedHospital)}
+              className="h-12 w-full items-center justify-center rounded-pill bg-brand active:opacity-80 mt-1"
+            >
+              <Text className="text-label font-bold text-on-brand">
+                See Detail
+              </Text>
+            </Pressable>
           </Card>
         </View>
       )}
     </View>
   );
 }
-
