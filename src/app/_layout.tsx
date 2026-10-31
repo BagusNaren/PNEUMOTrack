@@ -1,20 +1,51 @@
-import '@/global.css';
+import "@/global.css";
 
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { type PropsWithChildren } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/hooks/use-theme";
+import { ScreeningProvider } from "@/hooks/use-screening";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+// Member C can insert SessionProvider here without changing the navigation tree.
+function AppProviders({ children }: PropsWithChildren) {
+  return <ScreeningProvider>{children}</ScreeningProvider>;
+}
 
-SplashScreen.preventAutoHideAsync();
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
+  const scheme = useColorScheme();
+  const colors = useTheme();
+  const base = scheme === "dark" ? DarkTheme : DefaultTheme;
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AppProviders>
+          <ThemeProvider
+            value={{
+              ...base,
+              colors: {
+                ...base.colors,
+                background: colors.surface,
+                card: colors.surfaceCard,
+                text: colors.ink,
+                primary: colors.brand,
+                border: colors.border,
+              },
+            }}
+          >
+            <StatusBar style="auto" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: "none",
+                contentStyle: { backgroundColor: colors.surface },
+              }}
+            />
+          </ThemeProvider>
+        </AppProviders>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
