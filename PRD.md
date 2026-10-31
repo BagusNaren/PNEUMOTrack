@@ -152,11 +152,10 @@ The dataset contains only pneumonia-labeled samples, so these figures measure co
 
 ## 12. API contract
 
-> **Status: DRAFT v2 — pending team approval (Sprint 0, Member A).**
-> Source of truth while this is a draft: [`docs/api.md`](./docs/api.md). Once approved, this section replaces the table below and `docs/api.md` becomes the implementation reference.
-> The deployed backend still behaves like v1 until Sprint 1 lands.
+> **Status: implemented in `server_side/` (Sprint 1–2, Member A); team sign-off pending.**
+> Implementation reference and verification evidence: [`docs/api.md`](./docs/api.md). The backend now behaves as described below; only the team approval and the real-recording calibration remain.
 
-### 12.1 Proposed v2 — `POST /predict`
+### 12.1 Implemented v2 — `POST /predict`
 
 `multipart/form-data`:
 
@@ -207,9 +206,9 @@ The model is one-class and trained only on pneumonia samples. `Pneumonia` theref
 
 `agreement = (autoencoder vote == ocsvm vote)`. `confidence` is the vote proportion (0.5 or 1.0) and **must never be presented as clinical accuracy**; the 96.3% proposal figure is not a clinical metric.
 
-### 12.3 Current v1 (to be replaced in Sprint 1)
+### 12.3 Historical v1 (replaced)
 
-`POST /predict` with `audio` only. Response: `status`, `prediction`, `confidence`, `chunks`, `svm { label, score }`, `autoencoder { label, error, threshold }`. No `/health`, no CORS, no size/format gate, and invalid audio returns HTTP 200 with `prediction: null` (silent audio currently crashes with a 500). Details and test evidence in `docs/api.md` §6.
+`POST /predict` with `audio` only. Response: `status`, `prediction`, `confidence`, `chunks`, `svm { label, score }`, `autoencoder { label, error, threshold }`. No `/health`, no CORS, no size/format gate; invalid audio returned HTTP 200 with `prediction: null` and silent audio crashed with a 500. Kept only as history; do not build against it.
 
 History, children, doctors, hospitals, and articles go through Supabase tables unless stated otherwise.
 
