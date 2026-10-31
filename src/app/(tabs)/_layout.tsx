@@ -1,89 +1,102 @@
-// src/app/(tabs)/_layout.tsx
-// 4-Tab Bottom Navigation Shell matching design.md §7.18 and UI references.
+import {
+  TabList,
+  TabSlot,
+  TabTrigger,
+  Tabs,
+  type TabTriggerSlotProps,
+} from "expo-router/ui";
+import { type ComponentProps, useState } from "react";
+import { Pressable, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Icon, type IconName } from "@/components/ui/icon";
+import { MenuSheet } from "@/components/ui/menu-sheet";
+import { copy } from "@/constants/copy";
 
-import { Tabs } from 'expo-router';
-import { Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-export default function TabLayout() {
-  const insets = useSafeAreaInsets();
-
+type TabButtonProps = Omit<TabTriggerSlotProps, "ref"> &
+  Pick<ComponentProps<typeof Pressable>, "ref"> & {
+    icon: IconName;
+    label: string;
+  };
+function TabButton({
+  icon,
+  label,
+  isFocused,
+  style,
+  ...props
+}: TabButtonProps) {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarStyle: {
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
-          paddingTop: 8,
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E3E9EE',
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-        tabBarActiveTintColor: '#1F4B75',
-        tabBarInactiveTintColor: '#AEB7C2',
-      }}
+    <Pressable
+      {...props}
+      accessibilityRole="tab"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: isFocused }}
+      aria-selected={!!isFocused}
+      style={(state) => [
+        typeof style === "function" ? style(state) : style,
+        { flexDirection: "column", justifyContent: "center" },
+      ]}
+      className="min-h-12 flex-1 items-center justify-center gap-1 rounded-card active:opacity-70"
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Beranda',
-          tabBarAccessibilityLabel: 'Beranda',
-          tabBarIcon: ({ color, focused }) => (
-            <View className="items-center justify-center">
-              <Text style={{ color, fontSize: 22, fontWeight: focused ? 'bold' : 'normal' }}>
-                ⌂
-              </Text>
-            </View>
-          ),
-        }}
+      <Icon
+        name={icon}
+        tone={isFocused ? "brand" : "muted"}
+        selected={isFocused}
       />
-      <Tabs.Screen
-        name="monitoring"
-        options={{
-          title: 'Monitoring',
-          tabBarAccessibilityLabel: 'Monitoring',
-          tabBarIcon: ({ color, focused }) => (
-            <View className="items-center justify-center">
-              <Text style={{ color, fontSize: 20, fontWeight: focused ? 'bold' : 'normal' }}>
-                〰
-              </Text>
-            </View>
-          ),
-        }}
+      <View
+        className={`h-1 w-5 rounded-pill ${isFocused ? "bg-brand dark:bg-brand-light" : "bg-transparent"}`}
       />
-      <Tabs.Screen
-        name="children"
-        options={{
-          title: 'Anak',
-          tabBarAccessibilityLabel: 'Profil Anak',
-          tabBarIcon: ({ color, focused }) => (
-            <View className="items-center justify-center">
-              <Text style={{ color, fontSize: 20, fontWeight: focused ? 'bold' : 'normal' }}>
-                👤
-              </Text>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: 'Lainnya',
-          tabBarAccessibilityLabel: 'Menu Lainnya',
-          tabBarIcon: ({ color, focused }) => (
-            <View className="items-center justify-center">
-              <Text style={{ color, fontSize: 22, fontWeight: focused ? 'bold' : 'normal' }}>
-                ☰
-              </Text>
-            </View>
-          ),
-        }}
-      />
-    </Tabs>
+    </Pressable>
   );
 }
 
+export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  const [menuOpen, setMenuOpen] = useState(false);
+  return (
+    <Tabs className="flex-1 bg-surface dark:bg-surface-dark">
+      <TabSlot style={{ flex: 1 }} />
+      <TabList asChild>
+        <View
+          className="min-h-16 w-full max-w-content flex-row items-center self-center border-t border-border bg-surface-card px-3 dark:border-border-dark dark:bg-surface-card-dark"
+          style={{
+            paddingBottom: insets.bottom,
+            paddingLeft: insets.left + 12,
+            paddingRight: insets.right + 12,
+            minHeight: 64 + insets.bottom,
+          }}
+        >
+          <TabTrigger name="home" href="/(tabs)" asChild>
+            <TabButton label={copy.nav.home} icon="home" />
+          </TabTrigger>
+          <TabTrigger name="history" href="/(tabs)/history" asChild>
+            <TabButton label={copy.nav.history} icon="history" />
+          </TabTrigger>
+          <TabTrigger name="children" href="/(tabs)/children" asChild>
+            <TabButton label={copy.nav.profile} icon="profile" />
+          </TabTrigger>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copy.nav.menu}
+            accessibilityState={{ expanded: menuOpen }}
+            aria-expanded={menuOpen}
+            onPress={() => setMenuOpen(true)}
+            className="min-h-12 flex-1 items-center justify-center rounded-card active:opacity-70"
+          >
+            <Icon name="menu" tone="muted" />
+          </Pressable>
+          <TabTrigger
+            name="monitoring"
+            href="/(tabs)/monitoring"
+            style={{ display: "none" }}
+          />
+          <TabTrigger
+            name="more"
+            href="/(tabs)/more"
+            style={{ display: "none" }}
+          />
+        </View>
+      </TabList>
+      <MenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} />
+    </Tabs>
+  );
+}

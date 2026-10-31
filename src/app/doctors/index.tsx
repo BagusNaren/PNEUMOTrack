@@ -1,5 +1,5 @@
 // src/app/doctors/index.tsx
-// Doctor directory — matches doctor page_user.png exactly.
+// Doctor directory — matches doctor page_user.png.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { doctorsService } from '@/services/doctors';
@@ -31,19 +30,28 @@ export default function DoctorsScreen() {
       const list = await doctorsService.list(query);
       setDoctors(list);
     } catch {
-      // fallback
+      // Fallback handled by empty state
     } finally {
       setIsRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
-    loadDoctors(searchQuery);
-  }, [loadDoctors, searchQuery]);
+    let active = true;
+    doctorsService
+      .list(searchQuery)
+      .then((list) => {
+        if (active) setDoctors(list);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [searchQuery]);
 
   const onRefresh = () => {
     setIsRefreshing(true);
-    loadDoctors(searchQuery);
+    void loadDoctors(searchQuery);
   };
 
   return (
@@ -57,13 +65,11 @@ export default function DoctorsScreen() {
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header with back and kebab menu (doctor page_user.png) */}
       <ScreenHeader
         title="Doctor"
         rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
       />
 
-      {/* Search Bar */}
       <View className="my-3">
         <View className="h-11 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 dark:border-border-dark dark:bg-surface-card-dark">
           <Text className="mr-2 text-icon-muted">🔍</Text>
@@ -77,7 +83,6 @@ export default function DoctorsScreen() {
         </View>
       </View>
 
-      {/* Doctors List in Individual Cards (doctor page_user.png) */}
       {doctors.length === 0 ? (
         <EmptyState
           title="Doctor Not Found"
@@ -97,7 +102,6 @@ export default function DoctorsScreen() {
                 onPress={() => router.push(`/doctors/${doc.id}` as any)}
                 className="flex-row items-center gap-3.5 rounded-2xl border border-border bg-surface-card p-3.5 active:opacity-75 dark:border-border-dark dark:bg-surface-card-dark"
               >
-                {/* Doctor Photo on Light Blue Square Background (doctor page_user.png) */}
                 <View className="h-20 w-20 items-center justify-center rounded-2xl bg-surface-brand-soft overflow-hidden">
                   <Image
                     source={require('@/assets/images/image_doctor.png')}
@@ -106,7 +110,6 @@ export default function DoctorsScreen() {
                   />
                 </View>
 
-                {/* Info Column */}
                 <View className="flex-1 gap-1">
                   <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
                     {doc.name}
@@ -115,7 +118,6 @@ export default function DoctorsScreen() {
                     {doc.specialty}
                   </Text>
 
-                  {/* Rating Pill with Star */}
                   <View className="flex-row items-center gap-2 mt-0.5">
                     <View className="flex-row items-center gap-1 rounded-pill bg-surface-brand-soft px-2.5 py-0.5">
                       <Text className="text-xs text-amber-500">★</Text>

@@ -19,7 +19,7 @@ import { useActiveChild } from '@/hooks/use-active-child';
 import { useSession } from '@/hooks/use-session';
 import { articlesService } from '@/services/articles';
 import { screeningsService } from '@/services/screenings';
-import type { Article, Child, Screening } from '@/types/domain';
+import type { Article, Screening } from '@/types/domain';
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -33,24 +33,38 @@ export default function DashboardScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      if (activeChild) {
-        const scr = await screeningsService.latest(activeChild.id);
-        setLatestScreening(scr);
-      } else {
-        setLatestScreening(null);
-      }
-      const arts = await articlesService.list();
+      const [scr, arts] = await Promise.all([
+        activeChild ? screeningsService.latest(activeChild.id) : Promise.resolve(null),
+        articlesService.list(),
+      ]);
+      setLatestScreening(scr);
       setArticles(arts);
     } catch {
-      // fallback
+      // Fallback handled by empty/default states
     } finally {
       setIsRefreshing(false);
     }
   }, [activeChild]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    let active = true;
+    (async () => {
+      try {
+        const [scr, arts] = await Promise.all([
+          activeChild ? screeningsService.latest(activeChild.id) : Promise.resolve(null),
+          articlesService.list(),
+        ]);
+        if (!active) return;
+        setLatestScreening(scr);
+        setArticles(arts);
+      } catch {
+        // Fallback handled by empty/default states
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [activeChild]);
 
   const onRefresh = async () => {
     setIsRefreshing(true);
@@ -72,14 +86,13 @@ export default function DashboardScreen() {
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       showsVerticalScrollIndicator={false}
     >
-      {/* 1. Top Bar: Greeting & Notification Icon (dashboard_user.png) */}
       <View className="mb-4 flex-row items-center justify-between">
         <View>
           <Text className="text-title font-bold text-ink dark:text-ink-dark">
             Hi, {parentName}!
           </Text>
           <Text className="text-caption text-ink-muted">
-            Here's your child's status.
+            {"Here's your child's status."}
           </Text>
         </View>
 
@@ -92,14 +105,12 @@ export default function DashboardScreen() {
         </Pressable>
       </View>
 
-      {/* 2. Child Hero Card with Switcher Dropdown (information_user.png) */}
       <Card
         variant={isRisk ? 'risk' : 'brand'}
         className="mb-4 overflow-hidden rounded-2xl"
       >
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3">
-            {/* Active Child Selector Header */}
             <Pressable
               onPress={() => setShowChildPicker((prev) => !prev)}
               className="flex-row items-center gap-2 active:opacity-75"
@@ -113,7 +124,6 @@ export default function DashboardScreen() {
               </Text>
             </Pressable>
 
-            {/* Status Subtitle */}
             <View className="mt-1 flex-row items-center gap-1.5">
               <View
                 className={`h-2 w-2 rounded-full ${
@@ -131,7 +141,6 @@ export default function DashboardScreen() {
               </Text>
             </View>
 
-            {/* Child Switcher Dropdown List */}
             {showChildPicker && (
               <View className="mt-3 pt-2 border-t border-border/50 gap-2">
                 {children.map((c) => (
@@ -170,7 +179,6 @@ export default function DashboardScreen() {
             )}
           </View>
 
-          {/* Child Photo on Right */}
           <Image
             source={require('@/assets/images/image_children.png')}
             style={{ width: 80, height: 80, borderRadius: 20 }}
@@ -179,15 +187,12 @@ export default function DashboardScreen() {
         </View>
       </Card>
 
-      {/* 3. Vitals & Status Card with 4 Rows and Concentric Heart Gauge (dashboard_user.png) */}
       <Card
         variant={isRisk ? 'risk' : 'brand'}
         className="mb-5 rounded-2xl p-5"
       >
         <View className="flex-row items-center justify-between">
-          {/* Left Side: 4 Indicator Rows */}
           <View className="flex-1 pr-3 gap-2.5">
-            {/* Row 1: Condition */}
             <View className="flex-row items-center gap-2.5">
               <Text className="text-base">{isRisk ? '⚠️' : '🫁'}</Text>
               <Text
@@ -199,7 +204,6 @@ export default function DashboardScreen() {
               </Text>
             </View>
 
-            {/* Row 2: Respiratory Rate */}
             <View className="flex-row items-center gap-2.5">
               <Text className="text-base">🫁</Text>
               <Text className="text-caption font-semibold text-ink">
@@ -207,7 +211,6 @@ export default function DashboardScreen() {
               </Text>
             </View>
 
-            {/* Row 3: Temperature */}
             <View className="flex-row items-center gap-2.5">
               <Text className="text-base">🌡️</Text>
               <Text className="text-caption font-semibold text-ink">
@@ -215,7 +218,6 @@ export default function DashboardScreen() {
               </Text>
             </View>
 
-            {/* Row 4: Heart Rate / Cough Frequency */}
             <View className="flex-row items-center gap-2.5">
               <Text className="text-base">💓</Text>
               <Text className="text-caption font-semibold text-ink">
@@ -223,7 +225,6 @@ export default function DashboardScreen() {
               </Text>
             </View>
 
-            {/* Action Button & Circular Icon Buttons */}
             <View className="mt-2 flex-row items-center gap-2">
               <Pressable
                 onPress={() =>
@@ -242,7 +243,6 @@ export default function DashboardScreen() {
                 </Text>
               </Pressable>
 
-              {/* Refresh Button */}
               <Pressable
                 onPress={onRefresh}
                 className={`h-8 w-8 items-center justify-center rounded-full ${
@@ -253,7 +253,6 @@ export default function DashboardScreen() {
                 <Text className="text-xs text-white">🔄</Text>
               </Pressable>
 
-              {/* Record Mic Button */}
               <Pressable
                 onPress={() => router.push('/screening/guide' as any)}
                 className={`h-8 w-8 items-center justify-center rounded-full ${
@@ -266,7 +265,6 @@ export default function DashboardScreen() {
             </View>
           </View>
 
-          {/* Right Side: Concentric Heart Gauge */}
           <View className="items-center justify-center">
             <HeartGauge
               variant={!latestScreening ? 'pending' : isRisk ? 'risk' : 'normal'}
@@ -283,7 +281,6 @@ export default function DashboardScreen() {
         </View>
       </Card>
 
-      {/* 4. Article & News Section (dashboard_user.png) */}
       <View className="mb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">

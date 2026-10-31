@@ -1,132 +1,208 @@
-// src/app/recommendation.tsx
-// Recommended Actions screen — matches recommendations page_user.png exactly.
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import { SymbolView } from "expo-symbols";
+import { Text, View } from "react-native";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DangerSignsBox } from "@/components/ui/danger-signs-box";
+import { Disclaimer } from "@/components/ui/disclaimer";
+import { Icon } from "@/components/ui/icon";
+import { Screen } from "@/components/ui/screen";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { copy } from "@/constants/copy";
+import { useScreening } from "@/hooks/use-screening";
+import { useSingleFlight } from "@/hooks/use-single-flight";
+import { useTheme } from "@/hooks/use-theme";
 
-import { router } from 'expo-router';
-import { Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+const timeFormatter = new Intl.DateTimeFormat("id-ID", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 
-import { Card } from '@/components/ui/card';
-import { Disclaimer } from '@/components/ui/disclaimer';
-import { ScreenHeader } from '@/components/ui/screen-header';
+function formatScreeningTime(isoTimestamp: string | null): string | null {
+  if (!isoTimestamp) return null;
+  const date = new Date(isoTimestamp);
+  if (Number.isNaN(date.getTime())) return null;
+  return timeFormatter.format(date);
+}
 
 export default function RecommendationScreen() {
-  const insets = useSafeAreaInsets();
+  const { lastResult, completedAt, activeChild, isDemo } = useScreening();
+  const actionGate = useSingleFlight();
+  const theme = useTheme();
+  const formattedTime = formatScreeningTime(completedAt);
+  const childName =
+    activeChild.status === "ready" ? activeChild.child.name : null;
 
-  const handleCallEmergency = () => {
-    Linking.openURL('tel:119').catch(() => {});
-  };
+  function goBack() {
+    void actionGate.navigate(() => {
+      if (router.canGoBack()) {
+        router.back();
+        return true;
+      }
+      if (lastResult) {
+        router.replace("/screening/result");
+        return true;
+      }
+      router.replace("/(tabs)");
+      return true;
+    });
+  }
 
   return (
-    <ScrollView
-      className="flex-1 bg-surface dark:bg-surface-dark"
-      contentContainerStyle={{
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom + 24,
-        paddingHorizontal: 20,
-      }}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header with back and kebab menu (recommendations page_user.png) */}
-      <ScreenHeader
-        title="Recommended Action"
-        rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
-      />
-
-      {/* Card 1: Risk Notice & Child Photo (recommendations page_user.png) */}
-      <View className="my-3 rounded-2xl bg-risk-surface p-4 flex-row items-center justify-between">
-        <View className="flex-1 pr-3 gap-2.5">
-          <View className="flex-row items-center gap-1.5">
-            <View className="h-2.5 w-2.5 rounded-full bg-risk" />
-            <Text className="text-caption font-bold text-risk">
-              Pneumonia risk detected{'\n'}needs attention
-            </Text>
+    <Screen>
+      <ScreenHeader title={copy.recommendation.title} onBack={goBack} />
+      {isDemo && (
+        <Card variant="soft">
+          <Text className="text-label font-semibold text-brand dark:text-brand-light">
+            {copy.screening.demo}
+          </Text>
+          <Text className="text-body text-ink dark:text-ink-dark">
+            {copy.screening.demoNotice}
+          </Text>
+        </Card>
+      )}
+      <Card variant="risk">
+        <View
+          accessibilityRole="alert"
+          className="flex-row flex-wrap items-center gap-3"
+        >
+          <View className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface dark:bg-surface-card-dark">
+            <Icon name="warning" tone="risk" />
           </View>
-
-          <Pressable
-            onPress={() => router.push('/history')}
-            className="self-start rounded-pill bg-risk px-4 py-1.5 active:opacity-80"
-          >
-            <Text className="text-caption font-bold text-white">
-              View Detail
-            </Text>
-          </Pressable>
-        </View>
-
-        <Image
-          source={require('@/assets/images/image_children.png')}
-          style={{ width: 74, height: 74, borderRadius: 20 }}
-          resizeMode="cover"
-        />
-      </View>
-
-      {/* Card 2: Consult with a Doctor (Doctor Photo on LEFT) (recommendations page_user.png) */}
-      <View className="mb-4 rounded-2xl bg-risk-surface p-4 flex-row items-center justify-between">
-        <Image
-          source={require('@/assets/images/image_doctor.png')}
-          style={{ width: 80, height: 80, borderRadius: 20 }}
-          resizeMode="cover"
-        />
-
-        <View className="flex-1 pl-4 gap-2.5 items-start">
-          <Text className="text-subtitle font-bold text-risk">
-            Consult with a{'\n'}doctor
+          <Text className="min-w-0 flex-1 text-subtitle font-semibold text-risk dark:text-risk-light">
+            {lastResult
+              ? copy.result.riskTitle
+              : copy.recommendation.staticBannerTitle}
           </Text>
-
-          <Pressable
-            onPress={() => router.push('/doctors')}
-            className="rounded-pill bg-risk px-5 py-2 active:opacity-80"
-          >
-            <Text className="text-caption font-bold text-white">
-              Contact Doctor
+        </View>
+        {lastResult ? (
+          <>
+            <View className="gap-1">
+              {childName && (
+                <Text className="text-body font-semibold text-ink dark:text-ink-dark">
+                  {`${copy.recommendation.childLabel}: ${childName}`}
+                </Text>
+              )}
+              {formattedTime && (
+                <Text className="text-body text-ink dark:text-ink-dark">
+                  {`${copy.recommendation.timeLabel}: ${formattedTime}`}
+                </Text>
+              )}
+            </View>
+            <Button
+              label={copy.recommendation.viewResultDetail}
+              variant="secondary"
+              onPress={() => {
+                void actionGate.navigate(() => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace("/screening/result");
+                  }
+                });
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <Text className="text-body text-ink dark:text-ink-dark">
+              {copy.recommendation.staticBannerBody}
             </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Card 3: Visit the Nearest Health Facility (recommendations page_user.png) */}
-      <View className="mb-4 rounded-2xl bg-risk-surface p-4 flex-row items-center justify-between">
-        <View className="flex-1 pr-3 gap-2.5 items-start">
-          <Text className="text-subtitle font-bold text-risk">
-            Visit the nearest{'\n'}health facility
-          </Text>
-
-          <Pressable
-            onPress={() => router.push('/hospitals')}
-            className="rounded-pill bg-risk px-5 py-2 active:opacity-80"
-          >
-            <Text className="text-caption font-bold text-white">
-              Find for Hospital
-            </Text>
-          </Pressable>
-        </View>
-
-        <View className="h-20 w-24 rounded-2xl bg-surface items-center justify-center shadow-sm overflow-hidden">
-          <Text className="text-4xl">🏥</Text>
-        </View>
-      </View>
-
-      {/* Emergency 119 Box */}
-      <Card variant="default" className="mb-4 border-risk-border bg-risk-surface/30 p-4 gap-2">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-label font-bold text-risk">
-            Layanan Darurat Medis
-          </Text>
-          <Pressable
-            onPress={handleCallEmergency}
-            className="rounded-pill bg-risk px-3 py-1 active:opacity-80"
-          >
-            <Text className="text-caption font-bold text-white">📞 Hubungi 119</Text>
-          </Pressable>
-        </View>
-        <Text className="text-caption text-ink leading-4">
-          Segera bawa anak ke IGD bila napas sangat cepat, dinding dada cekung ke dalam, atau bibir kebiruan.
-        </Text>
+            <Button
+              label={copy.analyzing.guide}
+              variant="secondary"
+              onPress={() => {
+                void actionGate.navigate(() => {
+                  router.push("/screening/guide");
+                });
+              }}
+            />
+          </>
+        )}
       </Card>
 
-      {/* Mandatory Disclaimer */}
-      <View className="mb-4">
-        <Disclaimer />
-      </View>
-    </ScrollView>
+      <Card variant="risk">
+        <View className="flex-row flex-wrap items-center gap-4">
+          <View
+            className="items-center justify-center overflow-hidden rounded-card bg-surface dark:bg-surface-card-dark"
+            style={{ width: 88, height: 96 }}
+          >
+            <Image
+              source={require("../../UI_reference/image_doctor.png")}
+              accessible={false}
+              contentFit="contain"
+              style={{ width: 88, height: 96 }}
+            />
+          </View>
+          <View className="min-w-[180px] flex-1 gap-2">
+            <Text
+              accessibilityRole="header"
+              className="text-subtitle font-semibold text-risk dark:text-risk-light"
+            >
+              {copy.recommendation.doctors}
+            </Text>
+            <Text className="text-body text-ink dark:text-ink-dark">
+              {copy.recommendation.doctorsDescription}
+            </Text>
+          </View>
+        </View>
+        <Button
+          label={copy.recommendation.consult}
+          variant="risk"
+          onPress={() => {
+            void actionGate.navigate(() => {
+              router.push("/doctors");
+            });
+          }}
+        />
+      </Card>
+
+      <Card variant="risk">
+        <View className="flex-row flex-wrap items-center gap-4">
+          <View className="min-w-[180px] flex-1 gap-2">
+            <Text
+              accessibilityRole="header"
+              className="text-subtitle font-semibold text-risk dark:text-risk-light"
+            >
+              {copy.recommendation.hospitals}
+            </Text>
+            <Text className="text-body text-ink dark:text-ink-dark">
+              {copy.recommendation.hospitalsDescription}
+            </Text>
+          </View>
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            className="items-center justify-center rounded-card bg-surface dark:bg-surface-card-dark"
+            style={{ width: 88, height: 88 }}
+          >
+            <SymbolView
+              name={{
+                ios: "cross.case.fill",
+                android: "local_hospital",
+                web: "local_hospital",
+              }}
+              size={44}
+              tintColor={theme.risk}
+              style={{ width: 44, height: 44 }}
+              accessible={false}
+            />
+          </View>
+        </View>
+        <Button
+          label={copy.recommendation.findHospital}
+          variant="risk"
+          onPress={() => {
+            void actionGate.navigate(() => {
+              router.push("/hospitals");
+            });
+          }}
+        />
+      </Card>
+
+      <DangerSignsBox showEmergencyAction />
+      <Disclaimer />
+    </Screen>
   );
 }

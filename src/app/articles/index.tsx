@@ -1,5 +1,5 @@
 // src/app/articles/index.tsx
-// Educational articles directory — matches article page_user.png exactly.
+// Educational articles directory — matches article page_user.png.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -33,19 +33,28 @@ export default function ArticlesScreen() {
       const list = await articlesService.list();
       setArticles(list);
     } catch {
-      // fallback
+      // Fallback handled by empty state
     } finally {
       setIsRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
-    loadArticles();
-  }, [loadArticles]);
+    let active = true;
+    articlesService
+      .list()
+      .then((list) => {
+        if (active) setArticles(list);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const onRefresh = () => {
     setIsRefreshing(true);
-    loadArticles();
+    void loadArticles();
   };
 
   const categories: ArticleCategoryKey[] = ['Pneumonia', 'Lung', 'Breath'];
@@ -78,13 +87,11 @@ export default function ArticlesScreen() {
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header with back and kebab menu (article page_user.png) */}
       <ScreenHeader
         title="Article & News"
         rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
       />
 
-      {/* Search Bar */}
       <View className="my-3">
         <View className="h-11 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 dark:border-border-dark dark:bg-surface-card-dark">
           <Text className="mr-2 text-icon-muted">🔍</Text>
@@ -98,7 +105,6 @@ export default function ArticlesScreen() {
         </View>
       </View>
 
-      {/* "Popular Articles" Category Pills (article page_user.png) */}
       <View className="my-2">
         <Text className="text-label font-bold text-ink dark:text-ink-dark mb-2.5">
           Popular Articles
@@ -127,7 +133,6 @@ export default function ArticlesScreen() {
         </View>
       </View>
 
-      {/* Section "Trending Articles" with horizontal cards (article page_user.png) */}
       <View className="my-4">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
@@ -148,7 +153,6 @@ export default function ArticlesScreen() {
               onPress={() => router.push(`/articles/${item.id}` as any)}
               className="w-56 rounded-2xl border border-border bg-surface-card p-3 active:opacity-75 dark:border-border-dark dark:bg-surface-card-dark"
             >
-              {/* Cover Graphic Container */}
               <View className="h-28 w-full rounded-xl bg-surface-brand-soft items-center justify-center mb-2.5">
                 <Text className="text-4xl">💊</Text>
               </View>
@@ -174,7 +178,6 @@ export default function ArticlesScreen() {
         </ScrollView>
       </View>
 
-      {/* Section "Related Articles" with vertical cards (article page_user.png) */}
       <View className="my-2">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
@@ -197,12 +200,10 @@ export default function ArticlesScreen() {
                 onPress={() => router.push(`/articles/${item.id}` as any)}
                 className="flex-row items-center gap-3 rounded-2xl border border-border bg-surface-card p-3 active:opacity-75 dark:border-border-dark dark:bg-surface-card-dark"
               >
-                {/* Square Thumbnail */}
                 <View className="h-16 w-16 rounded-xl bg-surface-brand-soft items-center justify-center">
                   <Text className="text-2xl">🥗</Text>
                 </View>
 
-                {/* Info */}
                 <View className="flex-1 pr-1">
                   <Text
                     numberOfLines={2}
@@ -215,7 +216,6 @@ export default function ArticlesScreen() {
                   </Text>
                 </View>
 
-                {/* Bookmark Icon */}
                 <Text className="text-base text-brand">🔖</Text>
               </Pressable>
             ))}

@@ -1,5 +1,5 @@
 // src/app/chats/index.tsx
-// Chat list screen — matches chat list_user.png exactly.
+// Chat list screen — matches chat list_user.png.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -24,6 +24,7 @@ type ChatTab = 'all' | 'group' | 'people';
 export default function ChatsListScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useSession();
+  const parentId = user?.id ?? 'user-demo';
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeTab, setActiveTab] = useState<ChatTab>('all');
@@ -31,23 +32,31 @@ export default function ChatsListScreen() {
 
   const loadConversations = useCallback(async () => {
     try {
-      const parentId = user?.id ?? 'user-demo';
       const list = await chatService.listConversations(parentId);
       setConversations(list);
     } catch {
-      // fallback
+      // Fallback handled by empty state
     } finally {
       setIsRefreshing(false);
     }
-  }, [user?.id]);
+  }, [parentId]);
 
   useEffect(() => {
-    loadConversations();
-  }, [loadConversations]);
+    let active = true;
+    chatService
+      .listConversations(parentId)
+      .then((list) => {
+        if (active) setConversations(list);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [parentId]);
 
   const onRefresh = () => {
     setIsRefreshing(true);
-    loadConversations();
+    void loadConversations();
   };
 
   return (
@@ -62,7 +71,6 @@ export default function ChatsListScreen() {
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header: Left "Message", Right Search Icon (chat list_user.png) */}
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-display font-bold text-ink dark:text-ink-dark">
             Message
@@ -75,7 +83,6 @@ export default function ChatsListScreen() {
           </Pressable>
         </View>
 
-        {/* Segmented Tabs: "All", "Group", "People" (chat list_user.png) */}
         <View className="mb-5">
           <SegmentedTabs
             options={[
@@ -88,7 +95,6 @@ export default function ChatsListScreen() {
           />
         </View>
 
-        {/* Conversation List (chat list_user.png) */}
         {conversations.length === 0 ? (
           <EmptyState
             title="No Messages"
@@ -118,13 +124,11 @@ export default function ChatsListScreen() {
                   onPress={() => router.push(`/chats/${item.doctor_id}` as any)}
                   className="flex-row items-center gap-3.5 py-3 border-b border-border/50 active:opacity-75 dark:border-border-dark/50"
                 >
-                  {/* Doctor Avatar */}
                   <Image
                     source={require('@/assets/images/image_doctor.png')}
                     style={{ width: 50, height: 50, borderRadius: 25 }}
                   />
 
-                  {/* Message Preview */}
                   <View className="flex-1 pr-2">
                     <Text className="text-body font-bold text-ink dark:text-ink-dark">
                       {docName}
@@ -137,7 +141,6 @@ export default function ChatsListScreen() {
                     </Text>
                   </View>
 
-                  {/* Timestamp & Indicator */}
                   <View className="items-end gap-1.5">
                     <Text className="text-caption text-ink-muted">{time}</Text>
                     <View className="h-2.5 w-2.5 rounded-full bg-brand" />
@@ -149,7 +152,6 @@ export default function ChatsListScreen() {
         )}
       </ScrollView>
 
-      {/* Floating Action Button (FAB) at Bottom Right (chat list_user.png) */}
       <Pressable
         onPress={() => router.push('/doctors')}
         style={{ bottom: insets.bottom + 20 }}

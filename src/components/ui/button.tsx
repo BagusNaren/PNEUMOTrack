@@ -1,70 +1,92 @@
-// src/components/ui/button.tsx
-// PrimaryButton and SecondaryButton following the design system.
+import type { ReactNode } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  type PressableProps,
+} from "react-native";
+import { useTheme } from "@/hooks/use-theme";
 
-import { ActivityIndicator, Pressable, Text, type PressableProps } from 'react-native';
+const variants = {
+  primary: {
+    container: "bg-brand dark:bg-brand-light",
+    text: "text-on-brand dark:text-on-brand-dark",
+  },
+  secondary: {
+    container: "border border-brand dark:border-brand-light",
+    text: "text-brand dark:text-brand-light",
+  },
+  risk: {
+    container: "bg-risk dark:bg-risk-light",
+    text: "text-on-risk dark:text-on-risk-dark",
+  },
+  danger: {
+    container: "bg-risk dark:bg-risk-light",
+    text: "text-on-risk dark:text-on-risk-dark",
+  },
+  ghost: {
+    container: "bg-transparent",
+    text: "text-brand dark:text-brand-light",
+  },
+} as const;
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
-type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonSize = "sm" | "md" | "lg";
 
-interface ButtonProps extends PressableProps {
+type ButtonProps = Omit<PressableProps, "children"> & {
   label: string;
-  variant?: ButtonVariant;
+  variant?: keyof typeof variants;
   size?: ButtonSize;
+  loading?: boolean;
   isLoading?: boolean;
-  icon?: React.ReactNode;
-}
-
-const bgStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-brand active:opacity-80',
-  secondary: 'border border-brand bg-transparent active:opacity-70',
-  danger: 'bg-risk active:opacity-80',
-  ghost: 'bg-transparent active:opacity-60',
-};
-
-const textStyles: Record<ButtonVariant, string> = {
-  primary: 'text-on-brand',
-  secondary: 'text-brand',
-  danger: 'text-on-risk',
-  ghost: 'text-ink-muted dark:text-ink-dark-muted',
-};
-
-const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'h-9 px-4',
-  md: 'h-12 px-5',
-  lg: 'h-14 px-6',
+  icon?: ReactNode;
 };
 
 export function Button({
   label,
-  variant = 'primary',
-  size = 'md',
+  variant = "primary",
+  loading = false,
   isLoading = false,
   icon,
   disabled,
-  className,
+  className = "",
+  style,
   ...props
-}: ButtonProps & { className?: string }) {
-  const isDisabled = disabled || isLoading;
-
+}: ButtonProps) {
+  const theme = useTheme();
+  const busy = loading || isLoading;
+  const blocked = disabled || busy;
   return (
     <Pressable
-      className={`flex-row items-center justify-center gap-2 rounded-pill ${bgStyles[variant]} ${sizeStyles[size]} ${isDisabled ? 'opacity-50' : ''} ${className ?? ''}`}
-      disabled={isDisabled}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled }}
       {...props}
+      accessibilityRole="button"
+      accessibilityLabel={props.accessibilityLabel ?? label}
+      accessibilityState={{
+        ...props.accessibilityState,
+        disabled: !!blocked,
+        busy,
+      }}
+      disabled={blocked}
+      aria-busy={busy}
+      aria-disabled={!!blocked}
+      className={`min-h-12 flex-row flex-wrap items-center justify-center gap-2 rounded-pill px-5 py-3 active:opacity-80 ${blocked ? "bg-surface-muted dark:bg-surface-muted-dark" : variants[variant].container} ${className}`}
+      style={style}
     >
-      {isLoading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === 'primary' || variant === 'danger' ? '#FFFFFF' : '#1F4B75'}
-        />
-      ) : (
-        <>
-          {icon}
-          <Text className={`text-label font-semibold ${textStyles[variant]}`}>{label}</Text>
-        </>
-      )}
+      {busy ? <ActivityIndicator color={theme.inkMuted} /> : icon}
+      <Text
+        className={`min-w-0 shrink text-center text-label font-semibold ${blocked ? "text-ink-muted dark:text-ink-dark-muted" : variants[variant].text}`}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
+}
+
+export function PrimaryButton(props: Omit<ButtonProps, "variant">) {
+  return <Button {...props} variant="primary" />;
+}
+export function SecondaryButton(props: Omit<ButtonProps, "variant">) {
+  return <Button {...props} variant="secondary" />;
+}
+export function RiskButton(props: Omit<ButtonProps, "variant">) {
+  return <Button {...props} variant="risk" />;
 }

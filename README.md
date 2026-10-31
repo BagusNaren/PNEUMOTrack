@@ -114,12 +114,13 @@ PNEUMOTrack/
 │   ├── app/                  # Screens (file-based routing)
 │   │   ├── (auth)/           # sign-in, sign-up
 │   │   ├── (tabs)/           # dashboard, monitoring, children, more
+│   │   ├── screening/        # guide, record, analyzing, result
 │   │   ├── children/ history/ doctors/ hospitals/ chats/ articles/
 │   │   └── recommendation.tsx
 │   ├── components/ui/        # Design system (Button, Card, StatusBanner, Waveform...)
 │   ├── constants/            # theme, copy (UI text), config (env)
-│   ├── hooks/                # session, active child, location
-│   ├── services/             # Supabase client + data services (real and mock)
+│   ├── hooks/                # session, active child, location, recorder, screening
+│   ├── services/             # API client, Supabase client + data services (real and mock)
 │   └── types/
 ├── server_side/              # FastAPI + models
 │   ├── app.py                # API endpoints
@@ -309,6 +310,13 @@ bun run start
 
 Press `a` to open on Android, or scan the QR code from the development build.
 
+**Option C: Cloud APK build with EAS (`eas.json`)**
+
+```bash
+bunx eas-cli build --profile development --platform android
+bunx eas-cli build --profile preview --platform android
+```
+
 > Quick UI-only preview: set `EXPO_PUBLIC_USE_MOCK_DATA=true` in `.env` and start with `bun run start`. You can browse the screens with sample data without Docker or the backend. Features that need the microphone still need a development build.
 
 ### 6.8 Try the full flow
@@ -403,9 +411,10 @@ cd server_side
 # Database access rules (from repo root, needs the local DB running)
 bun run db:rls
 
-# App quality
+# App quality & mobile screening tests
 bun run lint
 bunx tsc --noEmit
+bun test src/services/api/screening.test.cjs src/types/screening.test.cjs
 ```
 
 ## 9. Troubleshooting

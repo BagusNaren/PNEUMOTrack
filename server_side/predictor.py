@@ -10,8 +10,9 @@ import noisereduce as nr
 from scipy.stats import kurtosis, skew
 
 # ---------------------------------------------------------------------------
-# Quality-gate thresholds (Sprint 2 — synthetic fixtures; calibrate with real
-# recordings before claiming production quality)
+# Quality-gate thresholds: calibrated on synthetic fixtures in Sprint 2.
+# Needs physical-phone microphone testing and field adjustment (especially
+# MIN_SNR_DB and MAX_ACTIVE_RATIO under room AC/fan background noise).
 # ---------------------------------------------------------------------------
 MIN_DURATION_SEC = 3.0
 SILENT_RMS = 1e-4
@@ -27,6 +28,7 @@ ERROR_MESSAGES = {
     "AUDIO_TOO_NOISY": "Rekaman terlalu berisik. Cari tempat yang lebih tenang.",
     "UNSUPPORTED_FORMAT": "Format audio tidak didukung.",
     "FILE_TOO_LARGE": "Ukuran file terlalu besar (maksimal 10 MB).",
+    "INVALID_REQUEST": "Permintaan tidak valid. Pastikan field audio terisi.",
     "INTERNAL_ERROR": "Terjadi kesalahan. Coba lagi.",
 }
 
@@ -280,6 +282,10 @@ def run_models(
 
 
 def decide(ae_error: float, ae_threshold: float, svm_label: str) -> Dict[str, Any]:
+    # NOTE: Tie-break on model disagreement (1 vs 1) currently defaults to "risk".
+    # Pending team discussion: evaluate tie-breaking using normalized distance/confidence
+    # from both models (Autoencoder threshold margin vs OC-SVM decision_function margin)
+    # instead of unconditionally defaulting every disagreement to "risk".
     ae_label = "Pneumonia" if ae_error <= ae_threshold else "Bukan Pneumonia"
     votes = [svm_label, ae_label]
     pneumonia_votes = votes.count("Pneumonia")

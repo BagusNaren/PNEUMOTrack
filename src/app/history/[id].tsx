@@ -61,7 +61,6 @@ export default function HistoryDetailScreen() {
     >
       <ScreenHeader title="Detail Skrining" />
 
-      {/* Date & Metadata */}
       <View className="mb-3">
         <Text className="text-caption text-ink-muted">Waktu Pengambilan:</Text>
         <Text className="text-body font-bold text-ink dark:text-ink-dark">
@@ -69,19 +68,17 @@ export default function HistoryDetailScreen() {
         </Text>
       </View>
 
-      {/* Status Banner */}
       <View className="mb-4">
         <StatusBanner
           variant={isRisk ? 'risk' : 'normal'}
           message={
             isRisk
-              ? 'Indikasi risiko pneumonia terdeteksi — Perlu Perhatian'
+              ? 'Indikasi risiko pneumonia terdeteksi - Perlu Perhatian'
               : 'Tidak terdeteksi indikasi pneumonia (Pola Batuk Normal)'
           }
         />
       </View>
 
-      {/* Acoustic Waveform */}
       {screening.waveform && (
         <Card variant={isRisk ? 'risk' : 'brand'} className="mb-4">
           <View className="flex-row items-center justify-between mb-2">
@@ -100,7 +97,6 @@ export default function HistoryDetailScreen() {
         </Card>
       )}
 
-      {/* AI Summary Card */}
       <Card variant="default" className="mb-4 gap-2">
         <Text className="text-label font-bold text-ink dark:text-ink-dark">
           Ringkasan Evaluasi AI
@@ -113,7 +109,6 @@ export default function HistoryDetailScreen() {
         </Text>
       </Card>
 
-      {/* Technical Diagnostic Details (Collapsible) */}
       <View className="mb-4">
         <Collapsible title="Detail Metrik Model AI (Untuk Tenaga Medis)">
           <View className="gap-2 pt-2">
@@ -145,7 +140,6 @@ export default function HistoryDetailScreen() {
         </Collapsible>
       </View>
 
-      {/* Danger Signs Box */}
       <Card variant="default" className="mb-4 border-risk-border/60 bg-risk-surface/30">
         <Text className="text-label font-bold text-risk">
           Segera ke IGD RS jika anak mengalami:
@@ -158,12 +152,10 @@ export default function HistoryDetailScreen() {
         </Text>
       </Card>
 
-      {/* Mandatory Disclaimer */}
       <View className="mb-6">
         <Disclaimer />
       </View>
 
-      {/* Action Buttons */}
       {isRisk ? (
         <View className="gap-2.5">
           <Button
@@ -190,4 +182,3 @@ export default function HistoryDetailScreen() {
     </ScrollView>
   );
 }
-

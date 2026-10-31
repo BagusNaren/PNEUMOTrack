@@ -77,6 +77,8 @@ create policy "screenings_owner_select" on public.screenings
   );
 
 drop policy if exists "screenings_owner_insert" on public.screenings;
+-- Requires an authenticated user whose auth.uid() matches children.parent_id for child_id.
+-- Client sessions without login or using a preview child profile skip inserting into screenings.
 create policy "screenings_owner_insert" on public.screenings
   for insert with check (
     exists (

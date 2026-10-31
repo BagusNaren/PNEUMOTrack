@@ -1,38 +1,41 @@
-// src/components/ui/avatar.tsx
-// Avatar circle for doctors, children, and chat.
+import { Image, type ImageSource } from "expo-image";
+import { useState } from "react";
+import { Text, View } from "react-native";
+import { copy } from "@/constants/copy";
 
-import { Image } from 'expo-image';
-import { Text, View, type ViewProps } from 'react-native';
-
-interface AvatarProps extends ViewProps {
-  uri?: string | null;
+export function Avatar({
+  name,
+  source,
+  accessibilityLabel = copy.ui.avatarFallback,
+}: {
   name?: string;
-  size?: number;
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('');
-}
-
-export function Avatar({ uri, name = '', size = 48, style, ...props }: AvatarProps) {
-  const initials = getInitials(name);
+  source?: ImageSource;
+  accessibilityLabel?: string;
+}) {
+  const [failedSource, setFailedSource] = useState<ImageSource>();
+  const initials =
+    name
+      ?.trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => Array.from(part)[0])
+      .join("")
+      .toLocaleUpperCase("id-ID") || "?";
   return (
     <View
-      style={[{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden' }, style]}
-      className="items-center justify-center bg-surface-brand dark:bg-surface-brand-dark"
-      {...props}
+      accessible
+      accessibilityLabel={accessibilityLabel}
+      className="h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-brand dark:bg-surface-brand-dark"
     >
-      {uri ? (
-        <Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" />
+      {source && source !== failedSource ? (
+        <Image
+          source={source}
+          contentFit="cover"
+          style={{ width: "100%", height: "100%" }}
+          onError={() => setFailedSource(source)}
+        />
       ) : (
-        <Text
-          className="font-semibold text-brand dark:text-brand-light"
-          style={{ fontSize: size * 0.36 }}
-        >
+        <Text className="text-subtitle font-semibold text-brand dark:text-brand-light">
           {initials}
         </Text>
       )}

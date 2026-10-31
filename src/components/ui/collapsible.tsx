@@ -1,32 +1,33 @@
-// src/components/ui/collapsible.tsx
-// Cross-platform collapsible accordion matching NativeWind theme.
+import { Collapsible as NativeCollapsible, Host, RNHostView } from "@expo/ui";
+import { type PropsWithChildren, useState } from "react";
+import { View } from "react-native";
+import { UI } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
-import { PropsWithChildren, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
-
-export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
+export function Collapsible({
+  children,
+  title,
+}: PropsWithChildren & { title: string }) {
   const [isOpen, setIsOpen] = useState(false);
+  const theme = useTheme();
 
   return (
-    <View className="rounded-card border border-border bg-surface-card overflow-hidden dark:border-border-dark dark:bg-surface-card-dark">
-      <Pressable
-        onPress={() => setIsOpen((prev) => !prev)}
-        className="flex-row items-center justify-between p-3.5 active:opacity-70"
-        accessibilityRole="button"
-        accessibilityState={{ expanded: isOpen }}
-      >
-        <Text className="text-label font-bold text-ink dark:text-ink-dark flex-1 pr-2">
-          {title}
-        </Text>
-        <Text className="text-sm font-bold text-ink-muted">
-          {isOpen ? '▲' : '▼'}
-        </Text>
-      </Pressable>
-      {isOpen && (
-        <View className="px-3.5 pb-3.5 pt-1 border-t border-border/40 dark:border-border-dark/40">
-          {children}
-        </View>
-      )}
+    <View className="rounded-card border border-border bg-surface-card dark:border-border-dark dark:bg-surface-card-dark">
+      <Host matchContents seedColor={theme.brand} style={{ width: "100%" }}>
+        <NativeCollapsible
+          label={title}
+          isOpen={isOpen}
+          onOpenChange={setIsOpen}
+          labelStyle={{ ...UI.label, color: theme.ink }}
+        >
+          <RNHostView
+            matchContents={{ vertical: true }}
+            style={{ width: "100%" }}
+          >
+            <View>{children}</View>
+          </RNHostView>
+        </NativeCollapsible>
+      </Host>
     </View>
   );
 }

@@ -1,5 +1,5 @@
 // src/app/hospitals/index.tsx
-// Hospital directory — matches hospital list_user.png exactly.
+// Hospital directory — matches hospital list_user.png.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -20,34 +20,38 @@ import type { Hospital } from '@/types/domain';
 
 export default function HospitalsScreen() {
   const insets = useSafeAreaInsets();
-  const { coords } = useLocation();
+  const { lat, lng } = useLocation();
 
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadHospitals = useCallback(async () => {
     try {
-      let list: Hospital[];
-      if (coords) {
-        list = await hospitalsService.nearest(coords.lat, coords.lng, 15);
-      } else {
-        list = await hospitalsService.list();
-      }
+      const list = await hospitalsService.nearest(lat, lng, 15);
       setHospitals(list);
     } catch {
-      // fallback
+      // Fallback handled by empty state
     } finally {
       setIsRefreshing(false);
     }
-  }, [coords]);
+  }, [lat, lng]);
 
   useEffect(() => {
-    loadHospitals();
-  }, [loadHospitals]);
+    let active = true;
+    hospitalsService
+      .nearest(lat, lng, 15)
+      .then((list) => {
+        if (active) setHospitals(list);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [lat, lng]);
 
   const onRefresh = () => {
     setIsRefreshing(true);
-    loadHospitals();
+    void loadHospitals();
   };
 
   return (
@@ -61,13 +65,11 @@ export default function HospitalsScreen() {
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header with back and kebab menu (hospital list_user.png) */}
       <ScreenHeader
         title="Hospital"
         rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
       />
 
-      {/* Button to Switch to Map View */}
       <Pressable
         onPress={() => router.push('/hospitals/map')}
         className="my-3 flex-row items-center justify-between rounded-2xl bg-surface-brand p-3.5 active:opacity-80"
@@ -86,7 +88,6 @@ export default function HospitalsScreen() {
         <Text className="text-lg font-bold text-brand">›</Text>
       </Pressable>
 
-      {/* Hospitals List in Individual Cards (hospital list_user.png) */}
       {hospitals.length === 0 ? (
         <EmptyState
           title="Faskes Tidak Ditemukan"
@@ -104,12 +105,10 @@ export default function HospitalsScreen() {
                 onPress={() => router.push('/hospitals/map')}
                 className="flex-row items-center gap-3.5 rounded-2xl border border-border bg-surface-card p-3.5 active:opacity-75 dark:border-border-dark dark:bg-surface-card-dark"
               >
-                {/* Hospital Photo Placeholder (hospital list_user.png) */}
                 <View className="h-20 w-20 items-center justify-center rounded-xl bg-surface-brand-soft overflow-hidden">
                   <Text className="text-3xl">🏥</Text>
                 </View>
 
-                {/* Right Info */}
                 <View className="flex-1 gap-1">
                   <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
                     {item.name}
@@ -118,7 +117,6 @@ export default function HospitalsScreen() {
                     {item.type === 'RS' ? 'Hospital • Pediatric Center' : 'Public Health Center'}
                   </Text>
 
-                  {/* Rating Pill & Distance */}
                   <View className="flex-row items-center gap-2 mt-0.5">
                     <View className="flex-row items-center gap-1 rounded-pill bg-surface-brand-soft px-2.5 py-0.5">
                       <Text className="text-xs text-amber-500">★</Text>

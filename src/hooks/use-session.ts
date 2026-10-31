@@ -3,7 +3,7 @@
 
 import { supabase } from '@/services/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from 'react';
 
 interface SessionContextValue {
   session: Session | null;
@@ -21,13 +21,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get existing session
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setIsLoading(false);
     });
 
-    // Listen for auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
     });
@@ -41,7 +39,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       setSession(data.session);
     } catch (err) {
-      // Offline / Demo fallback
       if (email === 'demo@pneumotrack.id') {
         const mockUser: User = {
           id: 'user-demo',
@@ -100,25 +97,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     try {
       await supabase.auth.signOut();
     } catch {
-      // ignore
+      // Sign-out error ignored; local session is cleared below
     } finally {
       setSession(null);
     }
   };
 
-  return (
-    <SessionContext.Provider
-      value={{
+  return createElement(
+    SessionContext.Provider,
+    {
+      value: {
         session,
         user: session?.user ?? null,
         isLoading,
         signIn,
         signUp,
         signOut,
-      }}
-    >
-      {children}
-    </SessionContext.Provider>
+      },
+    },
+    children,
   );
 }
 

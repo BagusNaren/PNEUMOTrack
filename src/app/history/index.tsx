@@ -28,27 +28,36 @@ export default function HistoryScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
-    if (!activeChild) {
-      setScreenings([]);
-      return;
-    }
     try {
-      const list = await screeningsService.listByChild(activeChild.id);
+      const list = activeChild
+        ? await screeningsService.listByChild(activeChild.id)
+        : await Promise.resolve([]);
       setScreenings(list);
     } catch {
-      // fallback
+      // Fallback handled by empty state
     } finally {
       setIsRefreshing(false);
     }
   }, [activeChild]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    let active = true;
+    (activeChild
+      ? screeningsService.listByChild(activeChild.id)
+      : Promise.resolve([])
+    )
+      .then((list) => {
+        if (active) setScreenings(list);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [activeChild]);
 
   const onRefresh = () => {
     setIsRefreshing(true);
-    loadData();
+    void loadData();
   };
 
   const latest = screenings[0];
@@ -66,14 +75,12 @@ export default function HistoryScreen() {
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with back and kebab menu (cough history_user.png & Recording List.png) */}
         <ScreenHeader
           title="All Recordings"
           subtitle={`${screenings.length} Recordings`}
           rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
         />
 
-        {/* 1. Top Card: Pills + Status + Child Photo (cough history_user.png & Recording List.png) */}
         <Card variant={isRisk ? 'risk' : 'brand'} className="my-3 rounded-2xl p-4">
           <View className="flex-row items-center justify-between">
             <View className="flex-1 pr-3 gap-2">
@@ -115,7 +122,6 @@ export default function HistoryScreen() {
           </View>
         </Card>
 
-        {/* 2. Middle Card: 24 Hours Trends (cough history_user.png) */}
         <Card variant="brand" className="mb-4 rounded-2xl p-4 gap-2">
           <View className="flex-row items-center justify-between">
             <View className="rounded-pill bg-brand px-3 py-1 self-start">
@@ -126,9 +132,7 @@ export default function HistoryScreen() {
             <Text className="text-caption text-ink-muted">Acoustic Activity</Text>
           </View>
 
-          {/* 4 Mini Trend Charts Visual (3 lines + 1 bar) */}
           <View className="flex-row flex-wrap gap-2 pt-2">
-            {/* Box 1 */}
             <View className="h-20 flex-1 rounded-xl bg-white p-2 justify-between dark:bg-surface-card-dark">
               <Text className="text-xs text-ink-muted">Cough Freq</Text>
               <View className="flex-row items-end justify-between h-8 px-1">
@@ -140,7 +144,6 @@ export default function HistoryScreen() {
               </View>
             </View>
 
-            {/* Box 2 */}
             <View className="h-20 flex-1 rounded-xl bg-white p-2 justify-between dark:bg-surface-card-dark">
               <Text className="text-xs text-ink-muted">Breath Rate</Text>
               <View className="flex-row items-end justify-between h-8 px-1">
@@ -154,7 +157,6 @@ export default function HistoryScreen() {
           </View>
 
           <View className="flex-row flex-wrap gap-2">
-            {/* Box 3 */}
             <View className="h-20 flex-1 rounded-xl bg-white p-2 justify-between dark:bg-surface-card-dark">
               <Text className="text-xs text-ink-muted">Temp Trend</Text>
               <View className="flex-row items-end justify-between h-8 px-1">
@@ -166,7 +168,6 @@ export default function HistoryScreen() {
               </View>
             </View>
 
-            {/* Box 4 */}
             <View className="h-20 flex-1 rounded-xl bg-white p-2 justify-between dark:bg-surface-card-dark">
               <Text className="text-xs text-ink-muted">Heart Pulse</Text>
               <View className="flex-row items-end justify-between h-8 px-1">
@@ -180,7 +181,6 @@ export default function HistoryScreen() {
           </View>
         </Card>
 
-        {/* 3. AI Summary Card (cough history_user.png) */}
         <Card variant="brand" className="mb-4 rounded-2xl p-4 gap-2">
           <View className="flex-row items-center gap-2">
             <Text className="text-base text-brand">✨</Text>
@@ -215,13 +215,12 @@ export default function HistoryScreen() {
                 › Breathing Rate:
               </Text>
               <Text className="text-caption text-ink-muted pl-3">
-                Within the normal range for a child's age. Minimal daily variation.
+                {"Within the normal range for a child's age. Minimal daily variation."}
               </Text>
             </View>
           </View>
         </Card>
 
-        {/* 4. All Recordings List (Recording List.png) */}
         <View className="my-2">
           <View className="flex-row items-center justify-between mb-3 border-b border-border pb-2">
             <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
@@ -241,7 +240,7 @@ export default function HistoryScreen() {
             />
           ) : (
             <View className="gap-1">
-              {screenings.map((item, idx) => {
+              {screenings.map((item) => {
                 const date = !isNaN(new Date(item.created_at).getTime())
                   ? new Date(item.created_at)
                   : new Date();
@@ -271,7 +270,6 @@ export default function HistoryScreen() {
                       </Text>
                     </View>
 
-                    {/* Play Button Icon + Duration (Recording List.png) */}
                     <View className="items-end gap-1">
                       <View
                         className={`h-8 w-8 items-center justify-center rounded-full ${
@@ -292,7 +290,6 @@ export default function HistoryScreen() {
         </View>
       </ScrollView>
 
-      {/* Floating Center Mic Button (Recording List.png) */}
       <View
         style={{ bottom: insets.bottom + 12 }}
         className="absolute left-0 right-0 items-center"

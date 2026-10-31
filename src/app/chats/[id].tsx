@@ -1,8 +1,8 @@
 // src/app/chats/[id].tsx
-// Doctor consultation chat room — matches chat room_user.png exactly.
+// Doctor consultation chat room — matches chat room_user.png.
 
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -19,59 +19,70 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { doctorsService } from '@/services/doctors';
 import type { Doctor, Message } from '@/types/domain';
 
+function createInitialMessages(doctorId: string): Message[] {
+  const now = Date.now();
+  return [
+    {
+      id: 'msg-1',
+      conversation_id: `conv-${doctorId}`,
+      sender_id: doctorId,
+      sender_role: 'doctor',
+      content: 'Hello, How can I help you?',
+      created_at: new Date(now - 30 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'msg-2',
+      conversation_id: `conv-${doctorId}`,
+      sender_id: 'user-demo',
+      sender_role: 'parent',
+      content:
+        'Does my son really have pneumonia? The app shows a pneumonia indication for my son.',
+      created_at: new Date(now - 20 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'msg-3',
+      conversation_id: `conv-${doctorId}`,
+      sender_id: doctorId,
+      sender_role: 'doctor',
+      content:
+        'I recommend you to do further examination at nearby hospital.',
+      created_at: new Date(now - 15 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'msg-4',
+      conversation_id: `conv-${doctorId}`,
+      sender_id: 'user-demo',
+      sender_role: 'parent',
+      content:
+        'Thank you doc! Do you have any recommendation of the hospital?',
+      created_at: new Date(now - 10 * 60 * 1000).toISOString(),
+    },
+  ];
+}
+
 export default function ChatRoomScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const [doctor, setDoctor] = useState<Doctor | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() =>
+    createInitialMessages(id ?? 'doc-1'),
+  );
   const [inputText, setInputText] = useState('');
 
   useEffect(() => {
     if (!id) return;
+    let active = true;
 
     doctorsService.get(id).then((doc) => {
+      if (!active) return;
       if (doc) setDoctor(doc);
     });
 
-    setMessages([
-      {
-        id: 'msg-1',
-        conversation_id: `conv-${id}`,
-        sender_id: id,
-        sender_role: 'doctor',
-        content: 'Hello, How can I help you?',
-        created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'msg-2',
-        conversation_id: `conv-${id}`,
-        sender_id: 'user-demo',
-        sender_role: 'parent',
-        content:
-          'Does my son really have pneumonia? The app shows a pneumonia indication for my son.',
-        created_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'msg-3',
-        conversation_id: `conv-${id}`,
-        sender_id: id,
-        sender_role: 'doctor',
-        content:
-          'I recommend you to do further examination at nearby hospital.',
-        created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'msg-4',
-        conversation_id: `conv-${id}`,
-        sender_id: 'user-demo',
-        sender_role: 'parent',
-        content:
-          'Thank you doc! Do you have any recommendation of the hospital?',
-        created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-      },
-    ]);
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   const handleSend = () => {
@@ -121,7 +132,6 @@ export default function ChatRoomScreen() {
       className="flex-1 bg-surface dark:bg-surface-dark"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Header with back, doctor name, video, phone, kebab (chat room_user.png) */}
       <View
         style={{ paddingTop: insets.top + 8 }}
         className="border-b border-border bg-surface px-4 pb-3 dark:border-border-dark dark:bg-surface-card-dark"
@@ -160,7 +170,6 @@ export default function ChatRoomScreen() {
         </View>
       </View>
 
-      {/* Messages Scroll View (chat room_user.png) */}
       <ScrollView
         ref={scrollViewRef}
         className="flex-1 px-4 py-3"
@@ -168,7 +177,6 @@ export default function ChatRoomScreen() {
         keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
-        {/* "Consultation Start" Divider Block (chat room_user.png) */}
         <View className="items-center my-2">
           <View className="rounded-full bg-surface-brand-soft px-4 py-1.5 mb-1">
             <Text className="text-caption font-bold text-brand">
@@ -184,7 +192,6 @@ export default function ChatRoomScreen() {
           const isMe = msg.sender_role === 'parent';
 
           if (!isMe) {
-            // Incoming message with doctor avatar and name (chat room_user.png)
             return (
               <View key={msg.id} className="self-start max-w-[80%] gap-1.5">
                 <View className="flex-row items-center gap-2">
@@ -207,7 +214,6 @@ export default function ChatRoomScreen() {
             );
           }
 
-          // Outgoing message (navy bubble with checkmark) (chat room_user.png)
           return (
             <View
               key={msg.id}
@@ -225,7 +231,6 @@ export default function ChatRoomScreen() {
         })}
       </ScrollView>
 
-      {/* Composer Input Bar with Pill Button "Send" (chat room_user.png) */}
       <View
         style={{ paddingBottom: insets.bottom > 0 ? insets.bottom : 12 }}
         className="border-t border-border bg-surface px-4 pt-2.5 dark:border-border-dark dark:bg-surface-card-dark"
