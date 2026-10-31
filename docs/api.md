@@ -171,6 +171,8 @@ Two real accounts against local Supabase:
 
 Dockerfile, smoke scripts, nginx/systemd templates, and checklist live in `docs/deploy.md`. **VPS deployment not executed** — no server/domain access.
 
+Docker runtime verified locally: image `pneumotrack-api:local` (3.9 GB) starts, `/health` → 200, `/predict` with a valid WAV → 200, CORS preflight → 200.
+
 Local LAN check: server bound to `0.0.0.0`, `curl http://192.168.18.6:8000/health` → `200` from another interface on the same machine. A physical-phone request over Wi-Fi is still untested.
 
 ---
