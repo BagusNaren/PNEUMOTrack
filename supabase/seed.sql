@@ -1,0 +1,3 @@
+-- Local seed data for `supabase db reset`.
+-- Keep this file empty (or additive) until the schema exists; the CLI requires
+-- it because `[db.seed] sql_paths = ["./seed.sql"]` is enabled by default.
