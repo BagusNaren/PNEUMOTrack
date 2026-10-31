@@ -1,22 +1,42 @@
 {
   "expo": {
-    "name": "PNM-TRACK",
-    "slug": "PNM-TRACK",
+    "name": "PNEUMOTrack",
+    "slug": "pneumotrack",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "pnmtrack",
+    "scheme": "pneumotrack",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "com.pneumotrack.app",
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "CADisableMinimumFrameDurationOnPhone": true
+      }
     },
     "android": {
+      "package": "com.pneumotrack.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#D6E9F4",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ],
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -29,11 +49,24 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#FFFFFF",
+          "image": "./UI_reference/logo.png",
+          "imageWidth": 176,
+          "dark": {
+            "backgroundColor": "#0B1220"
+          }
         }
-      ]
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "PNEUMOTrack membutuhkan akses mikrofon untuk merekam suara batuk anak guna skrining awal risiko pneumonia.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
