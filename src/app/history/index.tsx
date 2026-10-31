@@ -242,7 +242,9 @@ export default function HistoryScreen() {
           ) : (
             <View className="gap-1">
               {screenings.map((item, idx) => {
-                const date = new Date(item.created_at);
+                const date = !isNaN(new Date(item.created_at).getTime())
+                  ? new Date(item.created_at)
+                  : new Date();
                 const title = `Voice ${date.getFullYear().toString().slice(2)}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
                 const dateStr = date.toLocaleDateString('en-US', {
                   month: 'short',

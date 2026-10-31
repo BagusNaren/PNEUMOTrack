@@ -36,7 +36,7 @@ export default function SignInScreen() {
     setIsLoading(true);
     try {
       await signIn(email.trim(), password);
-      router.replace('/(tabs)/');
+      router.replace('/(tabs)');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Gagal masuk. Coba lagi.';
       if (msg.includes('Invalid login')) {
@@ -54,7 +54,7 @@ export default function SignInScreen() {
     try {
       // Demo account — predefined credentials
       await signIn('demo@pneumotrack.id', 'demo1234');
-      router.replace('/(tabs)/');
+      router.replace('/(tabs)');
     } catch {
       setError('Akun demo tidak tersedia. Silakan buat akun baru.');
     } finally {

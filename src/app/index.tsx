@@ -17,7 +17,7 @@ export default function IndexScreen() {
     // Small delay for smooth splash impression
     const timer = setTimeout(() => {
       if (session) {
-        router.replace('/(tabs)/');
+        router.replace('/(tabs)');
       } else {
         // Fallback to sign-in or demo tabs
         router.replace('/(auth)/sign-in');

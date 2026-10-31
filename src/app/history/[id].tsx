@@ -93,7 +93,7 @@ export default function HistoryDetailScreen() {
             </Text>
           </View>
           <Waveform
-            samples={screening.waveform}
+            data={screening.waveform}
             variant={isRisk ? 'risk' : 'normal'}
             height={88}
           />
@@ -184,7 +184,7 @@ export default function HistoryDetailScreen() {
           label="Kembali ke Beranda"
           size="md"
           variant="secondary"
-          onPress={() => router.replace('/(tabs)/')}
+          onPress={() => router.replace('/(tabs)')}
         />
       )}
     </ScrollView>

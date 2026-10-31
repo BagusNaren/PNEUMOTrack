@@ -318,7 +318,10 @@ export default function DashboardScreen() {
                   {item.title}
                 </Text>
                 <Text className="mt-1 text-caption text-ink-muted">
-                  {new Date(item.published_at).toLocaleDateString('en-US', {
+                  {(!isNaN(new Date(item.published_at).getTime())
+                    ? new Date(item.published_at)
+                    : new Date()
+                  ).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',
