@@ -150,24 +150,68 @@ From the proposal: 79 of 82 samples (96.3%) classified as pneumonia (inlier), 3 
 
 The dataset contains only pneumonia-labeled samples, so these figures measure consistency, not clinical sensitivity or specificity. **Do not present "96.3% accurate" as a clinical claim anywhere in the app UI.**
 
-## 12. API contract (assumed — confirm with backend)
+## 12. API contract
 
-`POST /screen` (multipart): `audio` (wav), `child_id`
+> **Status: DRAFT v2 — pending team approval (Sprint 0, Member A).**
+> Source of truth while this is a draft: [`docs/api.md`](./docs/api.md). Once approved, this section replaces the table below and `docs/api.md` becomes the implementation reference.
+> The deployed backend still behaves like v1 until Sprint 1 lands.
+
+### 12.1 Proposed v2 — `POST /predict`
+
+`multipart/form-data`:
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `audio` | file | yes | `m4a`, `mp4`, `aac`, `wav`; max 10 MB |
+| `child_id` | UUID string | no | never logged |
+
+`200 OK`
 
 ```json
 {
-  "label": "normal | anomaly",
-  "autoencoder_mse": 0.0,
-  "autoencoder_vote": "inlier | outlier",
-  "ocsvm_score": 0.0,
-  "ocsvm_vote": "inlier | outlier",
+  "status": "success",
+  "result": "risk | normal",
+  "raw_label": "Pneumonia | Bukan Pneumonia",
   "agreement": true,
-  "confidence": 0.0,
-  "summary": "string"
+  "votes": { "autoencoder": "risk | normal", "ocsvm": "risk | normal" },
+  "autoencoder": { "error": 0.0012, "threshold": 0.03890753 },
+  "ocsvm": { "score": 0.41 },
+  "chunks": 4,
+  "duration_sec": 6.2,
+  "waveform": [0.01, 0.2, 0.8],
+  "summary": "Ringkasan non-diagnostik berbahasa Indonesia",
+  "model_version": "v3"
 }
 ```
 
-History, children, doctors, hospitals, and articles go through Supabase tables unless stated otherwise. Update this section when the real contract is known.
+`422` — audio not usable (no prediction returned; app must ask for a re-record):
+
+```json
+{ "status": "error", "code": "AUDIO_TOO_SHORT", "message": "Rekaman terlalu pendek. Rekam minimal 3 detik." }
+```
+
+Codes: `AUDIO_TOO_SHORT`, `AUDIO_SILENT`, `NO_COUGH_DETECTED`, `AUDIO_TOO_NOISY`, `UNSUPPORTED_FORMAT`, `FILE_TOO_LARGE`.
+
+`500` — `{ "status": "error", "code": "INTERNAL_ERROR" }`
+
+`GET /health` — `{ "status": "ok", "model_version": "v3" }`
+
+### 12.2 Label mapping (decision requested)
+
+The model is one-class and trained only on pneumonia samples. `Pneumonia` therefore means **risk**, not diagnosis:
+
+| Raw label | `result` | UI treatment |
+|---|---|---|
+| `Pneumonia` | `risk` | pink/red, "Indikasi risiko pneumonia, perlu perhatian" |
+| `Bukan Pneumonia` | `normal` | blue/teal, "Tidak ditemukan tanda pola batuk pneumonia" |
+
+`agreement = (autoencoder vote == ocsvm vote)`. `confidence` is the vote proportion (0.5 or 1.0) and **must never be presented as clinical accuracy**; the 96.3% proposal figure is not a clinical metric.
+
+### 12.3 Current v1 (to be replaced in Sprint 1)
+
+`POST /predict` with `audio` only. Response: `status`, `prediction`, `confidence`, `chunks`, `svm { label, score }`, `autoencoder { label, error, threshold }`. No `/health`, no CORS, no size/format gate, and invalid audio returns HTTP 200 with `prediction: null` (silent audio currently crashes with a 500). Details and test evidence in `docs/api.md` §6.
+
+History, children, doctors, hospitals, and articles go through Supabase tables unless stated otherwise.
 
 ## 13. Safety, privacy, and compliance
 
