@@ -34,6 +34,15 @@ yarn-error.*
 .env*.local
 .env
 
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# backend runtime
+server_side/temp/
+
 # Supabase local artifacts
 supabase/.branches/
 supabase/.temp/
