@@ -203,6 +203,8 @@ export const copy = {
       "Format rekaman belum didukung. Buat rekaman baru dari aplikasi.",
     FILE_TOO_LARGE:
       "Ukuran rekaman terlalu besar. Buat rekaman yang lebih singkat.",
+    INVALID_REQUEST:
+      "Data rekaman tidak lengkap saat dikirim. Silakan rekam ulang dan coba lagi.",
   } satisfies Record<AudioErrorCode, string>,
   networkErrors: {
     offline: "Tidak dapat terhubung. Periksa koneksi internet, lalu coba lagi.",
@@ -300,6 +302,7 @@ export const copy = {
       AUDIO_TOO_NOISY: "Audio Bising",
       UNSUPPORTED_FORMAT: "Format Tidak Didukung",
       FILE_TOO_LARGE: "File Terlalu Besar",
+      INVALID_REQUEST: "Permintaan Tidak Valid",
       offline: "Offline",
       timeout: "Batas Waktu",
       server: "Server Gagal",

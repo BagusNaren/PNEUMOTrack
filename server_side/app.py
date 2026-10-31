@@ -28,7 +28,7 @@ TEMP_DIR = BASE_DIR / "temp"
 TEMP_DIR.mkdir(exist_ok=True)
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
-ALLOWED_SUFFIXES = {".wav", ".m4a", ".mp4", ".aac", ".mp3", ".ogg", ".flac"}
+ALLOWED_SUFFIXES = {".wav", ".m4a", ".mp4", ".aac", ".webm", ".mp3", ".ogg", ".flac"}
 CHUNK_SIZE = 1024 * 1024
 
 
