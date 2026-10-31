@@ -39,3 +39,28 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+
+---
+
+# PNEUMOTrack — Project Context
+
+This app is **PNEUMOTrack**, a mobile AI app that screens children for pneumonia risk from cough sound. The full product spec lives in [`PRD.md`](./PRD.md).
+
+**Read `PRD.md` before starting any feature, screen, or API work.** It defines the goals, user flow, screen list, functional requirements, AI pipeline, assumed API contract, safety rules, and MVP scope. If a task conflicts with `PRD.md`, or the PRD is silent on something important, ask the user instead of guessing.
+
+## Non-negotiable rules (details in PRD.md §11 and §13)
+
+- This is a **screening aid, not a diagnosis**. Never write "your child has pneumonia"; use risk wording such as "indikasi risiko pneumonia". Show a disclaimer on result and recommendation screens.
+- Never present the proposal's 96.3% figure as clinical accuracy in the UI.
+- Recordings and children's data are sensitive: no logging of audio or personal data, no secrets in the repo, and only `EXPO_PUBLIC_*` variables for non-secret config.
+- Handle bad audio (too short, noisy, no cough) and network failure on every screen that depends on them.
+
+## Project conventions
+
+- The mobile app sends audio to the FastAPI backend and renders the response; it does not run the ML models locally unless asked.
+- Backend data (children, history, doctors, hospitals, articles) goes through Supabase; mock data is allowed during the hackathon but keep it isolated in `src/services/` so it can be swapped.
+- Keep UI copy and theme values in central files (`src/constants/`), default language Indonesian, calm teal/blue palette with red/pink reserved for risk states.
+- Keep screens thin: logic in `src/hooks/` and `src/services/`, presentational pieces in `src/components/`. Use strict TypeScript and type API responses.
+- Verify audio, location, and map modules against the docs for the installed SDK version; do not assume `expo-av` versus `expo-audio`.
+- Prioritize a working end-to-end flow (record → analyze → result → recommendation) before polish.
