@@ -449,10 +449,8 @@ We want to be honest about what this prototype can and cannot do.
 | Role | Member |
 |---|---|
 | Team leader, pneumonia model developer (Autoencoder + OC-SVM), UI designer, Member C (mobile features) | [@BagusNaren](https://github.com/BagusNaren) |
-| Member A: backend, AI serving, Supabase | [@ruditagithub] (https://github.com/ruditagithub) |
-| Member B: mobile core flow (recording, analysis, result) | [@Nomad37301] (https://github.com/Nomad37301<img width="1500" height="1000" alt="PNEUMOTrack_thumbnail" src="https://github.com/user-attachments/assets/772ad83c-586e-4098-a5d9-00c96af16a75" />
-<img width="1500" height="1000" alt="PNEUMOTrack_thumbnail" src="https://github.com/user-attachments/assets/70b0c2f9-5b4c-4480-be74-3e56dd3b1964" />
-) |
+| Member A: backend, AI serving, Supabase | [@ruditagithub](https://github.com/ruditagithub) |
+| Member B: mobile core flow (recording, analysis, result) | [@Nomad37301](https://github.com/Nomad37301) |
 
 Built for the **INCEPTION 2026 Hackathon** · Universitas Udayana.
 
