@@ -22,6 +22,18 @@ INCEPTION 2026 Hackathon · Universitas Udayana
 
 ---
 
+## Try the deployed product
+
+A deployed build of PNEUMOTrack that you can test right away is available on the release page:
+
+**[Release `deployed_product`: deployed product you can test](https://github.com/BagusNaren/PNEUMOTrack/releases/tag/deployed_product)**
+
+Release timestamp: **1 November 2026, 12:00 WITA (GMT+8)**
+
+Prefer to run everything yourself? Follow [Run it locally, step by step](#6-run-it-locally-step-by-step).
+
+---
+
 ## Table of contents
 
 1. [The problem](#1-the-problem)
