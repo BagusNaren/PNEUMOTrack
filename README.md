@@ -68,19 +68,54 @@ PNEUMOTrack is a mobile app for early pneumonia **risk screening** in children, 
 
 ```mermaid
 flowchart LR
-    APP["Expo app<br/>(React Native)"] -->|"m4a + child_id"| API["FastAPI<br/>POST /predict"]
-    API --> GATE["Audio quality gate"]
-    GATE -->|valid| PRE["Preprocess<br/>noise reduction + normalize"]
-    PRE --> SEG["Cough segmentation<br/>RMS threshold"]
-    SEG --> FEAT["20 MFCC → 80-dim vector"]
-    FEAT --> AE["Autoencoder<br/>reconstruction MSE"]
-    FEAT --> ENC["Encoder (4-dim)"]
-    ENC --> SVM["One-Class SVM"]
-    AE --> VOTE["Majority vote"]
-    SVM --> VOTE
-    VOTE --> API
-    API -->|"result, waveform, summary"| APP
-    APP -->|"save screening"| SB[("Supabase<br/>Auth + Postgres + RLS")]
+    subgraph HW["Hardware"]
+        direction TB
+        MIC[/"Smartphone<br/>Microphone"/] --> REC("On-device Audio Recording<br/>(Edge Processing)")
+        REC --> AUD[("Cough Audio Data<br/>(m4a / WAV)")]
+    end
+
+    subgraph CC["Communication & Cloud"]
+        direction TB
+        API("REST API<br/>(FastAPI over HTTPS, hosted on VPS)")
+        CLOUD(["Cloud Storage<br/>(Supabase / PostgreSQL)"])
+        API --> CLOUD
+    end
+
+    subgraph SW["Software"]
+        direction TB
+        RES[("Retrieved<br/>Screening Result")]
+        DASH[/"Dashboard & Summary"/]
+        HIST("History")
+        REK("Recommendation")
+        DOC[/"Doctor Consultation"/]
+        HOSP("Hospital Recommendation")
+        RES --> DASH
+        RES --> HIST
+        RES --> REK
+        REK --> DOC
+        REK --> HOSP
+    end
+
+    subgraph AI["AI"]
+        direction TB
+        PRE("Cough Sound Pre-processing<br/>(Mono, LogMMSE Noise Reduction,<br/>Normalization, RMS Segmentation)")
+        FEAT("Feature Extraction<br/>(20 MFCC → 80-dim, Mean Pooling)")
+        AE("Autoencoder<br/>(Reconstruction Error / MSE)")
+        SVM("One-Class SVM<br/>(Decision Score)")
+        VOTE("Majority Voting")
+        OUT("Pneumonia Screening<br/>(Risk / Normal)")
+        PRE --> FEAT
+        FEAT --> AE
+        FEAT --> SVM
+        AE --> VOTE
+        SVM --> VOTE
+        VOTE --> OUT
+    end
+
+    AUD --> API
+    API --> PRE
+    OUT --> RES
+    API <--> RES
 ```
 
 **Audio and AI pipeline**
