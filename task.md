@@ -48,7 +48,7 @@
 
 | Member | Peran | Folder yang dimiliki |
 |---|---|---|
-| **Member A** — *Backend, AI & Data* | FastAPI, model, Supabase (skema, RLS, login, data contoh), deploy VPS | `server_side/**`, `supabase/**`, `docs/api.md` |
+| **Member A** — *Backend, AI & Data* | FastAPI, model, Supabase (skema, RLS, login, data contoh), deploy VPS | `server_side/**`, `supabase/**`, `PRD.md` §12 |
 | **Member B** — *Mobile Core Flow* | Fondasi app + alur **rekam → analisis → hasil → rekomendasi** | `src/app/_layout.tsx`, `src/app/index.tsx`, `src/app/screening/**`, `src/app/recommendation.tsx`, `src/constants/**`, `src/components/ui/**`, `src/components/screening/**`, `src/services/api/**`, `src/hooks/use-recorder.ts`, `src/hooks/use-screening.ts`, `src/types/**`, `app.json`, `eas.json` |
 | **Member C** — *Mobile Features* | Login, dashboard, profil anak, riwayat, monitoring, dokter, chat, rumah sakit, peta, artikel + service data | `src/app/(auth)/**`, `src/app/(tabs)/**` (isi), `src/app/children/**`, `src/app/history/**`, `src/app/doctors/**`, `src/app/chats/**`, `src/app/hospitals/**`, `src/app/articles/**`, `src/services/{supabase,children,screenings,doctors,hospitals,articles,chat}/**`, hook fitur terkait |
 
@@ -74,7 +74,7 @@
 
 ## 4. Kontrak Bersama
 
-### 4.1 API `POST /predict` v2 (usulan, final ditulis A di `docs/api.md`)
+### 4.1 API `POST /predict` v2 (usulan, final ditulis A di PRD §12)
 Request `multipart/form-data`: `audio` (m4a/mp4/aac/wav, ≤ 10 MB), `child_id` (opsional, tidak di-log).
 
 **200 OK**
@@ -135,7 +135,7 @@ src/app/
 
 | Sprint | Durasi | Sprint Goal | Deliverable demo akhir sprint |
 |---|---|---|---|
-| **Sprint 0** | ½ hari | Semua keputusan kritis & kontrak disepakati | `docs/api.md`, tipe TS, keputusan §1 tercatat |
+| **Sprint 0** | ½ hari | Semua keputusan kritis & kontrak disepakati | PRD §12, tipe TS, keputusan §1 tercatat |
 | **Sprint 1** | 1 hari | Fondasi siap: app ber-theme, backend v2 lokal, Supabase hidup | Dev build Android dengan tab ber-theme. `curl /predict` v2 jalan. Tabel Supabase + data contoh |
 | **Sprint 2** | 1,5 hari | **Rekam → analisis → hasil** jalan end-to-end di HP asli | Rekam batuk di HP → hasil normal/risiko dari backend asli. Audio jelek → minta rekam ulang |
 | **Sprint 3** | 1,5 hari | MVP lengkap: login, anak, simpan hasil, riwayat, dashboard, rekomendasi → dokter & RS | Demo alur MVP PRD §16 poin 1–3 |
@@ -162,7 +162,7 @@ flowchart LR
 
 ### 🅰️ Member A
 - [ ] Konfirmasi ke pemilik model: makna label, nilai `ae_threshold` dan `sample_rate` di `config_v3.pkl`.
-- [ ] Tulis `docs/api.md`: endpoint, contoh request/response, semua kode error, mapping label.
+- [ ] Lengkapi PRD §12: endpoint, contoh request/response, semua kode error, mapping label.
 - [ ] Draf perubahan PRD §12 (endpoint, field, makna label) dan minta persetujuan tim.
 - [ ] Jalankan backend saat ini secara lokal (`pip install -r requirements.txt`, `uvicorn app:app`) dan catat kendala instalasi.
 
@@ -177,7 +177,7 @@ flowchart LR
 - [ ] Kumpulkan aset gambar dari `UI_reference/` (logo, foto anak, dokter, ilustrasi loading) ke `assets/images/`.
 
 ### ✅ Exit Criteria Sprint 0
-- [ ] `docs/api.md` dan `src/types/*` ter-merge.
+- [ ] PRD §12 dan `src/types/*` ter-merge.
 - [ ] Semua pertanyaan terbuka sudah terjawab atau punya keputusan sementara.
 - [ ] Board berisi semua todo Sprint 1 dengan assignee.
 
@@ -263,7 +263,7 @@ flowchart LR
 - [ ] `AUDIO_SILENT`: RMS maksimum di bawah ambang **sebelum** normalisasi.
 - [ ] `NO_COUGH_DETECTED`: segmentasi tetap 0 chunk. **Matikan fallback "pakai seluruh sinyal"** di `segment_cough_chunks` untuk inferensi.
 - [ ] `AUDIO_TOO_NOISY`: SNR rendah atau frame aktif > 80%.
-- [ ] Kalibrasi ambang dengan ±10 rekaman uji (hening, bicara, TV/kipas, batuk dewasa, sampel dataset). Catat hasilnya di `docs/api.md`.
+- [ ] Kalibrasi ambang dengan ±10 rekaman uji (hening, bicara, TV/kipas, batuk dewasa, sampel dataset). Catat hasilnya bersama kontrak API pada PRD §12.
 
 **Output untuk UI**
 - [ ] `waveform`: envelope RMS ±100 titik, dinormalisasi 0..1.
@@ -340,7 +340,7 @@ flowchart LR
 - [ ] `server_side/Dockerfile` (python-slim + ffmpeg) atau unit systemd + venv.
 - [ ] Skrip smoke test `server_side/scripts/smoke.ps1`/`.sh` (`/health`, `/predict`).
 
-**✔ Acceptance:** data contoh tampil di app C. Uji RLS terdokumentasi di `docs/api.md`.
+**✔ Acceptance:** data contoh tampil di app C. Uji RLS tercatat bersama kontrak data pada PRD §12.
 
 ### 🅱️ Member B — Rekomendasi, Simpan Hasil, Polish Core Flow
 - [ ] `recommendation.tsx` *(ref `recommendations page_user.png`)*:
@@ -487,7 +487,7 @@ flowchart LR
 ### 🅰️ Member A
 - [ ] Perbaiki bug backend/Supabase dari QA.
 - [ ] Pantau log VPS selama QA (tanpa data pribadi). Cek memori & waktu respons (< 10 dtk target).
-- [ ] Update PRD §12 dengan kontrak final + finalisasi `docs/api.md`.
+- [ ] Finalisasi kontrak pada PRD §12.
 - [ ] Siapkan slide arsitektur & pipeline AI (preprocessing → segmentasi → MFCC 80-dim → AE + OC-SVM → voting), lengkap dengan batasan model.
 
 ### 🅱️ Member B

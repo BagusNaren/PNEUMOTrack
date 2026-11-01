@@ -167,7 +167,6 @@ PNEUMOTrack/
 │   └── pneumonia_detection_v3.ipynb   # training notebook
 ├── supabase/                 # migrations + seed data
 ├── docker/ docker-compose.yml        # local Supabase stack
-├── docs/                     # api.md, architecture.md, backend-local.md, deploy.md
 └── PRD.md  design.md  task.md
 ```
 
@@ -294,7 +293,7 @@ Back in the repository root, create your env file from the example:
 cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
 ```
 
-Then edit `.env`. The checked-in `.env.example` sets `EXPO_PUBLIC_USE_MOCK_DATA=true` by default for a UI preview. For the complete flow using the local Supabase database, change it to `false`. The URLs depend on **where the app runs**:
+Then fill the blank settings in `.env` with your own backend and Supabase configuration. Both mock switches are disabled by default. The URLs depend on **where the app runs**:
 
 | App runs on | Use this host in the URLs |
 |---|---|
@@ -304,7 +303,7 @@ Then edit `.env`. The checked-in `.env.example` sets `EXPO_PUBLIC_USE_MOCK_DATA=
 ```ini
 # Supabase (local stack from step 6.3)
 EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:54321
-EXPO_PUBLIC_SUPABASE_ANON_KEY=<keep the value from .env.example>
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<your project's public client key>
 
 # AI backend (from step 6.4)
 EXPO_PUBLIC_API_URL=http://10.0.2.2:8000
@@ -383,7 +382,7 @@ bunx expo run:android
 
 ## 7. API quick reference
 
-Full contract: [`docs/api.md`](./docs/api.md)
+Full contract: [`PRD.md`, section 12](./PRD.md#12-api-contract). Endpoint implementation: [`server_side/app.py`](./server_side/app.py).
 
 ### `POST /predict`
 
@@ -570,11 +569,6 @@ Built for the **INCEPTION 2026 Hackathon** · Universitas Udayana.
 
 ## Documentation
 
-- [`docs/android-local.md`](./docs/android-local.md): build dan testing APK Android lokal di Windows
-- [`docs/api.md`](./docs/api.md): API contract
-- [`docs/architecture.md`](./docs/architecture.md): architecture and AI pipeline
-- [`docs/backend-local.md`](./docs/backend-local.md): backend local setup notes
-- [`docs/deploy.md`](./docs/deploy.md): VPS deployment guide
 - [`docker/README.md`](./docker/README.md): local Supabase stack
 - [`PRD.md`](./PRD.md): product requirements
 

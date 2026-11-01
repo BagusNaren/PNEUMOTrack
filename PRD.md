@@ -153,7 +153,7 @@ The dataset contains only pneumonia-labeled samples, so these figures measure co
 ## 12. API contract
 
 > **Status: implemented in `server_side/` (Sprint 1–2, Member A); team sign-off pending.**
-> Implementation reference and verification evidence: [`docs/api.md`](./docs/api.md). The backend now behaves as described below; only the team approval and the real-recording calibration remain.
+> Implementation reference: [`server_side/app.py`](./server_side/app.py). The backend now behaves as described below; only the team approval and the real-recording calibration remain.
 
 ### 12.1 Implemented v2 — `POST /predict`
 

@@ -17,6 +17,9 @@ if ($Mock) {
     }
     $env:EXPO_PUBLIC_USE_MOCK_API = 'true'
     $env:EXPO_PUBLIC_USE_MOCK_DATA = 'true'
+    # Mock builds need a valid client shape without a configured backend.
+    $env:EXPO_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:54321'
+    $env:EXPO_PUBLIC_SUPABASE_ANON_KEY = 'mock-client-placeholder'
     Write-Host 'Testing UI dengan data mock dan konfigurasi lokal contoh.'
 }
 
