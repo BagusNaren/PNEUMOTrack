@@ -2,6 +2,8 @@
 
 <img width="1500" height="1000" alt="PNEUMOTrack_banner_logos" src="https://github.com/user-attachments/assets/40d24b6c-203a-4c0a-b16e-b7ed08a4116d" />
 
+<img width="3778" height="1640" alt="merged-images" src="https://github.com/user-attachments/assets/64e49514-00e6-4754-a9e2-1a8980cf02e4" />
+
 # PNEUMOTrack
 
 ### *Track the Signs, Guard the Lungs.*
