@@ -34,7 +34,7 @@ INCEPTION 2026 Hackathon · Universitas Udayana
 8. [Testing](#8-testing)
 9. [Troubleshooting](#9-troubleshooting)
 10. [Responsible AI and limitations](#10-responsible-ai-and-limitations)
-11. [Roadmap](#11-roadmap)
+11. [AI Use and Third-Party Declaration](#11-ai-use-and-third-party-declaration)
 12. [Team](#12-team)
 
 ---
@@ -141,9 +141,9 @@ You will run **three things**: the AI backend, the local database, and the mobil
 
 ```
 ┌──────────────┐  audio   ┌──────────────────┐
-│  Expo app    │ ───────▶ │ FastAPI :8000    │
-│  (phone/emu) │          └──────────────────┘
-│              │  data    ┌──────────────────┐
+│              │ ───────▶ │ FastAPI :8000    │
+│  Expo app    │          └──────────────────┘
+│  (phone/emu) │  data    ┌──────────────────┐
 │              │ ───────▶ │ Supabase :54321  │  (Docker)
 └──────────────┘          └──────────────────┘
 ```
@@ -159,6 +159,7 @@ You will run **three things**: the AI backend, the local database, and the mobil
 | [Android Studio](https://developer.android.com/studio) **or** a physical Android phone | recent | run the app (emulator or device) |
 
 > You do **not** need to install ffmpeg. The backend uses the binary bundled in `imageio-ffmpeg`.
+>
 > Prefer plain `pip`? Python 3.12 and `python -m venv` work too. See the note in step 6.4.
 
 ### 6.2 Clone the repository
@@ -257,7 +258,7 @@ Back in the repository root, create your env file from the example:
 cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
 ```
 
-Then edit `.env`. The URLs depend on **where the app runs**:
+Then edit `.env`. The checked-in `.env.example` sets `EXPO_PUBLIC_USE_MOCK_DATA=true` by default for a UI preview. For the complete flow using the local Supabase database, change it to `false`. The URLs depend on **where the app runs**:
 
 | App runs on | Use this host in the URLs |
 |---|---|
@@ -278,6 +279,7 @@ EXPO_PUBLIC_USE_MOCK_API=false     # true = fake prediction results, no backend 
 ```
 
 > `127.0.0.1` / `localhost` points to the **phone itself**, not your computer, so it will not work from a device or emulator.
+>
 > Find your LAN IP with `ipconfig` (Windows) or `ifconfig` / `ip a` (macOS/Linux).
 
 ### 6.6 Install the native packages the app needs
@@ -421,7 +423,7 @@ bun test src/services/api/screening.test.cjs src/types/screening.test.cjs
 
 | Problem | Fix |
 |---|---|
-| `Unable to resolve module @supabase/supabase-js` (or `async-storage`, `expo-location`, `react-native-svg`) | Run the `bunx expo install ...` command from [step 6.6](#66-install-the-native-packages-the-app-needs), then `bunx expo start -c` to clear the cache |
+| `Unable to resolve module @supabase/supabase-js` (or `async-storage`, `expo-location`, `react-native-svg`) | Run `bun install`; if a native package is missing or was changed, run `bunx expo install <package-name>`, then `bunx expo start -c` to clear the cache |
 | App on a **phone** cannot reach the API or database | Use your computer's **LAN IP** in `.env`, keep both devices on the same Wi-Fi, and allow ports `8000` and `54321` in the firewall |
 | App on the **emulator** cannot reach the API | Use `10.0.2.2` instead of `localhost` |
 | `/health` is not ready right after starting the backend | Wait 30 to 60 seconds for TensorFlow to load the models |
@@ -443,15 +445,38 @@ We want to be honest about what this prototype can and cannot do.
 - **Noise and microphones matter.** Background noise and phone microphone quality can affect consistency.
 - **Privacy first.** Audio is deleted right after inference, recordings and child names are never logged, and database access is restricted per user with Row Level Security.
 
-## 11. Roadmap
+## 11. AI Use and Third-Party Declaration
 
-- [ ] Collect non-pneumonia coughs (healthy, cold, asthma, bronchitis) to measure sensitivity and specificity
-- [ ] Clinical validation with pediatricians and partner community health centers (puskesmas)
-- [ ] Re-calibrate the audio quality gate with real home recordings
-- [ ] Complete the recording and analysis screens end to end on device
-- [ ] Real-time doctor chat and live hospital map with distance
-- [ ] Deploy the backend to a VPS with HTTPS (guide in [`docs/deploy.md`](./docs/deploy.md))
-- [ ] Anonymized epidemiology dashboard for health offices
+### AI use
+
+PNEUMOTrack uses machine-learning models as part of its core screening workflow:
+
+- **Autoencoder (AE):** learns a compact representation of the extracted cough-audio features and contributes a reconstruction-error-based anomaly signal.
+- **One-Class Support Vector Machine (One-Class SVM / OC-SVM):** evaluates the four-dimensional latent representation produced by the Autoencoder.
+- **Decision logic:** combines the model outputs through majority voting. The application presents the result as a cautious screening indication, not a medical diagnosis.
+
+The model implementation and training workflow are maintained in [`server_side/pneumonia_detection_v3.ipynb`](./server_side/pneumonia_detection_v3.ipynb), with inference code in [`server_side/predictor.py`](./server_side/predictor.py) and [`server_side/model.py`](./server_side/model.py).
+
+### Third-party declaration
+
+PNEUMOTrack is built with third-party open-source software and external services. The principal components visible in the project manifests and source code include:
+
+| Component | Purpose |
+|---|---|
+| [Expo](https://expo.dev/) and [React Native](https://reactnative.dev/) | Mobile application runtime and native device capabilities |
+| [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Expo Router](https://docs.expo.dev/router/introduction/) | UI, application logic, and file-based navigation |
+| [NativeWind](https://www.nativewind.dev/) and [Tailwind CSS](https://tailwindcss.com/) | Styling |
+| [Supabase](https://supabase.com/) | Local/hosted authentication, PostgreSQL access, and database services |
+| [FastAPI](https://fastapi.tiangolo.com/) and [Uvicorn](https://www.uvicorn.org/) | Backend API |
+| [TensorFlow](https://www.tensorflow.org/) / [Keras](https://keras.io/) and [scikit-learn](https://scikit-learn.org/) | Autoencoder and One-Class SVM implementation |
+| [librosa](https://librosa.org/), [noisereduce](https://github.com/timsainb/noisereduce), [SciPy](https://scipy.org/), [SoundFile](https://python-soundfile.readthedocs.io/) | Audio processing and feature extraction |
+| [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) | Bundled FFmpeg binary for audio decoding |
+| [Docker](https://www.docker.com/) and Docker Compose | Local database/backend development environment |
+| [Bun](https://bun.sh/) and [uv](https://docs.astral.sh/uv/) | JavaScript and Python dependency management |
+
+**Dataset and media attribution:** The model notebook processes 82 pneumonia-labelled cough samples, but the original dataset files and their source/license details are not included in this repository archive. The dataset provider, original citation, and usage license must be added here once confirmed. The same applies to any externally sourced images, icons, fonts, or other media: retain the original creator attribution and license where required. Do not assume that an asset is free to redistribute merely because it is accessible online.
+
+**No endorsement:** Third-party names and trademarks belong to their respective owners. Their inclusion documents technical dependencies or cited information sources and does not imply sponsorship, certification, or endorsement of PNEUMOTrack.
 
 ## 12. Team
 
