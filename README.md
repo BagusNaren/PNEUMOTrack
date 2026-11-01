@@ -1,6 +1,6 @@
 <div align="center">
 
-<img width="1500" height="1000" alt="PNEUMOTrack_thumbnail" src="https://github.com/user-attachments/assets/910a09cb-f6dd-417c-96bd-69eb57519f09" />
+<img width="1500" height="1000" alt="PNEUMOTrack_banner_logos" src="https://github.com/user-attachments/assets/40d24b6c-203a-4c0a-b16e-b7ed08a4116d" />
 
 # PNEUMOTrack
 
