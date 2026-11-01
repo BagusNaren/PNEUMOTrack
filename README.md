@@ -34,8 +34,9 @@ INCEPTION 2026 Hackathon · Universitas Udayana
 8. [Testing](#8-testing)
 9. [Troubleshooting](#9-troubleshooting)
 10. [Responsible AI and limitations](#10-responsible-ai-and-limitations)
-11. [AI Use and Third-Party Declaration](#11-ai-use-and-third-party-declaration)
-12. [Team](#12-team)
+11. [Roadmap and next steps](#11-roadmap-and-next-steps)
+12. [AI Use and Third-Party Declaration](#12-ai-use-and-third-party-declaration)
+13. [Team](#13-team)
 
 ---
 
@@ -480,7 +481,51 @@ We want to be honest about what this prototype can and cannot do.
 - **Noise and microphones matter.** Background noise and phone microphone quality can affect consistency.
 - **Privacy first.** Audio is deleted right after inference, recordings and child names are never logged, and database access is restricted per user with Row Level Security.
 
-## 11. AI Use and Third-Party Declaration
+## 11. Roadmap and next steps
+
+PNEUMOTrack is a hackathon prototype. The roadmap below turns the limitations in [section 10](#10-responsible-ai-and-limitations) into concrete next steps, from a better-tested model to a pilot in primary care. Timelines are plans and depend on funding and partner readiness.
+
+**Where we are now:** a working end-to-end prototype with cough recording, the FastAPI inference service, a Supabase database with Row Level Security, screening history, doctor and hospital recommendations, and a documented local setup.
+
+| Phase | Timeline | Focus | Outcome |
+|---|---|---|---|
+| 1 | Months 1–3 | Strengthen the model | Model tested against non-pneumonia coughs, with a performance report that can be defended |
+| 2 | Months 4–6 | Clinical validation and user testing | First clinical evidence and real feedback from parents and health cadres |
+| 3 | Months 7–12 | Pilot in primary care | Real-world usage and health partners willing to continue |
+| 4 | Year 2 | Scale and integrate | A sustainable service connected to regional health systems |
+
+### Phase 1: Strengthen the model (months 1–3)
+
+- [ ] Collect cough recordings from children **without** pneumonia (healthy and common cold) as a comparison set
+- [ ] Re-evaluate the model with sensitivity and specificity, not only agreement between models
+- [ ] Re-calibrate the audio quality-gate thresholds with real phone recordings instead of mostly synthetic signals
+- [ ] Complete dataset attribution and license information (see [section 12](#12-ai-use-and-third-party-declaration))
+
+### Phase 2: Clinical validation and user testing (months 4–6)
+
+- [ ] Draft a study protocol together with pediatricians and a research institution
+- [ ] Apply for research ethics approval and prepare informed consent for parents
+- [ ] Run usability tests with parents and posyandu health cadres
+- [ ] Harden child-data security (encryption, per-user access, retention rules)
+
+### Phase 3: Pilot in primary care (months 7–12)
+
+- [ ] Run a limited pilot at a puskesmas or posyandu together with the local health office
+- [ ] Put the referral flow into real use: doctors, hospitals and consultation chat
+- [ ] Publish on an app store with a privacy policy and a clear non-diagnostic statement
+- [ ] Monitor result quality and system errors on a regular basis
+
+### Phase 4: Scale and integrate (year 2)
+
+- [ ] Expand to more regions and health facilities
+- [ ] Add an epidemiology trend dashboard for health offices
+- [ ] Add an iOS version and regional-language support
+- [ ] Retrain the model on a schedule and evaluate supporting signals such as vital signs
+- [ ] Define a funding and revenue model for long-term sustainability
+
+> PNEUMOTrack is a screening aid, not a diagnosis. None of these steps changes that: every phase keeps a doctor in the loop.
+
+## 12. AI Use and Third-Party Declaration
 
 ### AI use
 
@@ -513,7 +558,7 @@ PNEUMOTrack is built with third-party open-source software and external services
 
 **No endorsement:** Third-party names and trademarks belong to their respective owners. Their inclusion documents technical dependencies or cited information sources and does not imply sponsorship, certification, or endorsement of PNEUMOTrack.
 
-## 12. Team
+## 13. Team
 
 | Role | Member |
 |---|---|
