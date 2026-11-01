@@ -449,6 +449,21 @@ curl -F "audio=@cough.m4a" http://127.0.0.1:8000/predict
 
 ## 8. Testing
 
+### 8.1 Demo account for judges
+
+Use the following account to test the app without registering:
+
+| Field | Value |
+|---|---|
+| Email | `demo@pneumotrack.id` |
+| Password | `demo1234` |
+
+On the sign-in screen, enter these credentials or tap **Masuk sebagai Demo**. The account is provisioned in the team's Supabase project; a fresh local Supabase instance does not include it.
+
+For the demo, add or select a fictional child profile, record a cough, run the analysis, and check the result, recommendations, and history. To test with an audio sample, play it on a separate device and record it through the phone microphone. Synthetic audio from `server_side/tests/conftest.py` is for functional testing and does not establish a clinical label or guarantee a particular screening result.
+
+### 8.2 Automated checks
+
 ```bash
 # Backend unit and API tests
 cd server_side
