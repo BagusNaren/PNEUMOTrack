@@ -1,16 +1,16 @@
 import { Image } from "expo-image";
-import { router } from "expo-router";
-import { useEffect } from "react";
+import { Redirect } from "expo-router";
 import { Text, View } from "react-native";
 import { Screen } from "@/components/ui/screen";
 import { copy } from "@/constants/copy";
 import { UI } from "@/constants/theme";
+import { useSession } from "@/hooks/use-session";
 
 export default function EntryScreen() {
-  useEffect(() => {
-    const timer = setTimeout(() => router.replace("/(tabs)"), 700);
-    return () => clearTimeout(timer);
-  }, []);
+  const { user, isLoading } = useSession();
+  if (!isLoading) {
+    return <Redirect href={user ? "/(tabs)" : "/(auth)/sign-in"} />;
+  }
   return (
     <Screen scroll={false}>
       <View className="items-center gap-6">

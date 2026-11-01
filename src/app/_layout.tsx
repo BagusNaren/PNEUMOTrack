@@ -2,6 +2,7 @@ import "@/global.css";
 
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { ThemeRoot } from "@/components/ui/theme-root";
 import { type PropsWithChildren, useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -32,8 +33,16 @@ function formatChildAgeLabel(birthDateStr: string): string {
 }
 
 function ScreeningBridge({ children }: PropsWithChildren) {
-  const { activeChild, isLoading } = useActiveChild();
+  const { activeChild, isLoading, error, refresh } = useActiveChild();
   const adapter = useMemo<ActiveChildAdapter>(() => {
+    if (error)
+      return {
+        status: "error",
+        child: null,
+        onRetry: () => {
+          void refresh();
+        },
+      };
     if (isLoading) {
       return { status: "loading", child: null };
     }
@@ -48,7 +57,7 @@ function ScreeningBridge({ children }: PropsWithChildren) {
         ageLabel: formatChildAgeLabel(activeChild.birth_date),
       },
     };
-  }, [activeChild, isLoading]);
+  }, [activeChild, isLoading, error, refresh]);
 
   return (
     <ScreeningProvider
@@ -63,7 +72,7 @@ function ScreeningBridge({ children }: PropsWithChildren) {
 function SessionBoundProviders({ children }: PropsWithChildren) {
   const { user } = useSession();
   return (
-    <ActiveChildProvider parentId={user?.id ?? "user-demo"}>
+    <ActiveChildProvider parentId={user?.id ?? null}>
       <ScreeningBridge>{children}</ScreeningBridge>
     </ActiveChildProvider>
   );
@@ -84,30 +93,32 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AppProviders>
-          <ThemeProvider
-            value={{
-              ...base,
-              colors: {
-                ...base.colors,
-                background: colors.surface,
-                card: colors.surfaceCard,
-                text: colors.ink,
-                primary: colors.brand,
-                border: colors.border,
-              },
-            }}
-          >
-            <StatusBar style="auto" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                animation: "none",
-                contentStyle: { backgroundColor: colors.surface },
+        <ThemeRoot>
+          <AppProviders>
+            <ThemeProvider
+              value={{
+                ...base,
+                colors: {
+                  ...base.colors,
+                  background: colors.surface,
+                  card: colors.surfaceCard,
+                  text: colors.ink,
+                  primary: colors.brand,
+                  border: colors.border,
+                },
               }}
-            />
-          </ThemeProvider>
-        </AppProviders>
+            >
+              <StatusBar style="auto" />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.surface },
+                }}
+              />
+            </ThemeProvider>
+          </AppProviders>
+        </ThemeRoot>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

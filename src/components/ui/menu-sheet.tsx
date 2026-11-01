@@ -22,6 +22,9 @@ export function MenuSheet({
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  // An empty Compose host can still intercept Android taps while the sheet is closed.
+  if (!open) return null;
+
   function navigate(href: Href) {
     onClose();
     router.navigate(href);
@@ -29,7 +32,7 @@ export function MenuSheet({
   return (
     <Host
       seedColor={theme.brand}
-      pointerEvents="box-none"
+      pointerEvents="none"
       style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
     >
       <BottomSheet
@@ -54,9 +57,6 @@ export function MenuSheet({
                 className="text-title font-bold text-ink dark:text-ink-dark"
               >
                 {copy.nav.menu}
-              </Text>
-              <Text className="text-body text-ink-muted dark:text-ink-dark-muted">
-                {copy.nav.upcoming}
               </Text>
               {entries.map((item) => (
                 <Button

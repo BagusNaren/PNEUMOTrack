@@ -1,0 +1,42 @@
+{
+  "light": {
+    "surface": "#FFFFFF",
+    "surfaceMuted": "#F6F8FA",
+    "surfaceCard": "#FFFFFF",
+    "surfaceBrand": "#D6E9F4",
+    "surfaceBrandSoft": "#EAF4F9",
+    "border": "#738497",
+    "ink": "#0B1B2B",
+    "inkMuted": "#4F535B",
+    "iconMuted": "#4C5D70",
+    "brand": "#1F4B75",
+    "brandStrong": "#173A5C",
+    "onBrand": "#FFFFFF",
+    "risk": "#963232",
+    "onRisk": "#FFFFFF",
+    "surfaceRisk": "#F4D6D6",
+    "borderRisk": "#A33A3A",
+    "safe": "#186449",
+    "surfaceSafe": "#D9EFE7"
+  },
+  "dark": {
+    "surface": "#0B1220",
+    "surfaceMuted": "#131C2A",
+    "surfaceCard": "#131C2A",
+    "surfaceBrand": "#1E3A52",
+    "surfaceBrandSoft": "#17293D",
+    "border": "#718399",
+    "ink": "#F5F7FA",
+    "inkMuted": "#BBC5D1",
+    "iconMuted": "#A9B4C2",
+    "brand": "#8ABFE5",
+    "brandStrong": "#A9CBE8",
+    "onBrand": "#0B1220",
+    "risk": "#F59C9C",
+    "onRisk": "#2A0F12",
+    "surfaceRisk": "#3A1E22",
+    "borderRisk": "#F08A8A",
+    "safe": "#7CDDB8",
+    "surfaceSafe": "#16332A"
+  }
+}

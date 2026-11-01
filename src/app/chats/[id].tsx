@@ -1,264 +1,164 @@
-// src/app/chats/[id].tsx
-// Doctor consultation chat room — matches chat room_user.png.
-
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import { useLocalSearchParams } from "expo-router";
+import { useCallback, useRef, useState, type ComponentRef } from "react";
 import {
-  Image,
   KeyboardAvoidingView,
   Linking,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { doctorsService } from '@/services/doctors';
-import type { Doctor, Message } from '@/types/domain';
-
-function createInitialMessages(doctorId: string): Message[] {
-  const now = Date.now();
-  return [
-    {
-      id: 'msg-1',
-      conversation_id: `conv-${doctorId}`,
-      sender_id: doctorId,
-      sender_role: 'doctor',
-      content: 'Hello, How can I help you?',
-      created_at: new Date(now - 30 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'msg-2',
-      conversation_id: `conv-${doctorId}`,
-      sender_id: 'user-demo',
-      sender_role: 'parent',
-      content:
-        'Does my son really have pneumonia? The app shows a pneumonia indication for my son.',
-      created_at: new Date(now - 20 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'msg-3',
-      conversation_id: `conv-${doctorId}`,
-      sender_id: doctorId,
-      sender_role: 'doctor',
-      content:
-        'I recommend you to do further examination at nearby hospital.',
-      created_at: new Date(now - 15 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'msg-4',
-      conversation_id: `conv-${doctorId}`,
-      sender_id: 'user-demo',
-      sender_role: 'parent',
-      content:
-        'Thank you doc! Do you have any recommendation of the hospital?',
-      created_at: new Date(now - 10 * 60 * 1000).toISOString(),
-    },
-  ];
-}
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { Icon } from "@/components/ui/icon";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { copy } from "@/constants/copy";
+import { useConversation } from "@/hooks/use-conversation";
+import { useResource } from "@/hooks/use-resource";
+import { useSession } from "@/hooks/use-session";
+import { useTheme } from "@/hooks/use-theme";
+import { doctorsService } from "@/services/doctors";
+import { formatDate } from "@/utils/format";
 
 export default function ChatRoomScreen() {
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const { user } = useSession();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const scrollViewRef = useRef<ComponentRef<typeof ScrollView>>(null);
-
-  const [doctor, setDoctor] = useState<Doctor | null>(null);
-  const [messages, setMessages] = useState<Message[]>(() =>
-    createInitialMessages(id ?? 'doc-1'),
+  const doctor = useResource(
+    useCallback(
+      () => (id ? doctorsService.get(id) : Promise.resolve(null)),
+      [id],
+    ),
   );
-  const [inputText, setInputText] = useState('');
-
-  useEffect(() => {
-    if (!id) return;
-    let active = true;
-
-    doctorsService.get(id).then((doc) => {
-      if (!active) return;
-      if (doc) setDoctor(doc);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [id]);
-
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-
-    const newMsg: Message = {
-      id: `msg-${Date.now()}`,
-      conversation_id: `conv-${id}`,
-      sender_id: 'user-demo',
-      sender_role: 'parent',
-      content: inputText.trim(),
-      created_at: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, newMsg]);
-    setInputText('');
-
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-
-    setTimeout(() => {
-      const docReply: Message = {
-        id: `msg-reply-${Date.now()}`,
-        conversation_id: `conv-${id}`,
-        sender_id: id ?? 'doc-1',
-        sender_role: 'doctor',
-        content:
-          'You can visit RSUP Sanglah or RS Kasih Ibu. They have 24-hour pediatric emergency facilities.',
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, docReply]);
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }, 1500);
-  };
-
-  const handleCall = () => {
-    if (doctor?.phone) {
-      Linking.openURL(`tel:${doctor.phone}`).catch(() => {});
+  const chat = useConversation(user?.id ?? "user-demo", id);
+  const [input, setInput] = useState("");
+  const [callFailed, setCallFailed] = useState(false);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  const call = async () => {
+    setCallFailed(false);
+    try {
+      await Linking.openURL(`tel:${doctor.data?.phone}`);
+    } catch {
+      setCallFailed(true);
     }
   };
-
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-surface dark:bg-surface-dark"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      className="flex-1 bg-surface"
+      style={{ paddingTop: insets.top }}
     >
-      <View
-        style={{ paddingTop: insets.top + 8 }}
-        className="border-b border-border bg-surface px-4 pb-3 dark:border-border-dark dark:bg-surface-card-dark"
-      >
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <Pressable
-              onPress={() => router.back()}
-              className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
-            >
-              <Text className="text-2xl text-ink dark:text-ink-dark">‹</Text>
-            </Pressable>
-
-            <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
-              {doctor?.name ?? 'Dr. Ichi Ni San'}
-            </Text>
-          </View>
-
-          <View className="flex-row items-center gap-3">
-            <Pressable
-              onPress={handleCall}
-              className="h-9 w-9 items-center justify-center rounded-full active:opacity-70"
-            >
-              <Text className="text-lg">📹</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleCall}
-              className="h-9 w-9 items-center justify-center rounded-full active:opacity-70"
-            >
-              <Text className="text-lg">📞</Text>
-            </Pressable>
-            <Pressable className="h-9 w-9 items-center justify-center rounded-full active:opacity-70">
-              <Text className="text-lg font-bold text-ink-muted">⋮</Text>
-            </Pressable>
-          </View>
-        </View>
+      <View className="px-4">
+        <ScreenHeader title={doctor.data?.name ?? copy.chats.title} />
       </View>
-
       <ScrollView
-        ref={scrollViewRef}
-        className="flex-1 px-4 py-3"
-        contentContainerStyle={{ gap: 14, paddingBottom: 16 }}
+        ref={scroll}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: 24,
+          gap: 16,
+        }}
         keyboardShouldPersistTaps="handled"
-        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() =>
+          scroll.current?.scrollToEnd({ animated: false })
+        }
       >
-        <View className="items-center my-2">
-          <View className="rounded-full bg-surface-brand-soft px-4 py-1.5 mb-1">
-            <Text className="text-caption font-bold text-brand">
-              Consultation Start
-            </Text>
-          </View>
-          <Text className="text-caption text-ink-muted">
-            You can consult your condition to the doctor
-          </Text>
-        </View>
-
-        {messages.map((msg) => {
-          const isMe = msg.sender_role === 'parent';
-
-          if (!isMe) {
-            return (
-              <View key={msg.id} className="self-start max-w-[80%] gap-1.5">
-                <View className="flex-row items-center gap-2">
-                  <Image
-                    source={require('@/assets/images/image_doctor.png')}
-                    style={{ width: 28, height: 28, borderRadius: 14 }}
-                  />
-                  <Text className="text-caption font-bold text-ink dark:text-ink-dark">
-                    {doctor?.name ?? 'Dr. Ichi Ni San'}
-                  </Text>
-                  <Text className="text-caption text-ink-muted">10:20 AM</Text>
-                </View>
-
-                <View className="rounded-2xl rounded-tl-sm bg-surface-brand px-4 py-2.5 dark:bg-surface-brand-dark">
-                  <Text className="text-body text-ink dark:text-ink-dark leading-5">
-                    {msg.content}
-                  </Text>
-                </View>
-              </View>
-            );
-          }
-
-          return (
-            <View
-              key={msg.id}
-              className="self-end max-w-[80%] rounded-2xl rounded-br-sm bg-brand px-4 py-2.5 shadow-sm"
-            >
-              <Text className="text-body text-on-brand leading-5">
-                {msg.content}
-              </Text>
-              <View className="mt-1 flex-row items-center justify-end gap-1">
-                <Text className="text-caption text-white/70">10:21 AM</Text>
-                <Text className="text-caption text-white/80">✓✓</Text>
-              </View>
-            </View>
-          );
-        })}
-      </ScrollView>
-
-      <View
-        style={{ paddingBottom: insets.bottom > 0 ? insets.bottom : 12 }}
-        className="border-t border-border bg-surface px-4 pt-2.5 dark:border-border-dark dark:bg-surface-card-dark"
-      >
-        <View className="flex-row items-center gap-2.5">
-          <View className="flex-1 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 py-2 dark:border-border-dark dark:bg-surface-dark">
-            <TextInput
-              className="flex-1 text-body text-ink dark:text-ink-dark"
-              placeholder="Type Message..."
-              placeholderTextColor="#AEB7C2"
-              value={inputText}
-              onChangeText={setInputText}
-            />
-            <Text className="text-base text-icon-muted ml-2">📎</Text>
-          </View>
-
-          <Pressable
-            onPress={handleSend}
-            disabled={!inputText.trim()}
-            className={`h-11 px-5 items-center justify-center rounded-pill ${
-              inputText.trim() ? 'bg-brand active:opacity-80' : 'bg-brand/50'
-            }`}
+        {(doctor.isLoading || chat.isLoading) && <LoadingState />}
+        {doctor.error && (
+          <ErrorState
+            description={copy.common.loadFailed}
+            onAction={() => void doctor.reload()}
+          />
+        )}
+        {chat.error && (
+          <ErrorState
+            description={copy.common.loadFailed}
+            onAction={() => void chat.reload()}
+          />
+        )}
+        {!doctor.isLoading && !doctor.error && !doctor.data && (
+          <EmptyState
+            title={copy.care.noDoctor}
+            body={copy.care.noDoctorBody}
+          />
+        )}
+        {!chat.isLoading && !chat.error && !chat.data?.messages.length && (
+          <EmptyState
+            title={copy.chats.noMessage}
+            body={copy.chats.emptyBody}
+          />
+        )}
+        {chat.data?.messages.map((message) => (
+          <View
+            key={message.id}
+            className={`max-w-[90%] gap-1 rounded-card px-4 py-3 ${message.sender_role === "parent" ? "self-end bg-brand" : "self-start bg-surface-brand"}`}
           >
-            <Text className="text-label font-bold text-on-brand">
-              Send
+            <Text
+              selectable
+              className={`text-body ${message.sender_role === "parent" ? "text-on-brand" : "text-ink"}`}
+            >
+              {message.content}
             </Text>
-          </Pressable>
-        </View>
+            <Text
+              className={`text-caption ${message.sender_role === "parent" ? "text-on-brand" : "text-ink-muted"}`}
+            >
+              {formatDate(message.created_at, true)}
+            </Text>
+          </View>
+        ))}
+        {doctor.data?.phone && (
+          <Button
+            label={copy.chats.call}
+            variant="secondary"
+            icon={<Icon name="phone" tone="brand" />}
+            onPress={() => void call()}
+          />
+        )}
+        {callFailed && (
+          <Text accessibilityRole="alert" className="text-body text-risk">
+            {copy.chats.callError}
+          </Text>
+        )}
+      </ScrollView>
+      <View
+        style={{ paddingBottom: insets.bottom + 12 }}
+        className="gap-2 border-t border-border px-5 pt-3"
+      >
+        {chat.sendFailed && (
+          <Text accessibilityRole="alert" className="text-label text-risk">
+            {copy.chats.sendError}
+          </Text>
+        )}
+        <Text className="text-label font-semibold text-ink">
+          {copy.chats.input}
+        </Text>
+        <TextInput
+          accessibilityLabel={copy.chats.input}
+          value={input}
+          onChangeText={setInput}
+          multiline
+          maxLength={2000}
+          placeholder={copy.chats.input}
+          placeholderTextColor={theme.inkMuted}
+          className="min-h-12 rounded-xl border border-border px-4 py-3 text-body text-ink"
+        />
+        <Button
+          label={copy.chats.send}
+          loading={chat.sending}
+          disabled={
+            !input.trim() || !doctor.data || chat.isLoading || chat.error
+          }
+          onPress={async () => {
+            const draft = input;
+            if (await chat.send(draft))
+              setInput((current) => (current === draft ? "" : current));
+          }}
+        />
       </View>
     </KeyboardAvoidingView>
   );

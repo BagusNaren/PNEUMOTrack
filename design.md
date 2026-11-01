@@ -1,5 +1,7 @@
 # PNEUMOTrack — Design Implementation Guide
 
+Implementation update, 1 November 2026 (audit 001): colors now come from `src/constants/palette.json`, shared by numeric theme props and NativeWind CSS variables at `ThemeRoot`. The existing color tables below record the original design; use the palette file for current contrast-adjusted values. Child profiles use initials instead of a shared photo. Bottom tabs show Indonesian labels with a history icon. Monitoring remains available through Menu and shows only the last recorded waveform. These decisions implement the requested audit fixes and replace the older photo/icon-only instructions below.
+
 Source of truth for visual implementation. Derived from the screens in [`UI_reference/`](./UI_reference) and the product rules in [`PRD.md`](./PRD.md). If this guide and a mockup disagree, follow the mockup for layout and this guide for tokens, copy, and safety rules.
 
 Stack assumptions: Expo SDK 58, React Native 0.88, NativeWind 4.2.7 (Tailwind CSS 3), Expo Router, `src/app/` routes.

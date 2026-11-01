@@ -570,6 +570,7 @@ Built for the **INCEPTION 2026 Hackathon** · Universitas Udayana.
 
 ## Documentation
 
+- [`docs/android-local.md`](./docs/android-local.md): build dan testing APK Android lokal di Windows
 - [`docs/api.md`](./docs/api.md): API contract
 - [`docs/architecture.md`](./docs/architecture.md): architecture and AI pipeline
 - [`docs/backend-local.md`](./docs/backend-local.md): backend local setup notes

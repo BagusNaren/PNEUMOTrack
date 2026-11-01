@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import type { ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { copy } from "@/constants/copy";
+import { Config } from "@/constants/config";
 import { Icon } from "./icon";
 
 export function ScreenHeader({
@@ -57,6 +58,11 @@ export function ScreenHeader({
         {subtitle && (
           <Text className="w-full text-center text-caption text-ink-muted dark:text-ink-dark-muted">
             {subtitle}
+          </Text>
+        )}
+        {Config.useMockData && (
+          <Text className="mt-1 text-center text-caption text-ink-muted">
+            {copy.screening.dataDemo}
           </Text>
         )}
       </View>

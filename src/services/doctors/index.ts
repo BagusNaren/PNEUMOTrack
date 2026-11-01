@@ -1,10 +1,10 @@
 // src/services/doctors/index.ts
 // Doctors service — read-only from Supabase, no RLS restriction needed (public data).
 
-import { Config } from '@/constants/config';
-import { supabase } from '@/services/supabase/client';
-import type { Doctor } from '@/types/domain';
-import { MOCK_DOCTORS } from '../mock-data';
+import { Config } from "@/constants/config";
+import { supabase } from "@/services/supabase/client";
+import type { Doctor } from "@/types/domain";
+import { MOCK_DOCTORS } from "../mock-data";
 
 export interface DoctorFilter {
   specialty?: string;
@@ -15,7 +15,7 @@ export type DoctorFilterParam = DoctorFilter | string;
 
 function normalizeFilter(filter?: DoctorFilterParam): DoctorFilter | undefined {
   if (!filter) return undefined;
-  if (typeof filter === 'string') return { query: filter };
+  if (typeof filter === "string") return { query: filter };
   return filter;
 }
 
@@ -49,14 +49,16 @@ const mockService = {
 const supabaseService = {
   list: async (filterParam?: DoctorFilterParam): Promise<Doctor[]> => {
     const filter = normalizeFilter(filterParam);
-    let query = supabase.from('doctors').select('*, hospitals(name)');
+    let query = supabase.from("doctors").select("*, hospitals(name)");
     if (filter?.query) {
-      query = query.or(`name.ilike.%${filter.query}%,specialty.ilike.%${filter.query}%`);
+      query = query.or(
+        `name.ilike.%${filter.query}%,specialty.ilike.%${filter.query}%`,
+      );
     }
     if (filter?.specialty) {
-      query = query.ilike('specialty', `%${filter.specialty}%`);
+      query = query.ilike("specialty", `%${filter.specialty}%`);
     }
-    const { data, error } = await query.order('rating', { ascending: false });
+    const { data, error } = await query.order("rating", { ascending: false });
     if (error) throw error;
     return (data ?? []).map((d: any) => ({
       ...d,
@@ -65,13 +67,16 @@ const supabaseService = {
   },
   get: async (id: string): Promise<Doctor | null> => {
     const { data, error } = await supabase
-      .from('doctors')
-      .select('*, hospitals(name)')
-      .eq('id', id)
-      .single();
-    if (error) return null;
+      .from("doctors")
+      .select("*, hospitals(name)")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
     return { ...data, hospital_name: (data as any).hospitals?.name ?? null };
   },
 };
 
-export const doctorsService = Config.useMockData ? mockService : supabaseService;
+export const doctorsService = Config.useMockData
+  ? mockService
+  : supabaseService;

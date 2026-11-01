@@ -68,7 +68,7 @@ export function Button({
       disabled={blocked}
       aria-busy={busy}
       aria-disabled={!!blocked}
-      className={`min-h-12 flex-row flex-wrap items-center justify-center gap-2 rounded-pill px-5 py-3 active:opacity-80 ${blocked ? "bg-surface-muted dark:bg-surface-muted-dark" : variants[variant].container} ${className}`}
+      className={`min-h-12 flex-row flex-wrap items-center justify-center gap-2 rounded-pill px-5 py-3 active:opacity-90 ${blocked ? "bg-surface-muted dark:bg-surface-muted-dark" : variants[variant].container} ${className}`}
       style={style}
     >
       {busy ? <ActivityIndicator color={theme.inkMuted} /> : icon}

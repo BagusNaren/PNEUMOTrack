@@ -31,7 +31,9 @@ Run lint and typecheck before declaring any task done.
 
 ## Building with EAS
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
+Prefer **local Android builds for routine testing**: `bun run android:local` for development and `bun run android:release` for a standalone release APK. On Windows, these scripts configure Bun, Android SDK, and CMake for long native paths. Use `-Mock` explicitly when testing the UI without a backend; this produces simulated screening results. See [`docs/android-local.md`](./docs/android-local.md). Verify tap/navigation behavior in a release APK before a cloud build.
+
+Use EAS for shared/cloud builds, signing, store submission (`eas build`, `eas submit`), and over-the-air updates (`eas update`). Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
 Docs: https://docs.expo.dev/eas/index.md
 
 ## Rules

@@ -3,6 +3,7 @@
 // Denpasar, Bali as the demo city.
 
 import type { Article, Child, Conversation, Doctor, Hospital, Message, Screening } from '@/types/domain';
+import { copy } from '@/constants/copy';
 
 export const MOCK_CHILDREN: Child[] = [
   {
@@ -41,8 +42,7 @@ export const MOCK_SCREENINGS: Screening[] = [
     chunks: 5,
     duration_sec: 7.2,
     waveform: makeWaveform(80, false),
-    summary:
-      '• Pola batuk terdeteksi normal, tidak ditemukan tanda-tanda pola batuk tidak biasa.\n• Kualitas rekaman baik dengan 5 segmen batuk terdeteksi.\n• Lanjutkan pemantauan secara berkala untuk kondisi optimal.',
+    summary: copy.screening.mockSummaryNormal,
     model_version: 'v3',
     created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -57,8 +57,7 @@ export const MOCK_SCREENINGS: Screening[] = [
     chunks: 4,
     duration_sec: 6.0,
     waveform: makeWaveform(80, true),
-    summary:
-      '• Pola batuk tidak biasa terdeteksi pada rekaman ini.\n• Terdapat ketidaksesuaian dengan pola batuk normal dalam analisis AI.\n• Disarankan untuk berkonsultasi dengan dokter anak atau dokter paru.',
+    summary: copy.screening.mockSummaryRisk,
     model_version: 'v3',
     created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -73,8 +72,7 @@ export const MOCK_SCREENINGS: Screening[] = [
     chunks: 3,
     duration_sec: 4.8,
     waveform: makeWaveform(80, false),
-    summary:
-      '• Hasil dua model AI menunjukkan perbedaan pendapat.\n• Autoencoder mendeteksi pola normal, namun OC-SVM menunjukkan pola yang perlu diperhatikan.\n• Disarankan rekam ulang untuk hasil yang lebih akurat.',
+    summary: copy.screening.mockSummaryDisagreement,
     model_version: 'v3',
     created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -89,8 +87,7 @@ export const MOCK_SCREENINGS: Screening[] = [
     chunks: 6,
     duration_sec: 8.4,
     waveform: makeWaveform(80, false),
-    summary:
-      '• Pola batuk terdeteksi normal.\n• Kualitas rekaman sangat baik dengan 6 segmen batuk.\n• Tidak ditemukan tanda pola batuk tidak biasa.',
+    summary: copy.screening.mockSummaryNormal,
     model_version: 'v3',
     created_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -105,8 +102,7 @@ export const MOCK_SCREENINGS: Screening[] = [
     chunks: 3,
     duration_sec: 5.1,
     waveform: makeWaveform(80, true),
-    summary:
-      '• Pola batuk tidak biasa terdeteksi pada rekaman ini.\n• Kedua model AI sepakat mendeteksi pola yang memerlukan perhatian.\n• Segera konsultasikan ke dokter anak.',
+    summary: copy.screening.mockSummaryRisk,
     model_version: 'v3',
     created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -121,8 +117,7 @@ export const MOCK_SCREENINGS: Screening[] = [
     chunks: 4,
     duration_sec: 6.2,
     waveform: makeWaveform(80, false),
-    summary:
-      '• Pola batuk normal terdeteksi.\n• Hasil skrining menunjukkan kondisi pernapasan yang baik.\n• Lanjutkan pemantauan secara berkala.',
+    summary: copy.screening.mockSummaryNormal,
     model_version: 'v3',
     created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
   },

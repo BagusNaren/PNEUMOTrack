@@ -71,6 +71,17 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "a95995b3-915a-4a91-a26f-401bb7501d9b"
+      }
+    },
+    "owner": "nomad37301s-team"
   }
 }

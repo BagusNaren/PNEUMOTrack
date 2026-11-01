@@ -114,8 +114,8 @@ const supabaseService = {
       .from("screenings")
       .select("*")
       .eq("id", id)
-      .single();
-    if (error) return null;
+      .maybeSingle();
+    if (error) throw error;
     return data;
   },
   latest: async (childId: string): Promise<Screening | null> => {
@@ -126,7 +126,7 @@ const supabaseService = {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (error) return null;
+    if (error) throw error;
     return data;
   },
 };

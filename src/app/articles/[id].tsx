@@ -1,118 +1,84 @@
-// src/app/articles/[id].tsx
-// Article detail view.
-
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import {
-  Linking,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ScreenHeader } from '@/components/ui/screen-header';
-import { articlesService } from '@/services/articles';
-import type { Article } from '@/types/domain';
+import { router, useLocalSearchParams } from "expo-router";
+import { useCallback } from "react";
+import { ScrollView, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/button";
+import { Disclaimer } from "@/components/ui/disclaimer";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { copy } from "@/constants/copy";
+import { useResource } from "@/hooks/use-resource";
+import { articlesService } from "@/services/articles";
+import { formatDate } from "@/utils/format";
 
 export default function ArticleDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-
-  const [article, setArticle] = useState<Article | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!id) return;
-    articlesService
-      .get(id)
-      .then(setArticle)
-      .finally(() => setIsLoading(false));
-  }, [id]);
-
-  if (isLoading || !article) {
-    return (
-      <View className="flex-1 items-center justify-center bg-surface dark:bg-surface-dark">
-        <Text className="text-body text-ink-muted">Memuat artikel…</Text>
-      </View>
-    );
-  }
-
-  const handleOpenSource = () => {
-    Linking.openURL('https://www.idai.or.id').catch(() => {});
-  };
-
+  const record = useResource(
+    useCallback(
+      () => (id ? articlesService.get(id) : Promise.resolve(null)),
+      [id],
+    ),
+  );
+  const article = record.data;
   return (
     <ScrollView
-      className="flex-1 bg-surface dark:bg-surface-dark"
+      className="flex-1 bg-surface"
       contentContainerStyle={{
         paddingTop: insets.top,
-        paddingBottom: insets.bottom + 24,
         paddingHorizontal: 20,
+        paddingBottom: insets.bottom + 24,
+        gap: 16,
       }}
-      showsVerticalScrollIndicator={false}
     >
-      <ScreenHeader title="Baca Artikel" />
-
-      <View className="my-3 gap-2">
-        <View className="flex-row items-center gap-2">
-          <Badge label={article.category} variant="brand" />
-          <Text className="text-caption text-ink-muted">
-            {new Date(article.published_at).toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </Text>
-        </View>
-
-        <Text className="text-title font-bold text-ink dark:text-ink-dark leading-8">
-          {article.title}
-        </Text>
-
-        <Text className="text-caption font-semibold text-brand dark:text-brand-light">
-          Sumber Edukasi: {article.source ?? 'Ikatan Dokter Anak Indonesia (IDAI)'}
-        </Text>
-      </View>
-
-      <View className="h-44 w-full rounded-2xl bg-surface-brand-soft items-center justify-center my-3 overflow-hidden border border-border">
-        <Text className="text-6xl">🫁</Text>
-        <Text className="mt-2 text-caption font-medium text-brand">
-          PNEUMOTrack Health Education
-        </Text>
-      </View>
-
-      <Card variant="default" className="my-3 p-5 gap-4">
-        <Text className="text-body text-ink dark:text-ink-dark leading-7">
-          {article.body_md}
-        </Text>
-
-        <View className="pt-3 border-t border-border gap-2">
-          <Text className="text-caption font-bold text-ink">Catatan Penting:</Text>
-          <Text className="text-caption text-ink-muted leading-5">
-            Informasi dalam artikel ini bersifat edukasi dan disadur dari pedoman klinis resmi. Jika si kecil menunjukkan gejala pneumonia seperti demam tinggi, napas cepat, atau tarikan dinding dada, segera konsultasikan langsung dengan dokter spesialis anak.
-          </Text>
-        </View>
-      </Card>
-
-      <View className="my-4 gap-3">
-        <Button
-          label="Konsultasi dengan Dokter Spesialis"
-          size="lg"
-          variant="primary"
-          icon={<Text className="text-lg">👨‍⚕️</Text>}
-          onPress={() => router.push('/doctors')}
-        />
-        <Button
-          label="Buka Pedoman Asli IDAI"
-          size="md"
-          variant="secondary"
-          onPress={handleOpenSource}
-        />
-      </View>
+      <ScreenHeader title={copy.articles.read} />
+      {record.isLoading ? (
+        <LoadingState />
+      ) : (
+        <>
+          {record.error && (
+            <ErrorState
+              description={copy.common.loadFailed}
+              onAction={() => void record.reload()}
+            />
+          )}
+          {article ? (
+            <>
+              <Text className="text-caption text-ink-muted">
+                {article.category} · {formatDate(article.published_at)}
+              </Text>
+              <Text
+                accessibilityRole="header"
+                className="text-title font-bold text-ink"
+              >
+                {article.title}
+              </Text>
+              {article.source && (
+                <Text selectable className="text-label text-brand">
+                  {copy.articles.source}: {article.source}
+                </Text>
+              )}
+              <Text selectable className="text-body text-ink">
+                {article.body_md}
+              </Text>
+              <Disclaimer />
+              <Button
+                label={copy.care.consult}
+                onPress={() => router.push("/doctors")}
+              />
+            </>
+          ) : (
+            !record.error && (
+              <EmptyState
+                title={copy.articles.unavailable}
+                body={copy.dashboard.articlesEmptyBody}
+              />
+            )
+          )}
+        </>
+      )}
     </ScrollView>
   );
 }

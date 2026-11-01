@@ -1,152 +1,115 @@
-// src/app/hospitals/map.tsx
-// Hospital map screen — matches hospital map_user.png.
-
-import { useEffect, useState } from 'react';
+import { useLocalSearchParams } from "expo-router";
+import { useCallback, useState } from "react";
 import {
+  FlatList,
   Linking,
   Platform,
-  Pressable,
   Text,
   TextInput,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { Card } from '@/components/ui/card';
-import { ScreenHeader } from '@/components/ui/screen-header';
-import { hospitalsService } from '@/services/hospitals';
-import type { Hospital } from '@/types/domain';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { copy } from "@/constants/copy";
+import { useResource } from "@/hooks/use-resource";
+import { useTheme } from "@/hooks/use-theme";
+import { hospitalsService } from "@/services/hospitals";
+import type { Hospital } from "@/types/domain";
 
 export default function HospitalMapScreen() {
   const insets = useSafeAreaInsets();
-  const [hospitals, setHospitals] = useState<Hospital[]>([]);
-  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    hospitalsService.list().then((list) => {
-      setHospitals(list);
-      if (list.length > 0) setSelectedHospital(list[0]);
-    });
-  }, []);
-
-  const handleNavigate = (h: Hospital) => {
+  const theme = useTheme();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const [search, setSearch] = useState("");
+  const [openFailed, setOpenFailed] = useState(false);
+  const hospitals = useResource(useCallback(() => hospitalsService.list(), []));
+  const filtered =
+    hospitals.data
+      ?.filter((item) =>
+        `${item.name} ${item.address}`
+          .toLocaleLowerCase("id-ID")
+          .includes(search.toLocaleLowerCase("id-ID")),
+      )
+      .sort((a, b) => Number(b.id === id) - Number(a.id === id)) ?? [];
+  const navigate = async (hospital: Hospital) => {
+    setOpenFailed(false);
     const url = Platform.select({
-      ios: `maps:0,0?q=${encodeURIComponent(h.name)}@${h.lat},${h.lng}`,
-      android: `geo:0,0?q=${h.lat},${h.lng}(${encodeURIComponent(h.name)})`,
-      default: `https://www.google.com/maps/search/?api=1&query=${h.lat},${h.lng}`,
+      ios: `maps:0,0?q=${encodeURIComponent(hospital.name)}@${hospital.lat},${hospital.lng}`,
+      android: `geo:0,0?q=${hospital.lat},${hospital.lng}(${encodeURIComponent(hospital.name)})`,
+      default: `https://www.google.com/maps/search/?api=1&query=${hospital.lat},${hospital.lng}`,
     });
-    if (url) Linking.openURL(url).catch(() => {});
+    try {
+      await Linking.openURL(url);
+    } catch {
+      setOpenFailed(true);
+    }
   };
-
   return (
-    <View className="flex-1 bg-surface dark:bg-surface-dark">
-      <View
-        style={{ paddingTop: insets.top }}
-        className="bg-surface px-4 pb-2 z-10 dark:bg-surface-card-dark"
-      >
-        <ScreenHeader
-          title="Hospital"
-          rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
-        />
-
-        <View className="my-2 h-11 flex-row items-center rounded-pill border border-border bg-surface-muted px-4 dark:border-border-dark dark:bg-surface-dark">
-          <Text className="mr-2 text-icon-muted">🔍</Text>
-          <TextInput
-            className="flex-1 text-label text-ink dark:text-ink-dark"
-            placeholder="Search location, ZIP code..."
-            placeholderTextColor="#AEB7C2"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-      </View>
-
-      <View className="flex-1 bg-surface-brand-soft items-center justify-center overflow-hidden">
-        <View className="h-72 w-72 rounded-full border border-brand/20 bg-brand/5 items-center justify-center">
-          <View className="h-44 w-44 rounded-full border border-brand/30 bg-brand/10 items-center justify-center">
-            <View className="h-7 w-7 rounded-full border-2 border-white bg-brand items-center justify-center shadow-md">
-              <View className="h-2.5 w-2.5 rounded-full bg-white" />
-            </View>
-          </View>
-        </View>
-
-        {hospitals.slice(0, 5).map((h, idx) => {
-          const isSelected = selectedHospital?.id === h.id;
-          const positions = [
-            { top: '25%', left: '22%' },
-            { top: '32%', right: '20%' },
-            { bottom: '38%', left: '28%' },
-            { bottom: '28%', right: '25%' },
-            { top: '15%', right: '35%' },
-          ];
-          const pos = positions[idx % positions.length];
-
-          return (
-            <Pressable
-              key={h.id}
-              onPress={() => setSelectedHospital(h)}
-              style={pos as any}
-              className="absolute items-center active:scale-110"
-            >
-              <View
-                className={`flex-row items-center gap-1 rounded-pill px-2.5 py-1 shadow-md ${
-                  isSelected
-                    ? 'bg-brand border-2 border-white'
-                    : 'bg-surface border border-border dark:bg-surface-card-dark'
-                }`}
-              >
-                <Text className="text-xs">🏥</Text>
-                <Text
-                  className={`text-caption font-bold ${
-                    isSelected ? 'text-on-brand' : 'text-ink dark:text-ink-dark'
-                  }`}
-                  numberOfLines={1}
-                >
-                  {h.name.slice(0, 10)}
-                </Text>
-              </View>
-              <View
-                className={`h-2 w-2 rotate-45 -mt-1 ${
-                  isSelected ? 'bg-brand' : 'bg-surface dark:bg-surface-card-dark'
-                }`}
-              />
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {selectedHospital && (
-        <View
-          style={{ paddingBottom: insets.bottom + 16 }}
-          className="absolute bottom-0 left-0 right-0 z-20 px-5 pt-3"
-        >
-          <Card
-            variant="default"
-            className="rounded-sheet shadow-xl border border-border p-5 gap-3"
-          >
-            <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
-              {selectedHospital.name}
+    <View className="flex-1 bg-surface" style={{ paddingTop: insets.top }}>
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 24,
+          gap: 16,
+        }}
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={
+          <View className="gap-3">
+            <ScreenHeader title={copy.care.mapTitle} />
+            <Text className="text-body text-ink-muted">
+              {copy.care.mapBody}
             </Text>
-
-            <View className="flex-row items-center gap-2">
-              <Text className="text-base text-brand">📍</Text>
-              <Text className="flex-1 text-caption text-ink-muted leading-4">
-                {selectedHospital.address}
+            <Text className="text-label font-semibold text-ink">
+              {copy.care.searchHospital}
+            </Text>
+            <TextInput
+              accessibilityLabel={copy.care.searchHospital}
+              value={search}
+              onChangeText={setSearch}
+              placeholder={copy.care.searchHospital}
+              placeholderTextColor={theme.inkMuted}
+              className="min-h-12 rounded-xl border border-border px-4 py-3 text-body text-ink"
+            />
+            {hospitals.error && (
+              <ErrorState
+                description={copy.common.loadFailed}
+                onAction={() => void hospitals.reload()}
+              />
+            )}
+            {openFailed && (
+              <Text accessibilityRole="alert" className="text-body text-risk">
+                {copy.care.mapError}
               </Text>
-            </View>
-
-            <Pressable
-              onPress={() => handleNavigate(selectedHospital)}
-              className="h-12 w-full items-center justify-center rounded-pill bg-brand active:opacity-80 mt-1"
-            >
-              <Text className="text-label font-bold text-on-brand">
-                See Detail
-              </Text>
-            </Pressable>
+            )}
+          </View>
+        }
+        ListEmptyComponent={
+          hospitals.isLoading ? (
+            <LoadingState />
+          ) : hospitals.error ? undefined : (
+            <EmptyState
+              title={copy.care.noHospital}
+              body={copy.care.noHospitalBody}
+            />
+          )
+        }
+        renderItem={({ item }) => (
+          <Card>
+            <Text className="text-subtitle font-semibold text-ink">
+              {item.name}
+            </Text>
+            <Text className="text-body text-ink-muted">{item.address}</Text>
+            <Button label={copy.care.map} onPress={() => void navigate(item)} />
           </Card>
-        </View>
-      )}
+        )}
+      />
     </View>
   );
 }

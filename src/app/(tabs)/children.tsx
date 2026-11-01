@@ -1,32 +1,35 @@
 // src/app/(tabs)/children.tsx
 // Children profile list and active child switcher.
 
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router } from "expo-router";
+import { useState } from "react";
 import {
   Alert,
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
   Text,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { ScreenHeader } from '@/components/ui/screen-header';
-import { copy } from '@/constants/copy';
-import { useActiveChild } from '@/hooks/use-active-child';
-import { childrenService } from '@/services/children';
-import type { Child } from '@/types/domain';
+import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
+import { ErrorState } from "@/components/ui/error-state";
+import { LoadingState } from "@/components/ui/loading-state";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { copy } from "@/constants/copy";
+import { useActiveChild } from "@/hooks/use-active-child";
+import { childrenService } from "@/services/children";
+import type { Child } from "@/types/domain";
 
 export default function ChildrenScreen() {
   const insets = useSafeAreaInsets();
-  const { activeChild, children, setActiveChild, refresh } = useActiveChild();
+  const { activeChild, children, setActiveChild, refresh, isLoading, error } =
+    useActiveChild();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const onRefresh = async () => {
@@ -37,24 +40,25 @@ export default function ChildrenScreen() {
 
   const handleDelete = (child: Child) => {
     Alert.alert(
-      'Hapus Profil Anak',
-      `Yakin ingin menghapus profil ${child.name}? Riwayat skrining akan tetap tersimpan.`,
+      copy.children.deleteTitle,
+      copy.children.deleteBody(child.name),
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: copy.common.cancel, style: "cancel" },
         {
-          text: 'Hapus',
-          style: 'destructive',
+          text: copy.common.delete,
+          style: "destructive",
           onPress: async () => {
             try {
               await childrenService.remove(child.id);
               await refresh();
             } catch (err: unknown) {
-              const msg = err instanceof Error ? err.message : 'Gagal menghapus';
-              Alert.alert('Error', msg);
+              const msg =
+                err instanceof Error ? err.message : copy.children.deleteFailed;
+              Alert.alert(copy.common.errorTitle, msg);
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -66,9 +70,10 @@ export default function ChildrenScreen() {
       (now.getMonth() - birth.getMonth());
     const years = Math.floor(diffMonths / 12);
     const months = diffMonths % 12;
-    if (years > 0 && months > 0) return `${years} tahun ${months} bulan`;
-    if (years > 0) return `${years} tahun`;
-    return `${months} bulan`;
+    if (years > 0 && months > 0)
+      return copy.children.ageYearsMonths(years, months);
+    if (years > 0) return copy.children.ageYears(years);
+    return copy.children.ageMonths(months);
   };
 
   return (
@@ -77,32 +82,27 @@ export default function ChildrenScreen() {
         className="flex-1"
         contentContainerStyle={{
           paddingTop: insets.top,
-          paddingBottom: insets.bottom + 90,
+          paddingBottom: 24,
           paddingHorizontal: 20,
         }}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+        }
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader
-          title={copy.children.listTitle}
-          showBack={false}
-          rightAction={
-            <Pressable
-              onPress={() => router.push('/children/new')}
-              className="h-10 w-10 items-center justify-center rounded-full bg-surface-brand active:opacity-70"
-              accessibilityLabel="Tambah Anak"
-            >
-              <Text className="text-xl font-bold text-brand">+</Text>
-            </Pressable>
-          }
-        />
+        <ScreenHeader title={copy.children.listTitle} showBack={false} />
 
-        {children.length === 0 ? (
+        {isLoading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState
+            description={copy.common.loadFailed}
+            onAction={() => void refresh()}
+          />
+        ) : children.length === 0 ? (
           <EmptyState
             title={copy.children.emptyTitle}
             body={copy.children.emptyBody}
-            actionLabel={copy.children.addButton}
-            onAction={() => router.push('/children/new')}
             className="mt-12"
           />
         ) : (
@@ -113,54 +113,58 @@ export default function ChildrenScreen() {
               return (
                 <Card
                   key={child.id}
-                  variant={isActive ? 'brand' : 'default'}
+                  variant={isActive ? "brand" : "default"}
                   className="gap-3"
                 >
                   <View className="flex-row items-center gap-3">
-                    <Image
-                      source={require('@/assets/images/image_children.png')}
-                      style={{ width: 56, height: 56, borderRadius: 28 }}
+                    <Avatar
+                      name={child.name}
+                      accessibilityLabel={copy.children.avatarLabel(child.name)}
                     />
 
                     <View className="flex-1">
-                      <View className="flex-row items-center gap-2">
+                      <View className="flex-row flex-wrap items-center gap-2">
                         <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
                           {child.name}
                         </Text>
                         {isActive && (
-                          <Badge label="Aktif" variant="brand" />
+                          <Badge
+                            label={copy.children.activeLabel}
+                            variant="brand"
+                          />
                         )}
                       </View>
 
                       <Text className="text-caption text-ink-muted">
-                        {getAgeString(child.birth_date)} •{' '}
-                        {child.sex === 'male' ? 'Laki-laki' : 'Perempuan'}
+                        {getAgeString(child.birth_date)} •{" "}
+                        {child.sex === "male"
+                          ? copy.children.sexMale
+                          : copy.children.sexFemale}
                       </Text>
                     </View>
                   </View>
 
-                  <View className="flex-row items-center justify-between pt-2 border-t border-border/60 dark:border-border-dark/60">
-                    {isActive ? (
-                      <Text className="text-caption font-semibold text-brand dark:text-brand-light">
-                        ✓ Profil sedang dipantau
-                      </Text>
-                    ) : (
+                  <View className="flex-row flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/40">
+                    {!isActive && (
                       <Pressable
+                        accessibilityRole="button"
                         onPress={() => setActiveChild(child)}
-                        className="active:opacity-70"
+                        className="min-h-12 justify-center py-3 active:opacity-90"
                       >
-                        <Text className="text-caption font-bold text-brand dark:text-brand-light">
-                          Jadikan Anak Aktif
+                        <Text className="text-label font-semibold text-brand">
+                          {copy.children.setActive}
                         </Text>
                       </Pressable>
                     )}
 
                     <Pressable
+                      accessibilityRole="button"
                       onPress={() => handleDelete(child)}
-                      className="px-2 py-1 active:opacity-60"
-                      hitSlop={8}
+                      className="min-h-12 min-w-12 justify-center px-3 py-3 active:opacity-90"
                     >
-                      <Text className="text-caption text-ink-muted">Hapus</Text>
+                      <Text className="text-label font-semibold text-risk">
+                        {copy.common.delete}
+                      </Text>
                     </Pressable>
                   </View>
                 </Card>
@@ -170,19 +174,14 @@ export default function ChildrenScreen() {
         )}
       </ScrollView>
 
-      {/* Floating Add Child Button at Bottom */}
-      <View
-        style={{ paddingBottom: insets.bottom + 16 }}
-        className="absolute bottom-0 left-0 right-0 bg-surface/90 px-5 pt-3 dark:bg-surface-dark/90"
-      >
+      <View className="px-5 pb-4">
         <Button
-          label="+ Tambah Profil Anak Baru"
+          label={copy.children.addButton}
           size="md"
           variant="secondary"
-          onPress={() => router.push('/children/new')}
+          onPress={() => router.push("/children/new")}
         />
       </View>
     </View>
   );
 }
-

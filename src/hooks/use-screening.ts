@@ -4,6 +4,7 @@ import {
   use,
   useCallback,
   useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
   type PropsWithChildren,
@@ -96,6 +97,21 @@ function useScreeningState(
   useEffect(() => {
     session.setSaveAdapter(saveScreening ?? defaultSaveAdapter);
   }, [session, saveScreening]);
+
+  const selectedChildId =
+    activeChild.status === "ready"
+      ? activeChild.child.id
+      : activeChild.status === "empty"
+        ? null
+        : undefined;
+  const previousChildId = useRef(selectedChildId);
+  useEffect(() => {
+    if (selectedChildId === undefined) return;
+    if (previousChildId.current !== selectedChildId) {
+      previousChildId.current = selectedChildId;
+      void session.clear();
+    }
+  }, [selectedChildId, session]);
 
   const snapshot = useSyncExternalStore(
     session.subscribe,

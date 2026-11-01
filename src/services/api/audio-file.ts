@@ -17,12 +17,8 @@ export async function appendAudio(
   if (file.size > MAX_AUDIO_BYTES) throw audioFailure("FILE_TOO_LARGE");
   const format = audioFormat(uri);
   if (!format) throw audioFailure("UNSUPPORTED_FORMAT");
-  // React Native's multipart bridge accepts a URI descriptor, unlike browser FormData.
-  body.append("audio", {
-    uri,
-    name: `cough.${format.extension}`,
-    type: format.mimeType,
-  } as unknown as Blob);
+  // SDK 58's default Expo fetch reads File bytes; URI descriptors are not supported.
+  body.append("audio", file);
 }
 
 export async function cleanupAudioFile(uri: string) {

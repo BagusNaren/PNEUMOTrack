@@ -234,7 +234,7 @@ function ComponentGallery() {
           >
             {message}
           </Text>
-          <Collapsible title={copy.result.technical}>
+          <Collapsible title={copy.gallery.detailsTitle}>
             <Text className="text-body text-ink dark:text-ink-dark">
               {copy.gallery.details}
             </Text>

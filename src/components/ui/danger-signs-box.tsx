@@ -3,11 +3,14 @@ import { Linking, Text, View } from "react-native";
 import { copy } from "@/constants/copy";
 import { Button } from "./button";
 import { Card } from "./card";
+import { Disclaimer } from "./disclaimer";
 
 export function DangerSignsBox({
   showEmergencyAction = false,
+  includeDisclaimer = false,
 }: {
   showEmergencyAction?: boolean;
+  includeDisclaimer?: boolean;
 }) {
   const [callFailed, setCallFailed] = useState(false);
   const [calling, setCalling] = useState(false);
@@ -32,7 +35,8 @@ export function DangerSignsBox({
     }
   }
   return (
-    <Card variant="risk">
+    <Card>
+      {includeDisclaimer && <Disclaimer />}
       <View className="flex-row flex-wrap">
         <Text className="min-w-0 flex-1 text-label font-semibold text-risk dark:text-risk-light">
           {copy.dangerSigns.title}

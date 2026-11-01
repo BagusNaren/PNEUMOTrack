@@ -6,7 +6,7 @@ import {
   type TabTriggerSlotProps,
 } from "expo-router/ui";
 import { type ComponentProps, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { MenuSheet } from "@/components/ui/menu-sheet";
@@ -42,9 +42,11 @@ function TabButton({
         tone={isFocused ? "brand" : "muted"}
         selected={isFocused}
       />
-      <View
-        className={`h-1 w-5 rounded-pill ${isFocused ? "bg-brand dark:bg-brand-light" : "bg-transparent"}`}
-      />
+      <Text
+        className={`text-caption ${isFocused ? "font-bold text-brand" : "text-ink-muted"}`}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -80,9 +82,10 @@ export default function TabsLayout() {
             accessibilityState={{ expanded: menuOpen }}
             aria-expanded={menuOpen}
             onPress={() => setMenuOpen(true)}
-            className="min-h-12 flex-1 items-center justify-center rounded-card active:opacity-70"
+            className="min-h-12 flex-1 items-center justify-center gap-1 rounded-card active:opacity-70"
           >
             <Icon name="menu" tone="muted" />
+            <Text className="text-caption text-ink-muted">{copy.nav.menu}</Text>
           </Pressable>
           <TabTrigger
             name="monitoring"

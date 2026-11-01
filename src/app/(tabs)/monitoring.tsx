@@ -1,236 +1,123 @@
-// src/app/(tabs)/monitoring.tsx
-// Live Monitoring screen — matches cough analysis_user.png.
-
-import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  Image,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { Card } from '@/components/ui/card';
-import { HeartGauge } from '@/components/ui/heart-gauge';
-import { ScreenHeader } from '@/components/ui/screen-header';
-import { Waveform } from '@/components/ui/waveform';
-import { useActiveChild } from '@/hooks/use-active-child';
-import { screeningsService } from '@/services/screenings';
-import type { Screening } from '@/types/domain';
+import { router } from "expo-router";
+import { useCallback } from "react";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { Waveform } from "@/components/ui/waveform";
+import { copy } from "@/constants/copy";
+import { useActiveChild } from "@/hooks/use-active-child";
+import { useResource } from "@/hooks/use-resource";
+import { screeningsService } from "@/services/screenings";
+import { formatDate, formatDuration } from "@/utils/format";
 
 export default function MonitoringScreen() {
   const insets = useSafeAreaInsets();
-  const { activeChild } = useActiveChild();
-
-  const [latestScreening, setLatestScreening] = useState<Screening | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const loadLatest = useCallback(async () => {
-    if (!activeChild) {
-      setIsRefreshing(false);
-      return;
-    }
-    try {
-      const scr = await screeningsService.latest(activeChild.id);
-      setLatestScreening(scr);
-    } catch {
-      // Fallback handled by empty/default states
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [activeChild]);
-
-  useEffect(() => {
-    if (!activeChild) return;
-    let active = true;
-    screeningsService
-      .latest(activeChild.id)
-      .then((scr) => {
-        if (active) setLatestScreening(scr);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [activeChild]);
-
-  const onRefresh = () => {
-    setIsRefreshing(true);
-    void loadLatest();
-  };
-
-  const isRisk = latestScreening?.result === 'risk';
-
+  const { activeChild, isLoading, error, refresh } = useActiveChild();
+  const childId = activeChild?.id;
+  const latest = useResource(
+    useCallback(
+      () =>
+        childId ? screeningsService.latest(childId) : Promise.resolve(null),
+      [childId],
+    ),
+  );
+  const screening = latest.data;
   return (
     <ScrollView
-      className="flex-1 bg-surface dark:bg-surface-dark"
+      className="flex-1 bg-surface"
       contentContainerStyle={{
         paddingTop: insets.top,
-        paddingBottom: insets.bottom + 24,
         paddingHorizontal: 20,
+        paddingBottom: 24,
+        gap: 16,
       }}
-      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
-      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={latest.isRefreshing}
+          onRefresh={() => {
+            void refresh();
+            void latest.reload();
+          }}
+        />
+      }
     >
-      <ScreenHeader
-        title="Monitoring"
-        showBack={false}
-        rightAction={<Text className="text-xl font-bold text-ink-muted">⋮</Text>}
-      />
-
-      <Card variant={isRisk ? 'risk' : 'brand'} className="mb-4 rounded-2xl p-4">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1 pr-3 gap-2">
-            <View className="flex-row items-center gap-2">
-              <View className="rounded-pill bg-brand px-3 py-1 shadow-sm">
-                <Text className="text-caption font-bold text-on-brand">
-                  Live Monitoring
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => router.push('/history')}
-                className="rounded-pill bg-white/70 px-3 py-1 active:opacity-75 dark:bg-black/20"
-              >
-                <Text className="text-caption font-semibold text-ink-muted">
-                  History
-                </Text>
-              </Pressable>
-            </View>
-
-            <View className="flex-row items-center gap-1.5 mt-1">
-              <View
-                className={`h-2.5 w-2.5 rounded-full ${
-                  isRisk ? 'bg-risk' : 'bg-safe'
-                }`}
-              />
-              <Text
-                className={`text-caption font-bold ${
-                  isRisk ? 'text-risk' : 'text-brand dark:text-brand-light'
-                }`}
-              >
-                {isRisk
-                  ? 'Pneumonia risk detected - needs attention'
-                  : 'No Sign of Pneumonia detected'}
-              </Text>
-            </View>
-          </View>
-
-          <Image
-            source={require('@/assets/images/image_children.png')}
-            style={{ width: 72, height: 72, borderRadius: 18 }}
-          />
-        </View>
-      </Card>
-
-      <Card variant={isRisk ? 'risk' : 'brand'} className="mb-4 rounded-2xl p-5">
-        <View className="items-center mb-3">
-          <View className="h-1 w-12 rounded-full bg-border/60" />
-        </View>
-
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1 pr-3 gap-2.5">
-            <View className="flex-row items-center gap-2.5">
-              <Text className="text-base">{isRisk ? '⚠️' : '🫁'}</Text>
-              <Text
-                className={`text-caption font-bold ${
-                  isRisk ? 'text-risk' : 'text-safe'
-                }`}
-              >
-                {isRisk ? 'Pneumonia Indicated' : 'All Good'}
-              </Text>
-            </View>
-
-            <View className="flex-row items-center gap-2.5">
-              <Text className="text-base">🫁</Text>
-              <Text className="text-caption font-semibold text-ink">
-                {isRisk ? '55 /min' : '27 /min'}
-              </Text>
-            </View>
-
-            <View className="flex-row items-center gap-2.5">
-              <Text className="text-base">🌡️</Text>
-              <Text className="text-caption font-semibold text-ink">
-                {isRisk ? '38.1°C' : '36.6°C'}
-              </Text>
-            </View>
-
-            <View className="flex-row items-center gap-2.5">
-              <Text className="text-base">💓</Text>
-              <Text className="text-caption font-semibold text-ink">
-                {isRisk ? '120 bpm' : '90 bpm'}
-              </Text>
-            </View>
-
-            <View className="mt-2 flex-row items-center gap-2">
-              <Pressable
-                onPress={() =>
-                  latestScreening
-                    ? router.push(`/history/${latestScreening.id}` as any)
-                    : router.push('/history')
-                }
-                className={`rounded-pill px-4 py-2 active:opacity-80 ${
-                  isRisk ? 'bg-risk' : 'bg-brand'
-                }`}
-              >
-                <Text className="text-caption font-bold text-white">
-                  View Detail
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={onRefresh}
-                className={`h-8 w-8 items-center justify-center rounded-full ${
-                  isRisk ? 'bg-risk' : 'bg-brand'
-                } active:opacity-80`}
-              >
-                <Text className="text-xs text-white">🔄</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => router.push('/screening/guide' as any)}
-                className={`h-8 w-8 items-center justify-center rounded-full ${
-                  isRisk ? 'bg-risk' : 'bg-brand'
-                } active:opacity-80`}
-              >
-                <Text className="text-xs text-white">🎙️</Text>
-              </Pressable>
-            </View>
-          </View>
-
-          <View className="items-center justify-center">
-            <HeartGauge
-              variant={!latestScreening ? 'pending' : isRisk ? 'risk' : 'normal'}
-              size={110}
+      <ScreenHeader title={copy.nav.monitoring} subtitle={activeChild?.name} />
+      <Text className="text-body text-ink-muted">
+        {copy.history.monitoringBody}
+      </Text>
+      {isLoading || latest.isLoading ? (
+        <LoadingState />
+      ) : (
+        <>
+          {(error || latest.error) && (
+            <ErrorState
+              description={copy.common.loadFailed}
+              onAction={() => {
+                void refresh();
+                void latest.reload();
+              }}
             />
-            <Text
-              className={`mt-2 text-center text-caption font-bold ${
-                isRisk ? 'text-risk' : 'text-brand dark:text-brand-light'
-              }`}
-            >
-              {isRisk ? 'At Risk of\nPneumonia' : 'No Sign of\nPneumonia'}
-            </Text>
-          </View>
-        </View>
-      </Card>
-
-      <Card variant="brand" className="mb-4 rounded-2xl p-4">
-        <Text className="text-caption font-bold text-brand mb-2">
-          Real-time Acoustic Waveform
-        </Text>
-        <View className="rounded-xl bg-white p-3 dark:bg-surface-card-dark">
-          <Waveform
-            data={
-              latestScreening?.waveform ??
-              Array.from({ length: 60 }, (_, i) => Math.sin(i * 0.3) * 0.5 + 0.5)
-            }
-            variant={isRisk ? 'risk' : 'normal'}
-            height={90}
-          />
-        </View>
-      </Card>
+          )}
+          {screening && !error ? (
+            <Card>
+              <Text
+                accessibilityRole="header"
+                className="text-subtitle font-semibold text-ink"
+              >
+                {copy.history.waveform}
+              </Text>
+              <Text className="text-caption text-ink-muted">
+                {formatDate(screening.created_at, true)} ·{" "}
+                {formatDuration(screening.duration_sec)}
+              </Text>
+              {screening.waveform?.length ? (
+                <Waveform samples={screening.waveform} />
+              ) : (
+                <Text className="text-body text-ink-muted">
+                  {copy.result.noWaveform}
+                </Text>
+              )}
+              <Button
+                label={copy.dashboard.viewDetail}
+                variant="secondary"
+                onPress={() =>
+                  router.push({
+                    pathname: "/history/[id]",
+                    params: { id: screening.id },
+                  })
+                }
+              />
+            </Card>
+          ) : (
+            !error &&
+            !latest.error && (
+              <EmptyState
+                title={
+                  activeChild ? copy.ui.emptyTitle : copy.children.emptyTitle
+                }
+                body={activeChild ? copy.ui.emptyBody : copy.children.emptyBody}
+              />
+            )
+          )}
+        </>
+      )}
+      <View>
+        <Button
+          label={activeChild ? copy.record.start : copy.children.addButton}
+          onPress={() =>
+            router.push(
+              activeChild
+                ? "/screening/guide?source=monitoring"
+                : "/children/new",
+            )
+          }
+        />
+      </View>
     </ScrollView>
   );
 }

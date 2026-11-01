@@ -1,3 +1,5 @@
+const color = (name) => `rgb(var(--color-${name}) / <alpha-value>)`;
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
@@ -6,37 +8,52 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        surface: { DEFAULT: "#FFFFFF", dark: "#0B1220" },
-        "surface-muted": { DEFAULT: "#F6F8FA", dark: "#131C2A" },
-        "surface-card": { DEFAULT: "#FFFFFF", dark: "#131C2A" },
-        "surface-brand": { DEFAULT: "#D6E9F4", dark: "#1E3A52" },
-        "surface-brand-soft": { DEFAULT: "#EAF4F9", dark: "#17293D" },
-        border: { DEFAULT: "#E3E9EE", dark: "#243244" },
+        surface: { DEFAULT: color("surface"), dark: color("surface") },
+        "surface-muted": {
+          DEFAULT: color("surfaceMuted"),
+          dark: color("surfaceMuted"),
+        },
+        "surface-card": {
+          DEFAULT: color("surfaceCard"),
+          dark: color("surfaceCard"),
+        },
+        "surface-brand": {
+          DEFAULT: color("surfaceBrand"),
+          dark: color("surfaceBrand"),
+        },
+        "surface-brand-soft": {
+          DEFAULT: color("surfaceBrandSoft"),
+          dark: color("surfaceBrandSoft"),
+        },
+        border: { DEFAULT: color("border"), dark: color("border") },
         ink: {
-          DEFAULT: "#0B1B2B",
-          muted: "#60646C",
-          dark: "#F5F7FA",
-          "dark-muted": "#A9B4C2",
+          DEFAULT: color("ink"),
+          muted: color("inkMuted"),
+          dark: color("ink"),
+          "dark-muted": color("inkMuted"),
         },
-        "icon-muted": { DEFAULT: "#AEB7C2", dark: "#6B7A8C" },
+        "icon-muted": { DEFAULT: color("iconMuted"), dark: color("iconMuted") },
         brand: {
-          DEFAULT: "#1F4B75",
-          strong: "#173A5C",
-          light: "#7FB3D9",
-          "strong-dark": "#A9CBE8",
+          DEFAULT: color("brand"),
+          strong: color("brandStrong"),
+          light: color("brand"),
+          "strong-dark": color("brandStrong"),
         },
-        "on-brand": { DEFAULT: "#FFFFFF", dark: "#0B1220" },
+        "on-brand": { DEFAULT: color("onBrand"), dark: color("onBrand") },
         risk: {
-          DEFAULT: "#A33A3A",
-          light: "#F08A8A",
-          surface: "#F4D6D6",
-          "surface-dark": "#3A1E22",
-          border: "#E7B4B4",
-          "border-dark": "#5A2C31",
+          DEFAULT: color("risk"),
+          light: color("risk"),
+          surface: color("surfaceRisk"),
+          "surface-dark": color("surfaceRisk"),
+          border: color("borderRisk"),
+          "border-dark": color("borderRisk"),
         },
-        "on-risk": { DEFAULT: "#FFFFFF", dark: "#2A0F12" },
-        safe: { DEFAULT: "#1F7A5C", light: "#6FD3AE" },
-        "surface-safe": { DEFAULT: "#D9EFE7", dark: "#16332A" },
+        "on-risk": { DEFAULT: color("onRisk"), dark: color("onRisk") },
+        safe: { DEFAULT: color("safe"), light: color("safe") },
+        "surface-safe": {
+          DEFAULT: color("surfaceSafe"),
+          dark: color("surfaceSafe"),
+        },
       },
       fontSize: {
         display: ["32px", { lineHeight: "40px" }],
