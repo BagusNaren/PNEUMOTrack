@@ -1,7 +1,10 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 
-export function useResource<T>(loader: () => Promise<T>) {
+export function useResource<T>(
+  loader: () => Promise<T>,
+  subscribe?: (listener: () => void) => () => void,
+) {
   const request = useRef(0);
   const [state, setState] = useState<{
     loader: typeof loader;
@@ -32,10 +35,12 @@ export function useResource<T>(loader: () => Promise<T>) {
   useFocusEffect(
     useCallback(() => {
       void reload();
+      const unsubscribe = subscribe?.(() => void reload());
       return () => {
+        unsubscribe?.();
         request.current += 1;
       };
-    }, [reload]),
+    }, [reload, subscribe]),
   );
 
   const data = state.loader === loader ? state.data : undefined;

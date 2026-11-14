@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { Screen } from "@/components/ui/screen";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { copy } from "@/constants/copy";
@@ -70,7 +71,15 @@ function ProfileField({
 }
 
 export default function ProfileEditScreen() {
-  const { profile, isReady } = useProfile();
+  const { profile, isReady, loadError, retryLoad } = useProfile();
+  if (loadError) {
+    return (
+      <Screen>
+        <ScreenHeader title={copy.profile.editTitle} />
+        <ErrorState description={copy.profile.loadFailed} onAction={retryLoad} />
+      </Screen>
+    );
+  }
   if (!isReady) {
     return (
       <Screen>

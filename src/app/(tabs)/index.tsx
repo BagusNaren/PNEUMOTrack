@@ -65,6 +65,7 @@ export default function DashboardScreen() {
         childId ? screeningsService.latest(childId) : Promise.resolve(null),
       [childId],
     ),
+    screeningsService.subscribe,
   );
   const articles = useResource(useCallback(() => articlesService.list(), []));
   const screening = latest.data;
@@ -210,7 +211,7 @@ export default function DashboardScreen() {
                         : "text-ink-muted"
                   }`}
                 >
-                  {screening
+                  {latest.isLoading ? copy.common.loading : latest.error ? copy.common.loadFailed : screening
                     ? risk
                       ? copy.dashboard.riskStatus
                       : copy.dashboard.normalStatus
@@ -261,7 +262,9 @@ export default function DashboardScreen() {
                 </Text>
               </View>
 
-              {screening ? (
+              {latest.isLoading ? <LoadingState /> : latest.error ? (
+                <ErrorState description={copy.common.loadFailed} onAction={() => void latest.reload()} />
+              ) : screening ? (
                 <View className="flex-row flex-wrap">
                   <View className="w-1/2 pb-3 pr-2">
                     <InfoRow
@@ -319,13 +322,6 @@ export default function DashboardScreen() {
               </View>
             </Card>
 
-            {latest.isLoading ? <LoadingState /> : null}
-            {latest.error ? (
-              <ErrorState
-                description={copy.common.loadFailed}
-                onAction={() => void latest.reload()}
-              />
-            ) : null}
           </View>
         )}
 

@@ -21,6 +21,8 @@ export interface LocalProfile {
 interface ProfileContextValue {
   profile: LocalProfile;
   isReady: boolean;
+  loadError: boolean;
+  retryLoad: () => void;
   updateProfile: (input: Partial<LocalProfile>) => Promise<void>;
 }
 
@@ -63,7 +65,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     userId: string | null;
     profile: LocalProfile;
     isReady: boolean;
-  }>({ userId, profile: defaults, isReady: false });
+    loadError: boolean;
+  }>({ userId, profile: defaults, isReady: false, loadError: false });
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -80,15 +84,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
             avatarUri: parsed.avatarUri ?? null,
           },
           isReady: true,
+          loadError: false,
         });
       })
       .catch(() => {
-        if (active) setState({ userId, profile: defaults, isReady: true });
+        if (active) setState({ userId, profile: defaults, isReady: true, loadError: true });
       });
     return () => {
       active = false;
     };
-  }, [defaults, storageKey, userId]);
+  }, [defaults, storageKey, userId, loadAttempt]);
 
   const current = state.userId === userId;
   const profile = current ? state.profile : defaults;
@@ -96,18 +101,25 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = useCallback(
     async (input: Partial<LocalProfile>) => {
+      if (!isReady || state.loadError) throw new Error("Stored profile is unavailable");
       const next: LocalProfile = {
         ...profile,
         ...input,
       };
-      setState({ userId, profile: next, isReady: true });
       await AsyncStorage.setItem(storageKey, JSON.stringify(next));
+      setState((previous) => previous.userId === userId
+        ? { userId, profile: next, isReady: true, loadError: false }
+        : previous);
     },
-    [profile, storageKey, userId],
+    [isReady, state.loadError, profile, storageKey, userId],
   );
 
   return (
-    <ProfileContext.Provider value={{ profile, isReady, updateProfile }}>
+    <ProfileContext.Provider value={{
+      profile, isReady, updateProfile,
+      loadError: current && state.loadError,
+      retryLoad: () => setLoadAttempt((attempt) => attempt + 1),
+    }}>
       {children}
     </ProfileContext.Provider>
   );

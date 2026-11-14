@@ -25,7 +25,7 @@ export function ScreenHeader({
   const canShowBack = back ?? showBack ?? true;
   const trailingAction = action ?? rightAction;
   return (
-    <View className="min-h-14 flex-row items-center justify-between gap-2 py-1">
+    <View className="min-h-14 flex-row flex-wrap items-center justify-between gap-2 py-1">
       {canShowBack ? (
         <Pressable
           accessibilityRole="button"
@@ -51,7 +51,6 @@ export function ScreenHeader({
       )}
       <View className="min-w-0 flex-1 items-center py-1">
         <Text
-          numberOfLines={1}
           accessibilityRole="header"
           className="w-full text-center text-subtitle font-semibold text-ink"
         >
@@ -59,7 +58,6 @@ export function ScreenHeader({
         </Text>
         {subtitle && (
           <Text
-            numberOfLines={1}
             className="w-full text-center text-caption text-ink-muted"
           >
             {subtitle}

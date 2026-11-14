@@ -26,6 +26,7 @@ export default function MonitoringScreen() {
         childId ? screeningsService.latest(childId) : Promise.resolve(null),
       [childId],
     ),
+    screeningsService.subscribe,
   );
   const screening = latest.data;
   return (

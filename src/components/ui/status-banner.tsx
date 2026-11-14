@@ -19,7 +19,7 @@ export function StatusBanner({
   return (
     <Card variant={variant === "risk" ? "risk" : "safe"}>
       <View
-        className="flex-row items-center gap-3"
+        className="flex-row flex-wrap items-center gap-3"
         accessibilityLiveRegion="polite"
       >
         <View

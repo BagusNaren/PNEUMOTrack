@@ -26,7 +26,11 @@ INCEPTION 2026 Hackathon · Universitas Udayana
 
 ## Try the deployed product
 
-A deployed build of PNEUMOTrack that you can test right away is available on the release page:
+**Finalist build, 15 November 2026:** `dist/release-final.apk` is the latest local Android ARM64 release APK (40.6 MB). It includes the configured FastAPI endpoint and Supabase public configuration, with mock API and mock data disabled. Its APK signature has been verified. This final APK has not been uploaded to a public release or built through EAS Cloud in this session.
+
+**Backend:** [Live API health endpoint](https://api.lalalele.web.id/health). FastAPI health and Supabase Auth responded with HTTP 200 during final verification. Synthetic-audio requests also passed the client response validators: silence returned HTTP 422 and synthetic bursts returned HTTP 200. These checks do not establish clinical accuracy.
+
+An earlier build is available on the release page below. It is separate from the latest local finalist APK:
 
 **[Release `deployed_product`: deployed product you can test](https://github.com/BagusNaren/PNEUMOTrack/releases/tag/deployed_product)**
 
@@ -36,24 +40,60 @@ Prefer to run everything yourself? Follow [Run it locally, step by step](#6-run-
 
 ---
 
-## Latest updates (14 November 2026)
+# Changelog
 
-The mobile UI was reworked to follow the FigCraft design (`UI Kit · FIX PNM`) and extended with profile, trend and audio-playback features. The AI backend and the database schema are unchanged.
+## Final Release — 14 November 2026
 
-| Area | What changed |
-|---|---|
-| **Onboarding and login** | New 3-slide onboarding before sign-in (for families who care, consult a trusted doctor, trusted hospitals one tap away). **Masuk sebagai Demo** is shown in mock mode. The temporary UI-preview bypass was removed, so the app uses the normal login flow again. |
-| **Navigation** | Icon-only bottom navigation with four tabs: Home, History, Profile, Menu. Focused flows (screening, chat) hide the bottom navigation. |
-| **Profile** | New Profile tab with account info, children list, latest screening result, service menu and logout. Parents can edit name, phone number and city and set a profile photo. The photo is stored locally on the device and also appears in the dashboard header. Child avatars remain initials. |
-| **Dashboard** | Redesigned child card, screening status card and call to action. Temperature, respiratory rate, heart rate and weight were removed, because the app only analyzes cough audio. |
-| **History** | New trend section built from stored screening data: latest result, duration chart, cough-segment chart, normal vs. risk counts, AI summary and recent history list. Charts use `react-native-svg`. |
-| **Audio playback** | Result and history detail screens include an audio player. In simulation (mock) mode it plays a bundled sample (`assets/audio/cough-sample.wav`), which is **not** a real child's recording. |
-| **Chat** | New chat composer for the consultation chat screen. |
-| **Icons and theme** | All icons moved to `lucide-react-native` behind one wrapper (`components/ui/icon.tsx`); `expo-symbols` is no longer used. The app is locked to light mode for this delivery. |
-| **UI audit and docs** | Contrast and layout fixes from `UI_UX_AUDIT_SPEC.md`, design decisions recorded in `design.md`, and new guides in `docs/` (API, architecture, local backend, deployment, sprint notes). |
-| **Dependencies** | Expo SDK 58 packages aligned to the latest patch versions. Added `lucide-react-native` and `expo-image-picker`. |
+Perubahan dari [`deployed_product`](https://github.com/BagusNaren/PNEUMOTrack/releases/tag/deployed_product) (1 November 2026, 11:49 WITA, commit `23f5268`) ke [`Final_Release`](https://github.com/BagusNaren/PNEUMOTrack/releases/tag/Final_Release) (14 November 2026, 23:59 WITA, commit `d8d33ce`).
 
-> **After pulling these changes:** run `bun install`, then rebuild the development build or APK. `expo-image-picker` is a native module, so a build made before this update will not include it.
+**Ringkasan:** 91 berkas berubah (+4.922 / −1.202 baris). Di `src/` ada 11 berkas baru, 54 diubah, dan 1 dihapus. **Backend AI (`server_side/`), skema database (`supabase/`), dan konfigurasi Docker tidak berubah.** Perubahan ada di aplikasi mobile, dokumentasi, dan materi pengujian juri.
+
+### Ditambahkan
+
+- **Onboarding 3 slide** sebelum login: untuk keluarga yang peduli, konsultasi dengan dokter tepercaya, dan rumah sakit tepercaya dalam satu ketukan.
+- **Tab Profil** berisi info akun, daftar anak, hasil skrining terakhir, menu layanan, dan logout.
+- **Edit profil** (`profile/edit.tsx`): nama, telepon, kota, dan foto profil. Foto disimpan lokal di perangkat lewat `expo-image-picker` dan tampil juga di header beranda. Avatar anak tetap berupa inisial.
+- **Tren skrining di Riwayat**: hasil terakhir, grafik durasi, grafik segmen batuk, jumlah hasil normal dan risiko, ringkasan AI, dan daftar riwayat terbaru. Grafik memakai `react-native-svg` dan data skrining yang tersimpan (`TrendChart`).
+- **Pemutar audio** di halaman hasil dan detail riwayat. Pada mode simulasi, pemutar memutar audio contoh `assets/audio/cough-sample.wav`, bukan rekaman anak.
+- **Chat composer** untuk layar konsultasi.
+- **Tombol "Masuk sebagai Demo"** tampil di mode mock, dengan status loading terpisah dari tombol masuk biasa.
+- **Preferensi tema** (`theme-preference.tsx`) dan palet warna terpusat.
+
+### Diubah
+
+- **Navigasi bawah** menjadi ikon saja dengan empat tab: Beranda, Riwayat, Profil, Menu. Layar fokus (skrining, chat) menyembunyikannya.
+- **Dashboard** didesain ulang: kartu anak, kartu status skrining, dan tombol aksi.
+- **Seluruh ikon** dipindah ke `lucide-react-native` lewat satu wrapper (`components/ui/icon.tsx`).
+- **Polesan UI** di hampir semua layar (auth, dashboard, riwayat, dokter, rumah sakit, chat, artikel, alur skrining) berdasarkan `UI_UX_AUDIT_SPEC.md`.
+- **Aplikasi dikunci ke mode terang** (`userInterfaceStyle: "light"`).
+- **Dependency Expo SDK 58** diselaraskan ke patch terbaru (mis. `expo` ~58.0.25, `expo-router` ~58.0.31, `expo-audio` ~58.0.12). Ditambahkan `lucide-react-native` dan `expo-image-picker`.
+- **`app.json`**: plugin `expo-image-picker` (hanya izin galeri, kamera dinonaktifkan), plus plugin `expo-font`, `expo-status-bar`, dan `expo-web-browser`.
+- **`design.md`** diisi catatan keputusan implementasi (FigCraft, `UI Kit · FIX PNM`).
+
+### Dihapus
+
+- Komponen `heart-gauge` dan tampilan **suhu, laju napas, detak jantung, dan berat**, karena aplikasi hanya menganalisis suara batuk.
+- Bypass pratinjau UI. Aplikasi kembali memakai alur login normal.
+- Pemakaian `expo-symbols` di kode (paket masih tercantum di `package.json`).
+
+### Dokumentasi dan pengujian
+
+- Folder **`docs/`**: kontrak API, arsitektur, backend lokal, deployment, dan catatan sprint 0–5 Member B.
+- **`UI_UX_AUDIT_SPEC.md`** (hasil audit UI/UX).
+- **`testing-juri/`**: audio uji sintetis, senyap, terlalu pendek, noise, dan satu berkas zip. Dipakai untuk menguji quality gate.
+- **README**: tautan rilis, akun demo juri, bagian "Latest updates", struktur repo, langkah instalasi, dan troubleshooting diperbarui.
+
+### Catatan upgrade
+
+1. Jalankan `bun install`.
+2. Rebuild development build atau APK. `expo-image-picker` adalah modul native, jadi build lama tidak memuatnya.
+3. Jika tampilan terlihat lama, jalankan `bunx expo start -c`.
+
+### Catatan dan batasan
+
+- Audio contoh di mode simulasi tidak memiliki arti klinis.
+- Sumber dan lisensi dataset, ilustrasi onboarding, logo, dan audio contoh masih perlu dikonfirmasi (lihat README bagian 12).
+- PNEUMOTrack adalah alat bantu skrining, bukan diagnosis.
 
 ---
 

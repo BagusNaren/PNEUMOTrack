@@ -76,7 +76,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useSession();
   const { profile } = useProfile();
-  const { activeChild, children, setActiveChild } = useActiveChild();
+  const { activeChild, children, setActiveChild, isLoading, error, refresh } = useActiveChild();
   const childId = activeChild?.id;
   const latest = useResource(
     useCallback(
@@ -84,6 +84,7 @@ export default function ProfileScreen() {
         childId ? screeningsService.latest(childId) : Promise.resolve(null),
       [childId],
     ),
+    screeningsService.subscribe,
   );
   const screening = latest.data;
   const risk = screening?.result === "risk";
@@ -166,7 +167,9 @@ export default function ProfileScreen() {
             >
               {copy.profile.activeChild}
             </Text>
-            {children.length === 0 ? (
+            {isLoading ? <LoadingState /> : error ? (
+              <ErrorState description={copy.common.loadFailed} onAction={() => void refresh()} />
+            ) : children.length === 0 ? (
               <EmptyState
                 title={copy.profile.noChild}
                 body={copy.profile.noChildBody}

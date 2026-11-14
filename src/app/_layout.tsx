@@ -4,7 +4,6 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useReduceMotion } from "@/components/screening/motion";
 import { ThemeRoot } from "@/components/ui/theme-root";
-import { Config } from "@/constants/config";
 import { type PropsWithChildren, useMemo } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -20,6 +19,7 @@ import { SessionProvider, useSession } from "@/hooks/use-session";
 import { useTheme } from "@/hooks/use-theme";
 import { ThemePreferenceProvider } from "@/hooks/theme-preference";
 import { screeningsService } from "@/services/screenings";
+import { LoadingState } from "@/components/ui/loading-state";
 
 function formatChildAgeLabel(birthDateStr: string): string {
   const birth = new Date(birthDateStr);
@@ -76,9 +76,9 @@ function ScreeningBridge({ children }: PropsWithChildren) {
 
 function SessionBoundProviders({ children }: PropsWithChildren) {
   const { user } = useSession();
-  const parentId = user?.id ?? (Config.useMockData ? "user-demo" : null);
+  const parentId = user?.id ?? null;
   return (
-    <ActiveChildProvider parentId={parentId}>
+    <ActiveChildProvider key={parentId ?? "guest"} parentId={parentId}>
       <ScreeningBridge>{children}</ScreeningBridge>
     </ActiveChildProvider>
   );
@@ -102,10 +102,50 @@ export default function RootLayout() {
   );
 }
 
+function AppNavigator() {
+  const { user, isLoading } = useSession();
+  const colors = useTheme();
+  const reducedMotion = useReduceMotion();
+  if (isLoading) return <LoadingState />;
+  return (
+    <Stack screenOptions={{
+      headerShown: false,
+      animation: Platform.OS === "web" || reducedMotion ? "none" : "slide_from_right",
+      contentStyle: { backgroundColor: colors.surface },
+    }}>
+      <Stack.Screen name="index" />
+      <Stack.Protected guard={!user}>
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+      <Stack.Protected guard={!!user}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="profile/edit" />
+        <Stack.Screen name="children/new" />
+        <Stack.Screen name="screening/guide" />
+        <Stack.Screen name="screening/record" />
+        <Stack.Screen name="screening/analyzing" />
+        <Stack.Screen name="screening/result" />
+        <Stack.Screen name="history/index" />
+        <Stack.Screen name="history/[id]" />
+        <Stack.Screen name="recommendation" />
+        <Stack.Screen name="doctors/index" />
+        <Stack.Screen name="doctors/[id]" />
+        <Stack.Screen name="chats/index" />
+        <Stack.Screen name="chats/[id]" />
+        <Stack.Screen name="hospitals/index" />
+        <Stack.Screen name="hospitals/map" />
+        <Stack.Screen name="articles/index" />
+        <Stack.Screen name="articles/[id]" />
+        <Stack.Screen name="dev/components" />
+      </Stack.Protected>
+    </Stack>
+  );
+}
+
 function ThemedLayout() {
   const scheme = useColorScheme();
   const colors = useTheme();
-  const reducedMotion = useReduceMotion();
   const base = scheme === "dark" ? DarkTheme : DefaultTheme;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -126,16 +166,7 @@ function ThemedLayout() {
               }}
             >
               <StatusBar style="auto" />
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  animation:
-                    Platform.OS === "web" || reducedMotion
-                      ? "none"
-                      : "slide_from_right",
-                  contentStyle: { backgroundColor: colors.surface },
-                }}
-              />
+              <AppNavigator />
             </ThemeProvider>
           </AppProviders>
         </ThemeRoot>

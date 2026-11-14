@@ -35,6 +35,7 @@ import {
 
 import { UI } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { Platform } from "react-native";
 
 const icons = {
   home: House,
@@ -101,7 +102,7 @@ export function Icon({
       color={colors[tone]}
       strokeWidth={selected ? 2.4 : 2}
       absoluteStrokeWidth
-      accessible={false}
+      {...(Platform.OS === "web" ? { "aria-hidden": true as const } : { accessible: false })}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -22,6 +22,7 @@ import { screeningsService } from "@/services/screenings";
 import { formatDate, formatDuration } from "@/utils/format";
 
 export default function HistoryScreen() {
+  const [showAll, setShowAll] = useState(false);
   const insets = useSafeAreaInsets();
   const { activeChild, isLoading, error, refresh } = useActiveChild();
   const childId = activeChild?.id;
@@ -31,6 +32,7 @@ export default function HistoryScreen() {
         childId ? screeningsService.listByChild(childId) : Promise.resolve([]),
       [childId],
     ),
+    screeningsService.subscribe,
   );
 
   const items = history.data ?? [];
@@ -140,6 +142,9 @@ export default function HistoryScreen() {
                 </Text>
                 <Text className="text-caption text-ink-muted">
                   {copy.history.perRecordingNote}
+                </Text>
+                <Text className="text-caption text-ink-muted">
+                  {copy.history.dataLimit}
                 </Text>
               </View>
 
@@ -283,7 +288,7 @@ export default function HistoryScreen() {
               >
                 {copy.history.recent}
               </Text>
-              {items.slice(0, 5).map((item) => (
+              {(showAll ? items : items.slice(0, 5)).map((item) => (
                 <ListRow
                   key={item.id}
                   onPress={() =>
@@ -313,6 +318,13 @@ export default function HistoryScreen() {
               ))}
             </View>
 
+            {items.length > 5 && (
+              <Button
+                label={showAll ? copy.history.showRecent : copy.history.showAll}
+                variant="secondary"
+                onPress={() => setShowAll((previous) => !previous)}
+              />
+            )}
             <Button
               label={copy.record.start}
               onPress={() => router.push("/screening/guide")}

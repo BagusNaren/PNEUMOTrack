@@ -92,6 +92,7 @@ export const copy = {
     photoErrorTitle: "Foto belum dapat dipilih",
     photoErrorBody: "Coba pilih foto lain atau periksa izin galeri.",
     saveFailed: "Profil belum dapat disimpan. Coba lagi.",
+    loadFailed: "Profil tersimpan belum dapat dibaca. Coba muat ulang sebelum mengubah data.",
   },
   auth: {
     signInTitle: "Masuk ke PNEUMOTrack",
@@ -376,6 +377,9 @@ export const copy = {
     oldest: "Terlama",
     newest: "Terbaru",
     perRecordingNote: "Tiap titik atau batang adalah satu rekaman.",
+    dataLimit: "Ringkasan memakai maksimal 50 hasil terbaru. Durasi dan jumlah segmen bukan ukuran keparahan penyakit.",
+    showAll: "Lihat semua hasil yang dimuat",
+    showRecent: "Tampilkan lima hasil terbaru",
     noTrend: "Belum cukup data untuk grafik.",
     noTrendBody:
       "Rekam batuk lagi untuk melihat perubahan dari waktu ke waktu.",

@@ -52,11 +52,11 @@ const mockService = {
     await new Promise((r) => setTimeout(r, 300));
     return mockScreenings
       .filter((s) => s.child_id === childId)
-      .slice(0, limit)
       .sort(
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      );
+      )
+      .slice(0, limit);
   },
   get: async (id: string): Promise<Screening | null> => {
     await new Promise((r) => setTimeout(r, 200));
@@ -131,6 +131,20 @@ const supabaseService = {
   },
 };
 
-export const screeningsService = Config.useMockData
+const service = Config.useMockData
   ? mockService
   : supabaseService;
+
+const listeners = new Set<() => void>();
+export const screeningsService = {
+  ...service,
+  subscribe: (listener: () => void) => {
+    listeners.add(listener);
+    return () => { listeners.delete(listener); };
+  },
+  save: async (input: SaveScreeningPayload | SaveScreeningInput) => {
+    const saved = await service.save(input);
+    listeners.forEach((listener) => listener());
+    return saved;
+  },
+};
