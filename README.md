@@ -36,6 +36,27 @@ Prefer to run everything yourself? Follow [Run it locally, step by step](#6-run-
 
 ---
 
+## Latest updates (14 November 2026)
+
+The mobile UI was reworked to follow the FigCraft design (`UI Kit · FIX PNM`) and extended with profile, trend and audio-playback features. The AI backend and the database schema are unchanged.
+
+| Area | What changed |
+|---|---|
+| **Onboarding and login** | New 3-slide onboarding before sign-in (for families who care, consult a trusted doctor, trusted hospitals one tap away). **Masuk sebagai Demo** is shown in mock mode. The temporary UI-preview bypass was removed, so the app uses the normal login flow again. |
+| **Navigation** | Icon-only bottom navigation with four tabs: Home, History, Profile, Menu. Focused flows (screening, chat) hide the bottom navigation. |
+| **Profile** | New Profile tab with account info, children list, latest screening result, service menu and logout. Parents can edit name, phone number and city and set a profile photo. The photo is stored locally on the device and also appears in the dashboard header. Child avatars remain initials. |
+| **Dashboard** | Redesigned child card, screening status card and call to action. Temperature, respiratory rate, heart rate and weight were removed, because the app only analyzes cough audio. |
+| **History** | New trend section built from stored screening data: latest result, duration chart, cough-segment chart, normal vs. risk counts, AI summary and recent history list. Charts use `react-native-svg`. |
+| **Audio playback** | Result and history detail screens include an audio player. In simulation (mock) mode it plays a bundled sample (`assets/audio/cough-sample.wav`), which is **not** a real child's recording. |
+| **Chat** | New chat composer for the consultation chat screen. |
+| **Icons and theme** | All icons moved to `lucide-react-native` behind one wrapper (`components/ui/icon.tsx`); `expo-symbols` is no longer used. The app is locked to light mode for this delivery. |
+| **UI audit and docs** | Contrast and layout fixes from `UI_UX_AUDIT_SPEC.md`, design decisions recorded in `design.md`, and new guides in `docs/` (API, architecture, local backend, deployment, sprint notes). |
+| **Dependencies** | Expo SDK 58 packages aligned to the latest patch versions. Added `lucide-react-native` and `expo-image-picker`. |
+
+> **After pulling these changes:** run `bun install`, then rebuild the development build or APK. `expo-image-picker` is a native module, so a build made before this update will not include it.
+
+---
+
 ## Table of contents
 
 1. [The problem](#1-the-problem)
@@ -70,12 +91,13 @@ Early symptoms look like a common cold, parents have no objective way to tell a 
 
 PNEUMOTrack is a mobile app for early pneumonia **risk screening** in children, based on cough sounds.
 
-1. **Register** a child profile.
-2. **Record** a short cough with the phone microphone, guided by on-screen tips.
-3. **Analyze**: the backend checks audio quality, extracts acoustic features and runs two anomaly-detection models.
-4. **See the result**: a clear, non-diagnostic status (normal or needs attention) with a waveform and a plain-language summary.
-5. **Act**: warning signs to watch for, doctors to consult and nearby hospitals.
-6. **Track**: every screening is saved to the child's history.
+1. **Get started** with a short onboarding, then sign in. Parents can edit their profile (name, phone, city, photo).
+2. **Register** a child profile.
+3. **Record** a short cough with the phone microphone, guided by on-screen tips.
+4. **Analyze**: the backend checks audio quality, extracts acoustic features and runs two anomaly-detection models.
+5. **See the result**: a clear, non-diagnostic status (normal or needs attention) with a waveform and a plain-language summary.
+6. **Act**: warning signs to watch for, doctors to consult and nearby hospitals.
+7. **Track**: every screening is saved to the child's history, with trend charts (duration, cough segments) and a normal vs. risk summary.
 
 > PNEUMOTrack is a **screening aid, not a diagnosis**. It does not replace a doctor or a chest X-ray.
 
@@ -151,7 +173,7 @@ Because the open dataset contains **only pneumonia-labelled coughs** (82 patient
 
 | Layer | Technology |
 |---|---|
-| **Mobile app** | Expo SDK 58, React Native 0.88, React 19, Expo Router, TypeScript, NativeWind (Tailwind), Reanimated |
+| **Mobile app** | Expo SDK 58, React Native 0.88, React 19, Expo Router, TypeScript, NativeWind (Tailwind), Reanimated, lucide-react-native (icons), react-native-svg (charts), expo-audio, expo-image-picker |
 | **Backend and AI** | Python 3.12, FastAPI, Uvicorn, TensorFlow/Keras, scikit-learn, librosa, noisereduce, SciPy, soundfile, imageio-ffmpeg, pytest |
 | **Database and auth** | Supabase (PostgreSQL 17, GoTrue, PostgREST) with Row Level Security |
 | **Infrastructure** | Docker and Docker Compose (local Supabase stack, backend image), Caddy gateway (local), VPS deployment guide (Nginx + certbot) |
@@ -162,15 +184,19 @@ Because the open dataset contains **only pneumonia-labelled coughs** (82 patient
 PNEUMOTrack/
 ├── src/                      # Expo app
 │   ├── app/                  # Screens (file-based routing)
+│   │   ├── onboarding.tsx    # 3-slide onboarding before sign-in
 │   │   ├── (auth)/           # sign-in, sign-up
-│   │   ├── (tabs)/           # dashboard, monitoring, children, more
+│   │   ├── (tabs)/           # dashboard, history, profile, monitoring, children, more
 │   │   ├── screening/        # guide, record, analyzing, result
+│   │   ├── profile/          # edit profile (name, phone, city, photo)
 │   │   ├── children/ history/ doctors/ hospitals/ chats/ articles/
 │   │   └── recommendation.tsx
-│   ├── components/ui/        # Design system (Button, Card, StatusBanner, Waveform...)
-│   ├── constants/            # theme, copy (UI text), config (env)
-│   ├── hooks/                # session, active child, location, recorder, screening
-│   ├── services/             # API client, Supabase client + data services (real and mock)
+│   ├── components/
+│   │   ├── ui/               # Design system (Button, Card, StatusBanner, Waveform, TrendChart, ChatComposer...)
+│   │   └── screening/        # recording guide, noise meter, audio playback, result view
+│   ├── constants/            # theme, palette, copy (UI text), config (env), audio (demo sample)
+│   ├── hooks/                # session, profile, active child, location, recorder, screening, theme
+│   ├── services/             # API client, Supabase client + data services (real and mock), profile photo
 │   └── types/
 ├── server_side/              # FastAPI + models
 │   ├── app.py                # API endpoints
@@ -179,9 +205,12 @@ PNEUMOTrack/
 │   ├── deployment_v3/        # trained models (.h5, .pkl)
 │   ├── tests/                # pytest suite
 │   └── pneumonia_detection_v3.ipynb   # training notebook
+├── assets/audio/             # sample cough audio for simulation mode
 ├── supabase/                 # migrations + seed data
 ├── docker/ docker-compose.yml        # local Supabase stack
-└── PRD.md  design.md  task.md
+├── docs/                     # API, architecture, local backend, deployment, sprint notes
+├── testing-juri/             # audio samples for judges (synthetic, silent, short, noise)
+└── PRD.md  design.md  UI_UX_AUDIT_SPEC.md  task.md
 ```
 
 ## 6. Run it locally, step by step
@@ -336,7 +365,7 @@ EXPO_PUBLIC_USE_MOCK_API=false     # true = fake prediction results, no backend 
 Some packages used by the code are installed through Expo so that versions match SDK 58. Run once, from the repository root:
 
 ```bash
-bunx expo install @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill react-native-svg expo-location expo-audio
+bunx expo install @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill react-native-svg expo-location expo-audio expo-image-picker
 ```
 
 > Use `bunx expo install`, not `bun add`, for Expo and React Native packages, so versions stay compatible with the SDK.
@@ -372,10 +401,12 @@ bunx eas-cli build --profile preview --platform android
 
 ### 6.8 Try the full flow
 
-1. Open the app and **sign up** with any email and password. The local auth stack auto-confirms accounts.
+1. Go through the **onboarding** slides, then **sign up** with any email and password. The local auth stack auto-confirms accounts.
 2. **Add a child** profile.
-3. Browse **doctors**, **hospitals** and **articles** (loaded from the seeded database).
-4. Check the backend with a real recording (see [Testing](#8-testing)).
+3. Open the **Profile** tab and edit your name, phone, city and photo (the photo is stored on the device only).
+4. Browse **doctors**, **hospitals** and **articles** (loaded from the seeded database).
+5. Record a cough, then check the **History** tab for the trend charts and summary.
+6. Check the backend with a real recording (see [Testing](#8-testing)).
 
 ### 6.9 Quick start cheat sheet
 
@@ -390,7 +421,7 @@ uv pip install --python .venv/Scripts/python.exe -r requirements.txt     # macOS
 
 # terminal 3 (repo root)
 cp .env.example .env     # then edit URLs (step 6.5)
-bunx expo install @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill react-native-svg expo-location expo-audio
+bunx expo install @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill react-native-svg expo-location expo-audio expo-image-picker
 bunx expo run:android
 ```
 
@@ -460,6 +491,8 @@ Use the following account to test the app without registering:
 
 On the sign-in screen, enter these credentials or tap **Masuk sebagai Demo**. The account is provisioned in the team's Supabase project; a fresh local Supabase instance does not include it.
 
+**Mock mode (no backend or database):** with `EXPO_PUBLIC_USE_MOCK_API=true` and `EXPO_PUBLIC_USE_MOCK_DATA=true`, **Masuk sebagai Demo** signs in with built-in sample data (demo user, two fictional children, sample screenings). Results and the audio player in this mode use a bundled sample, so they are for UI testing only and do not represent a real screening.
+
 For the demo, add or select a fictional child profile, record a cough, run the analysis, and check the result, recommendations, and history. To test with an audio sample, play it on a separate device and record it through the phone microphone. Synthetic audio from `server_side/tests/conftest.py` is for functional testing and does not establish a clinical label or guarantee a particular screening result.
 
 ### 8.2 Automated checks
@@ -479,7 +512,7 @@ bun run db:rls
 
 # App quality & mobile screening tests
 bun run lint
-bunx tsc --noEmit
+bun run typecheck                     # same as: bunx tsc --noEmit
 bun test src/services/api/screening.test.cjs src/types/screening.test.cjs
 ```
 
@@ -496,6 +529,8 @@ bun test src/services/api/screening.test.cjs src/types/screening.test.cjs
 | Windows blocks the system Python (`os error 4551`) | Use `uv`, which installs its own managed Python 3.12 |
 | Model loading error about scikit-learn | Install with the pinned `requirements.txt`; the models require `scikit-learn==1.6.1` |
 | TensorFlow prints oneDNN messages | Harmless. Set `TF_ENABLE_ONEDNN_OPTS=0` to silence them |
+| Profile photo picker does not open, or `expo-image-picker` is missing | Run `bun install`, then rebuild the development build or APK (`bunx expo run:android`). It is a native module and is not available in builds made before it was added |
+| Icons or screens look outdated after pulling | Run `bun install`, then `bunx expo start -c` to clear the Metro cache |
 | Microphone or location does not work | Use a **development build** (`bunx expo run:android`), not Expo Go, and grant the permissions on the device |
 
 ## 10. Responsible AI and limitations
@@ -506,6 +541,8 @@ We want to be honest about what this prototype can and cannot do.
 - **One-class training data.** The model was trained only on pneumonia-labelled coughs, so it measures similarity to that pattern. It has **not** been evaluated on healthy children or other causes of cough.
 - **The 96.3% figure is not clinical accuracy.** In Leave-One-Out evaluation on 82 pneumonia samples, 79 were classified as inliers. This shows consistency with the training class, so the app never presents it as accuracy.
 - **No clinical validation yet.** The quality-gate thresholds were calibrated mainly with synthetic signals and need real recordings before any performance claims.
+- **Sample audio is not a recording.** The audio player in simulation (mock) mode plays a bundled sample so the UI can be tested. It is not a child's cough and carries no screening meaning.
+- **Only cough audio is analyzed.** The app does not measure or display temperature, respiratory rate, heart rate or weight.
 - **Noise and microphones matter.** Background noise and phone microphone quality can affect consistency.
 - **Privacy first.** Audio is deleted right after inference, recordings and child names are never logged, and database access is restricted per user with Row Level Security.
 
@@ -574,6 +611,9 @@ PNEUMOTrack is built with third-party open-source software and external services
 | [Expo](https://expo.dev/) and [React Native](https://reactnative.dev/) | Mobile application runtime and native device capabilities |
 | [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Expo Router](https://docs.expo.dev/router/introduction/) | UI, application logic, and file-based navigation |
 | [NativeWind](https://www.nativewind.dev/) and [Tailwind CSS](https://tailwindcss.com/) | Styling |
+| [Lucide](https://lucide.dev/) (`lucide-react-native`) | App icons |
+| [react-native-svg](https://github.com/software-mansion/react-native-svg) | Trend charts and waveform drawing |
+| [expo-audio](https://docs.expo.dev/versions/latest/sdk/audio/) and [expo-image-picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/) | Audio recording and playback, profile photo selection |
 | [Supabase](https://supabase.com/) | Local/hosted authentication, PostgreSQL access, and database services |
 | [FastAPI](https://fastapi.tiangolo.com/) and [Uvicorn](https://www.uvicorn.org/) | Backend API |
 | [TensorFlow](https://www.tensorflow.org/) / [Keras](https://keras.io/) and [scikit-learn](https://scikit-learn.org/) | Autoencoder and One-Class SVM implementation |
@@ -582,7 +622,7 @@ PNEUMOTrack is built with third-party open-source software and external services
 | [Docker](https://www.docker.com/) and Docker Compose | Local database/backend development environment |
 | [Bun](https://bun.sh/) and [uv](https://docs.astral.sh/uv/) | JavaScript and Python dependency management |
 
-**Dataset and media attribution:** The model notebook processes 82 pneumonia-labelled cough samples, but the original dataset files and their source/license details are not included in this repository archive. The dataset provider, original citation, and usage license must be added here once confirmed. The same applies to any externally sourced images, icons, fonts, or other media: retain the original creator attribution and license where required. Do not assume that an asset is free to redistribute merely because it is accessible online.
+**Dataset and media attribution:** The model notebook processes 82 pneumonia-labelled cough samples, but the original dataset files and their source/license details are not included in this repository archive. The dataset provider, original citation, and usage license must be added here once confirmed. The onboarding illustrations, the app logo, and the bundled sample audio (`assets/audio/cough-sample.wav`) also need their original source and license confirmed. The same applies to any externally sourced images, icons, fonts, or other media: retain the original creator attribution and license where required. Do not assume that an asset is free to redistribute merely because it is accessible online.
 
 **No endorsement:** Third-party names and trademarks belong to their respective owners. Their inclusion documents technical dependencies or cited information sources and does not imply sponsorship, certification, or endorsement of PNEUMOTrack.
 
