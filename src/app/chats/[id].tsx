@@ -8,11 +8,10 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button } from "@/components/ui/button";
+import { ChatComposer } from "@/components/ui/chat-composer";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Icon } from "@/components/ui/icon";
@@ -22,13 +21,11 @@ import { copy } from "@/constants/copy";
 import { useConversation } from "@/hooks/use-conversation";
 import { useResource } from "@/hooks/use-resource";
 import { useSession } from "@/hooks/use-session";
-import { useTheme } from "@/hooks/use-theme";
 import { doctorsService } from "@/services/doctors";
 import { formatDate } from "@/utils/format";
 
 export default function ChatRoomScreen() {
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
   const { user } = useSession();
   const { id } = useLocalSearchParams<{ id: string }>();
   const doctor = useResource(
@@ -128,31 +125,17 @@ export default function ChatRoomScreen() {
             {copy.chats.sendError}
           </Text>
         )}
-        <View className="flex-row items-end gap-2">
-        <TextInput
-          accessibilityLabel={copy.chats.input}
+        <ChatComposer
           value={input}
           onChangeText={setInput}
-          multiline
-          maxLength={2000}
-          placeholder={copy.chats.input}
-          placeholderTextColor={theme.inkMuted}
-          className="min-w-0 flex-1 min-h-12 max-h-28 rounded-2xl border border-border bg-surface-muted px-4 py-2.5 text-body text-ink"
-        />
-        <Button
-          className="px-5"
-          label={copy.chats.send}
-          loading={chat.sending}
-          disabled={
-            !input.trim() || !doctor.data || chat.isLoading || chat.error
-          }
-          onPress={async () => {
+          sending={chat.sending}
+          disabled={!doctor.data || chat.isLoading || !!chat.error}
+          onSend={async () => {
             const draft = input;
             if (await chat.send(draft))
               setInput((current) => (current === draft ? "" : current));
           }}
         />
-        </View>
       </View>
     </KeyboardAvoidingView>
   );

@@ -1,4 +1,5 @@
 import { UI } from "@/constants/theme";
+import type { Href } from "expo-router";
 import {
   TabList,
   TabSlot,
@@ -7,7 +8,7 @@ import {
   type TabTriggerSlotProps,
 } from "expo-router/ui";
 import { type ComponentProps, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { MenuSheet } from "@/components/ui/menu-sheet";
@@ -34,20 +35,15 @@ function TabButton({
       aria-selected={!!isFocused}
       style={(state) => [
         typeof style === "function" ? style(state) : style,
-        { flexDirection: "column", justifyContent: "center" },
       ]}
-      className="min-h-12 flex-1 items-center justify-center gap-1 rounded-card active:opacity-70"
+      className="min-h-12 flex-1 items-center justify-center rounded-card active:opacity-70"
     >
-      <View className={`px-3 py-1 rounded-pill ${isFocused ? "bg-surface-brand" : "bg-transparent"}`}><Icon
+      <Icon
         name={icon}
         tone={isFocused ? "brand" : "muted"}
         selected={isFocused}
-      /></View>
-      <Text
-        className={`text-caption ${isFocused ? "font-bold text-brand" : "text-ink-muted"}`}
-      >
-        {label}
-      </Text>
+        size={UI.iconLg}
+      />
     </Pressable>
   );
 }
@@ -74,7 +70,7 @@ export default function TabsLayout() {
           <TabTrigger name="history" href="/(tabs)/history" asChild>
             <TabButton label={copy.nav.history} icon="history" />
           </TabTrigger>
-          <TabTrigger name="children" href="/(tabs)/children" asChild>
+          <TabTrigger name="profile" href={"/(tabs)/profile" as Href} asChild>
             <TabButton label={copy.nav.profile} icon="profile" />
           </TabTrigger>
           <Pressable
@@ -83,11 +79,20 @@ export default function TabsLayout() {
             accessibilityState={{ expanded: menuOpen }}
             aria-expanded={menuOpen}
             onPress={() => setMenuOpen(true)}
-            className="min-h-12 flex-1 items-center justify-center gap-1 rounded-card active:opacity-70"
+            className="min-h-12 flex-1 items-center justify-center rounded-card active:opacity-70"
           >
-            <View className={`px-3 py-1 rounded-pill ${menuOpen ? "bg-surface-brand" : "bg-transparent"}`}><Icon name="menu" tone={menuOpen ? "brand" : "muted"} selected={menuOpen} /></View>
-            <Text className={`text-caption ${menuOpen ? "font-bold text-brand" : "text-ink-muted"}`}>{copy.nav.menu}</Text>
+            <Icon
+              name="menu"
+              tone={menuOpen ? "brand" : "muted"}
+              selected={menuOpen}
+              size={UI.iconLg}
+            />
           </Pressable>
+          <TabTrigger
+            name="children"
+            href="/(tabs)/children"
+            style={{ display: "none" }}
+          />
           <TabTrigger
             name="monitoring"
             href="/(tabs)/monitoring"

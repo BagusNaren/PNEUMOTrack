@@ -10,6 +10,110 @@ Stack assumptions: Expo SDK 58, React Native 0.88, NativeWind 4.2.7 (Tailwind CS
 
 ---
 
+## 0. Implementation decisions, UI Kit · FIX PNM
+
+This section records the decisions for the FigCraft to Expo implementation. It does not replace the design tokens or screen specification below.
+
+### Source of truth
+
+- FigCraft page: `UI Kit · FIX PNM`, 32 frames.
+- The top row is canonical. Duplicate rows and duplicate columns have been removed.
+- Frames named `Online Pharmacy`, `LineArea`, and `Group 633202` are assets or annotations, not app screens.
+- The page uses 430 × 932 frames. The app uses responsive layout, safe areas, and a 390 × 844 baseline.
+
+### Scope
+
+- UI implementation only.
+- Dummy data only. No backend, no Supabase cloud, no real audio upload.
+- Login and profile use the existing demo session, mock children, and mock screenings.
+- Android and iOS.
+- System font. No custom font file.
+- Light mode only for this delivery. Existing dark tokens stay in the code but are not part of the acceptance test.
+- Copy is Indonesian. All new strings go to `src/constants/copy.ts`.
+
+### Icons
+
+- Source: `lucide-react-native`.
+- Size: 24 px in navigation, search, and headers.
+- Stroke: 2. Round caps and round joins.
+- One central wrapper in `src/components/ui/icon.tsx`. Screens continue to use `<Icon name="..." />`.
+- `expo-symbols` is replaced. No mixed icon systems.
+
+### Navigation flow
+
+1. Onboarding, three slides:
+   - For families who care.
+   - Consult a trusted doctor.
+   - Trusted hospitals, one tap away.
+2. Login and sign up.
+3. Tabs:
+   - Home.
+   - History.
+   - Profile.
+   - Menu.
+4. Focused flows hide the bottom navigation.
+
+The bottom navigation is icon-only, 64 px, one hairline, 48 px touch targets. Profile is a new route at `src/app/(tabs)/profile.tsx`. Child management stays at `(tabs)/children`.
+
+### Screen inventory
+
+- Onboarding.
+- Login and sign up.
+- Dashboard safe and risk.
+- Monitoring.
+- History.
+- Recording list.
+- Recording guidance.
+- Recording audio.
+- Analyzing.
+- Cough analysis normal and risk.
+- Recommended action.
+- Doctor list and detail.
+- Messages and chat room.
+- Hospital list and map.
+- Article list and detail.
+- Profile.
+- Add child.
+
+### Data and safety
+
+- Demo user: Bunda Sari, `demo@pneumotrack.id`.
+- Demo children: Budi Santoso and Ayu Lestari.
+- Screening data: `MOCK_SCREENINGS`.
+- Doctors, hospitals, articles, and chats: existing mock services.
+- The app screens cough audio only. Do not show temperature, respiratory rate, or heart rate as if they were measured.
+- Dashboard cards show cough screening status, duration, segments, date, waveform, and summary only.
+- Never present the model figure as clinical fact.
+- Result and recommendation screens keep the screening disclaimer.
+
+### Implementation order
+
+1. Onboarding, login, sign up, demo login.
+2. Profile, bottom navigation, dashboard.
+3. Screening flow.
+4. History and monitoring.
+5. Doctor, chat, hospital, article.
+6. Typecheck, lint, Expo Doctor, Android and iOS device checks.
+
+### Device delivery
+
+- Android: `bun run android:local -Mock` for development, `bun run android:release -Mock` for a release APK.
+- iOS: Expo Go with `npx expo start --lan` first. If a module is unavailable, use an EAS development build.
+- Mock environment: `EXPO_PUBLIC_USE_MOCK_API=true`, `EXPO_PUBLIC_USE_MOCK_DATA=true`.
+- Demo login must remain visible in mock builds, not only in `__DEV__`.
+
+### Acceptance
+
+- Onboarding, login, and dashboard work on a physical device.
+- Profile shows the demo account, children, and latest screening.
+- All listed screens are reachable with dummy data.
+- Lucide icons only.
+- System font, light mode, Indonesian copy.
+- `bun run typecheck`, `bun run lint`, and `bunx expo-doctor` pass.
+- No audio, child name, or personal data in logs.
+
+---
+
 ## 1. Design intent
 
 A calm, trustworthy medical assistant for parents — not a hospital dashboard. The interface should feel:

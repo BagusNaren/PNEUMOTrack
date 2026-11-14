@@ -34,6 +34,43 @@ export const copy = {
     callError:
       "Panggilan belum dapat dibuka. Hubungi 119 melalui telepon Anda.",
   },
+  onboarding: {
+    skip: "Lewati",
+    next: "Lanjut",
+    start: "Mulai",
+    slides: [
+      {
+        title: "Untuk keluarga yang peduli",
+        body: "Pantau tanda pernapasan si kecil dan dapatkan arahan yang jelas, tanpa membuat panik.",
+      },
+      {
+        title: "Konsultasi dengan dokter tepercaya",
+        body: "Diskusikan hasil skrining dengan dokter anak atau dokter paru yang tersedia.",
+      },
+      {
+        title: "Fasilitas kesehatan terdekat",
+        body: "Temukan rumah sakit dan klinik di sekitar Anda saat butuh tindak lanjut.",
+      },
+    ],
+  },
+  profile: {
+    title: "Profil",
+    account: "Akun saya",
+    activeChild: "Anak aktif",
+    manageChildren: "Kelola anak",
+    addChild: "Tambah anak",
+    latest: "Skrining terakhir",
+    services: "Layanan",
+    about: "Tentang aplikasi",
+    demo: "Mode demo",
+    sampleData: "Data contoh",
+    noChild: "Belum ada profil anak",
+    noChildBody: "Tambahkan profil anak untuk mulai memantau kesehatannya.",
+    noScreening: "Belum ada skrining",
+    noScreeningBody: "Hasil skrining akan muncul di sini.",
+    settings: "Pengaturan",
+    help: "Bantuan",
+  },
   auth: {
     signInTitle: "Masuk ke PNEUMOTrack",
     signInSubtitle: "Pantau kesehatan pernapasan si kecil",
@@ -359,6 +396,11 @@ export const copy = {
     noMessage: "Belum ada pesan",
     input: "Tulis pesan",
     send: "Kirim",
+    attach: "Lampiran",
+    voice: "Pesan suara",
+    comingSoonTitle: "Segera hadir",
+    comingSoonBody:
+      "Lampiran dan pesan suara belum tersedia di demo UI ini.",
     sendError: "Pesan belum terkirim. Periksa koneksi, lalu coba lagi.",
     call: "Telepon Dokter",
     callError: "Panggilan belum dapat dibuka. Coba lagi.",

@@ -1,66 +1,71 @@
-import { SymbolView } from "expo-symbols";
+import {
+  ArrowLeft,
+  ArrowRight,
+  AudioWaveform,
+  ChevronDown,
+  ChevronUp,
+  CircleCheck,
+  HeartPulse,
+  History,
+  Hospital,
+  House,
+  Map,
+  MapPin,
+  Menu,
+  MessageCircle,
+  Mic,
+  Newspaper,
+  Phone,
+  Plus,
+  Search,
+  Send,
+  Stethoscope,
+  Thermometer,
+  TriangleAlert,
+  User,
+  Weight,
+  WifiOff,
+  Wind,
+  X,
+  type LucideIcon,
+} from "lucide-react-native";
+
 import { UI } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
-const symbols = {
-  home: { ios: "house", android: "home", web: "home" },
-  history: {
-    ios: "clock.arrow.circlepath",
-    android: "history",
-    web: "history",
-  },
-  mic: { ios: "mic", android: "mic", web: "mic" },
-  add: { ios: "plus", android: "add", web: "add" },
-  chevronDown: {
-    ios: "chevron.down",
-    android: "keyboard_arrow_down",
-    web: "keyboard_arrow_down",
-  },
-  chevronUp: {
-    ios: "chevron.up",
-    android: "keyboard_arrow_up",
-    web: "keyboard_arrow_up",
-  },
-  chevronRight: {
-    ios: "chevron.right",
-    android: "chevron_right",
-    web: "chevron_right",
-  },
-  close: { ios: "xmark", android: "close", web: "close" },
-  search: { ios: "magnifyingglass", android: "search", web: "search" },
-  doctor: { ios: "stethoscope", android: "stethoscope", web: "stethoscope" },
-  hospital: {
-    ios: "cross.case",
-    android: "local_hospital",
-    web: "local_hospital",
-  },
-  chat: { ios: "bubble.left", android: "chat_bubble", web: "chat_bubble" },
-  article: { ios: "newspaper", android: "article", web: "article" },
-  location: {
-    ios: "mappin.and.ellipse",
-    android: "location_on",
-    web: "location_on",
-  },
-  map: { ios: "map", android: "map", web: "map" },
-  phone: { ios: "phone", android: "call", web: "call" },
-  profile: { ios: "person", android: "person", web: "person" },
-  menu: { ios: "line.3.horizontal", android: "menu", web: "menu" },
-  back: { ios: "chevron.left", android: "arrow_back", web: "arrow_back" },
-  check: {
-    ios: "checkmark.circle",
-    android: "check_circle",
-    web: "check_circle",
-  },
-  warning: {
-    ios: "exclamationmark.triangle",
-    android: "warning",
-    web: "warning",
-  },
-  empty: { ios: "waveform", android: "graphic_eq", web: "graphic_eq" },
-  error: { ios: "wifi.slash", android: "wifi_off", web: "wifi_off" },
-} as const;
+const icons = {
+  home: House,
+  history: History,
+  mic: Mic,
+  add: Plus,
+  chevronDown: ChevronDown,
+  chevronUp: ChevronUp,
+  chevronRight: ArrowRight,
+  close: X,
+  search: Search,
+  doctor: Stethoscope,
+  hospital: Hospital,
+  chat: MessageCircle,
+  article: Newspaper,
+  thermometer: Thermometer,
+  breath: Wind,
+  heart: HeartPulse,
+  weight: Weight,
+  location: MapPin,
+  map: Map,
+  phone: Phone,
+  profile: User,
+  menu: Menu,
+  back: ArrowLeft,
+  send: Send,
+  check: CircleCheck,
+  warning: TriangleAlert,
+  empty: AudioWaveform,
+  error: WifiOff,
+} as const satisfies Record<string, LucideIcon>;
 
-export type IconName = keyof typeof symbols;
+export type IconName = keyof typeof icons;
+
 export function Icon({
   name,
   tone = "ink",
@@ -82,13 +87,14 @@ export function Icon({
     warning: theme.warning,
     onBrand: theme.onBrand,
   };
+  const Glyph = icons[name];
+
   return (
-    <SymbolView
-      name={symbols[name]}
+    <Glyph
       size={size}
-      tintColor={colors[tone]}
-      weight={selected ? "bold" : "regular"}
-      style={{ width: size, height: size }}
+      color={colors[tone]}
+      strokeWidth={selected ? 2.4 : 2}
+      absoluteStrokeWidth
       accessible={false}
     />
   );

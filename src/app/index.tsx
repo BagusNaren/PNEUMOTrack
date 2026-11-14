@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { Redirect } from "expo-router";
+import { Redirect, type Href } from "expo-router";
 import { Text, View } from "react-native";
 import { Screen } from "@/components/ui/screen";
 import { copy } from "@/constants/copy";
@@ -9,7 +9,9 @@ import { useSession } from "@/hooks/use-session";
 export default function EntryScreen() {
   const { user, isLoading } = useSession();
   if (!isLoading) {
-    return <Redirect href={user ? "/(tabs)" : "/(auth)/sign-in"} />;
+    return (
+      <Redirect href={(user ? "/(tabs)" : "/onboarding") as Href} />
+    );
   }
   return (
     <Screen scroll={false}>

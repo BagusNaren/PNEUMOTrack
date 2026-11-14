@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/button";
+import { Config } from "@/constants/config";
 import { copy } from "@/constants/copy";
 import { useSession } from "@/hooks/use-session";
 import { useTheme } from "@/hooks/use-theme";
@@ -147,7 +148,7 @@ export default function SignInScreen() {
               className="mt-2"
             />
 
-            {__DEV__ && (
+            {Config.useMockData && (
               <Button
                 label={copy.auth.demoButton}
                 variant="secondary"

@@ -44,6 +44,15 @@ function formatChildAge(birthDateStr: string): string {
   return copy.children.ageMonths(months);
 }
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="gap-0.5">
+      <Text className="text-caption text-ink-muted">{label}</Text>
+      <Text className="text-label font-semibold text-ink">{value}</Text>
+    </View>
+  );
+}
+
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useSession();
@@ -62,6 +71,23 @@ export default function DashboardScreen() {
   const screening = latest.data;
   const risk = screening?.result === "risk";
   const name = user?.user_metadata?.full_name?.trim().split(/\s+/)[0];
+  const sexLabel =
+    activeChild?.sex === "male" ? copy.children.sexMale : copy.children.sexFemale;
+  const gaugeVariant = screening ? (risk ? "risk" : "normal") : "pending";
+  const ctaLabel = risk
+    ? copy.dashboard.viewRecommendation
+    : copy.dashboard.recordButton;
+
+  const handleCta = () => {
+    if (risk && screening) {
+      router.push({
+        pathname: "/recommendation",
+        params: { screeningId: screening.id },
+      });
+      return;
+    }
+    router.push("/screening/guide");
+  };
 
   return (
     <ScrollView
@@ -100,6 +126,7 @@ export default function DashboardScreen() {
             {risk ? copy.dashboard.subtitleRisk : copy.dashboard.subtitle}
           </Text>
         </View>
+
         {isLoading ? (
           <LoadingState label={copy.guide.childLoading} />
         ) : error ? (
@@ -116,32 +143,35 @@ export default function DashboardScreen() {
           />
         ) : (
           <View className="gap-4">
-            <Card variant="soft" className="p-3.5">
+            <Card variant={risk ? "risk" : "brand"} className="gap-3 p-4">
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={copy.dashboard.chooseChild}
                 accessibilityState={{ expanded: showChildPicker }}
                 onPress={() => setShowChildPicker(!showChildPicker)}
-                className="min-h-12 flex-row items-center gap-3 active:opacity-70"
+                className="min-h-12 flex-row items-center gap-3 active:opacity-80"
               >
                 <Avatar
-                  size="md"
+                  size="lg"
                   name={activeChild.name}
                   accessibilityLabel={copy.children.avatarLabel(
                     activeChild.name,
                   )}
                 />
                 <View className="min-w-0 flex-1 gap-1">
-                  <Text className="text-subtitle font-semibold text-ink">
-                    {activeChild.name}
-                  </Text>
-                  <View className="self-start rounded-pill bg-surface-brand px-2.5 py-0.5">
-                    <Text className="text-caption font-semibold text-brand">
-                      {formatChildAge(activeChild.birth_date)}
+                  <View className="flex-row flex-wrap items-center gap-2">
+                    <Text className="text-title font-bold text-ink">
+                      {activeChild.name}
                     </Text>
+                    <View className="rounded-pill bg-surface px-2.5 py-0.5">
+                      <Text className="text-caption font-semibold text-brand">
+                        {formatChildAge(activeChild.birth_date)}
+                      </Text>
+                    </View>
                   </View>
+                  <Text className="text-caption text-ink-muted">{sexLabel}</Text>
                 </View>
-                <View className="h-9 w-9 items-center justify-center rounded-full bg-surface-brand">
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-surface">
                   <Icon
                     name={showChildPicker ? "chevronUp" : "chevronDown"}
                     tone="brand"
@@ -149,9 +179,33 @@ export default function DashboardScreen() {
                   />
                 </View>
               </Pressable>
+
+              <View className="flex-row items-start gap-2">
+                <Icon
+                  name={screening ? (risk ? "warning" : "check") : "history"}
+                  tone={risk ? "risk" : screening ? "safe" : "muted"}
+                  size={UI.iconMd}
+                />
+                <Text
+                  className={`flex-1 text-label font-semibold ${
+                    risk
+                      ? "text-risk"
+                      : screening
+                        ? "text-brand"
+                        : "text-ink-muted"
+                  }`}
+                >
+                  {screening
+                    ? risk
+                      ? copy.dashboard.riskStatus
+                      : copy.dashboard.normalStatus
+                    : copy.dashboard.noScreeningYet}
+                </Text>
+              </View>
             </Card>
+
             {showChildPicker && (
-              <Card variant="soft">
+              <Card variant="soft" className="gap-1">
                 {children.map((child) => (
                   <Pressable
                     key={child.id}
@@ -161,8 +215,9 @@ export default function DashboardScreen() {
                       setActiveChild(child);
                       setShowChildPicker(false);
                     }}
-                    className="min-h-12 flex-row items-center gap-3 py-3 active:opacity-70"
+                    className="min-h-12 flex-row items-center gap-3 py-2 active:opacity-80"
                   >
+                    <Avatar size="sm" name={child.name} />
                     <Text className="min-w-0 flex-1 text-body text-ink">
                       {child.name}
                     </Text>
@@ -179,84 +234,83 @@ export default function DashboardScreen() {
                 />
               </Card>
             )}
-            {latest.isLoading ? (
-              <LoadingState />
-            ) : (
-              <>
-                {latest.error && (
-                  <ErrorState
-                    description={copy.common.loadFailed}
-                    onAction={() => void latest.reload()}
-                  />
-                )}
-                {screening ? (
-                  <Card variant={risk ? "risk" : "brand"}>
-                    <View className="items-center">
-                      <HeartGauge
-                        variant={risk ? "risk" : "normal"}
-                        size={UI.gaugeSize}
+
+            <Card variant={risk ? "risk" : "brand"} className="gap-4 p-4">
+              <View className="flex-row items-center justify-between gap-2">
+                <Text
+                  className={`text-label font-semibold ${
+                    risk ? "text-risk" : "text-brand"
+                  }`}
+                >
+                  {copy.dashboard.sectionStatus}
+                </Text>
+              </View>
+
+              <View className="flex-row items-center gap-3">
+                <View className="flex-1 gap-2">
+                  {screening ? (
+                    <>
+                      <InfoRow
+                        label="Durasi rekaman"
+                        value={formatDuration(screening.duration_sec)}
                       />
-                    </View>
-                    <Text
-                      className={`text-center text-subtitle font-semibold ${risk ? "text-risk" : "text-brand"}`}
-                    >
-                      {risk
-                        ? copy.dashboard.riskStatus
-                        : copy.dashboard.normalStatus}
-                    </Text>
-                    <Text className="text-center text-caption text-ink-muted">
-                      {formatDate(screening.created_at, true)} ·{" "}
-                      {formatDuration(screening.duration_sec)}
-                    </Text>
-                    <Button
-                      label={
-                        risk
-                          ? copy.dashboard.viewRecommendation
-                          : copy.dashboard.recordButton
-                      }
-                      variant={risk ? "risk" : "primary"}
-                      onPress={() =>
-                        router.push(
-                          risk
-                            ? {
-                                pathname: "/recommendation",
-                                params: { screeningId: screening.id },
-                              }
-                            : "/screening/guide",
-                        )
-                      }
-                    />
-                    <Button
-                      label={copy.dashboard.viewDetail}
-                      variant="ghost"
-                      onPress={() =>
-                        router.push({
-                          pathname: "/history/[id]",
-                          params: { id: screening.id },
-                        })
-                      }
-                    />
-                  </Card>
-                ) : (
-                  !latest.error && (
-                    <Card variant="brand">
-                      <View className="items-center">
-                        <HeartGauge variant="pending" size={UI.gaugeSize} />
-                      </View>
-                      <Text className="text-center text-subtitle font-semibold text-ink">
+                      <InfoRow
+                        label="Segmen batuk"
+                        value={`${screening.chunks} bagian`}
+                      />
+                      <InfoRow
+                        label="Tanggal"
+                        value={formatDate(screening.created_at, true)}
+                      />
+                      <InfoRow label="Metode" value="Analisis audio batuk" />
+                    </>
+                  ) : (
+                    <>
+                      <Text className="text-label font-semibold text-ink">
                         {copy.dashboard.noScreeningYet}
                       </Text>
-                      <Button
-                        label={copy.dashboard.recordButton}
-                        onPress={() => router.push("/screening/guide")}
-                      />
-                    </Card>
-                  )
-                )}
-              </>
-            )}
+                      <Text className="text-caption text-ink-muted">
+                        Rekam batuk untuk melihat hasil skrining.
+                      </Text>
+                    </>
+                  )}
+                </View>
+                <HeartGauge variant={gaugeVariant} size={UI.gaugeSize} />
+              </View>
+
+              <View className="flex-row flex-wrap gap-2">
+                <Button
+                  label={ctaLabel}
+                  variant={risk ? "risk" : "primary"}
+                  onPress={handleCta}
+                  className="flex-1"
+                />
+                {screening ? (
+                  <Button
+                    label={copy.dashboard.viewDetail}
+                    variant="secondary"
+                    onPress={() =>
+                      router.push({
+                        pathname: "/history/[id]",
+                        params: { id: screening.id },
+                      })
+                    }
+                    className="flex-1"
+                  />
+                ) : null}
+              </View>
+            </Card>
+
+            {latest.isLoading ? <LoadingState /> : null}
+            {latest.error ? (
+              <ErrorState
+                description={copy.common.loadFailed}
+                onAction={() => void latest.reload()}
+              />
+            ) : null}
           </View>
         )}
+
         <View className="gap-3">
           <View className="flex-row flex-wrap items-center justify-between gap-2">
             <Text
