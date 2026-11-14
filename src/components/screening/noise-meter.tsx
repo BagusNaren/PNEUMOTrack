@@ -28,7 +28,7 @@ export function NoiseMeter({
       </Text>
       <Text
         accessibilityLiveRegion="polite"
-        className="text-body text-brand dark:text-brand-light"
+        className={`text-body ${!checking && status === "safe" ? "text-safe" : !checking && status === "noisy" ? "text-warning" : "text-brand"}`}
       >
         {label}
       </Text>
@@ -44,7 +44,7 @@ export function NoiseMeter({
       >
         {level !== null && (
           <View
-            className="h-2 rounded-pill bg-brand dark:bg-brand-light"
+            className={`h-2 rounded-pill ${!checking && status === "safe" ? "bg-safe" : !checking && status === "noisy" ? "bg-warning" : "bg-brand"}`}
             style={{ width: `${Math.round(level * 100)}%` }}
           />
         )}

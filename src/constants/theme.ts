@@ -58,7 +58,8 @@ export const Spacing = {
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+export const MaxContentWidth = 640;
+export const MaxFormWidth = 480;
 
 export const UI = {
   gutter: 20,
@@ -67,6 +68,23 @@ export const UI = {
   cardRadius: 16,
   sheetRadius: 24,
   iconSize: 24,
+  iconSm: 16,
+  iconMd: 20,
+  iconLg: 24,
+  iconXl: 32,
+  avatarSm: 40,
+  avatarMd: 48,
+  avatarLg: 64,
+  avatarXl: 80,
+  analyzingLogoSize: 140,
+  authLogoSize: 72,
+  gaugeSize: 112,
+  maxFormWidth: 440,
+  waveformBarCount: 32,
+  waveformBarHeight: 72,
+  diagramSize: 56,
+  diagramHeight: 72,
+  touchTarget: Platform.OS === "android" ? 48 : 44,
   logoSize: 176,
   tabHeight: 64,
   label: { fontSize: 14, lineHeight: 20, fontWeight: "600" },

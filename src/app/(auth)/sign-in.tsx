@@ -1,3 +1,6 @@
+import { Image } from "expo-image";
+import { Icon } from "@/components/ui/icon";
+import { UI, Spacing } from "@/constants/theme";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -25,9 +28,10 @@ export default function SignInScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
 
   const handleSignIn = async () => {
-    if (isLoading) return;
+    if (isLoading || isDemoLoading) return;
     if (!email.trim() || !password) {
       setError(copy.auth.required);
       return;
@@ -50,14 +54,16 @@ export default function SignInScreen() {
   };
 
   const handleDemo = async () => {
-    setIsLoading(true);
+    if (isLoading || isDemoLoading) return;
+    setError(null);
+    setIsDemoLoading(true);
     try {
       await signIn("demo@pneumotrack.id", "demo1234");
       router.replace("/(tabs)");
     } catch {
       setError(copy.auth.demoUnavailable);
     } finally {
-      setIsLoading(false);
+      setIsDemoLoading(false);
     }
   };
 
@@ -70,13 +76,17 @@ export default function SignInScreen() {
         contentContainerStyle={{
           flexGrow: 1,
           paddingTop: insets.top,
-          paddingBottom: insets.bottom + 24,
+          paddingBottom: insets.bottom + Spacing.four,
         }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-1 justify-center px-6">
-          <View className="mb-10 items-center gap-2">
+        <View
+          style={{ maxWidth: UI.maxFormWidth }}
+          className="w-full self-center flex-1 justify-center px-5 py-8"
+        >
+          <View className="mb-8 items-center gap-2">
+            <Image source={require("../../../assets/images/logo.png")} contentFit="contain" accessibilityLabel={copy.app.name} style={{ width: UI.authLogoSize, height: UI.authLogoSize, borderRadius: UI.cardRadius }} />
             <Text className="text-title font-bold text-brand dark:text-brand-light">
               {copy.app.name}
             </Text>
@@ -91,7 +101,7 @@ export default function SignInScreen() {
                 {copy.auth.emailLabel}
               </Text>
               <TextInput
-                className="min-h-12 rounded-xl border border-border bg-surface px-4 py-3 text-body text-ink"
+                className={`min-h-12 rounded-xl border bg-surface px-4 py-3 text-body text-ink ${error && !email.trim() ? "border-risk-border" : "border-border"}`}
                 placeholder={copy.auth.emailPlaceholder}
                 placeholderTextColor={theme.inkMuted}
                 value={email}
@@ -109,7 +119,7 @@ export default function SignInScreen() {
                 {copy.auth.passwordLabel}
               </Text>
               <TextInput
-                className="min-h-12 rounded-xl border border-border bg-surface px-4 py-3 text-body text-ink"
+                className={`min-h-12 rounded-xl border bg-surface px-4 py-3 text-body text-ink ${error && !password.trim() ? "border-risk-border" : "border-border"}`}
                 placeholder={copy.auth.passwordPlaceholder}
                 placeholderTextColor={theme.inkMuted}
                 value={password}
@@ -123,8 +133,9 @@ export default function SignInScreen() {
             </View>
 
             {error ? (
-              <View className="rounded-xl bg-risk-surface px-4 py-3">
-                <Text className="text-caption text-risk">{error}</Text>
+              <View accessibilityRole="alert" className="flex-row items-center gap-2 rounded-xl border border-risk-border bg-risk-surface px-4 py-3">
+                <Icon name="warning" tone="risk" />
+                <Text className="flex-1 text-label text-risk">{error}</Text>
               </View>
             ) : null}
 
@@ -132,6 +143,7 @@ export default function SignInScreen() {
               label={copy.auth.signInButton}
               onPress={handleSignIn}
               isLoading={isLoading}
+              disabled={isDemoLoading}
               className="mt-2"
             />
 
@@ -140,7 +152,8 @@ export default function SignInScreen() {
                 label={copy.auth.demoButton}
                 variant="secondary"
                 onPress={handleDemo}
-                isLoading={isLoading}
+                isLoading={isDemoLoading}
+                disabled={isLoading}
               />
             )}
           </View>

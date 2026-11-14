@@ -6,6 +6,7 @@ export const copy = {
     tagline: "Track the Signs, Guard the Lungs.",
   },
   common: {
+    clearSearch: "Hapus pencarian",
     appName: "PNEUMOTrack",
     tagline: "Track the Signs, Guard the Lungs.",
     back: "Kembali",
@@ -319,6 +320,9 @@ export const copy = {
       "Informasi ini untuk edukasi. Konsultasikan gejala anak kepada tenaga kesehatan.",
   },
   care: {
+    callHospital: "Telepon",
+    pediatric: "Poli Anak",
+    selectedFacility: "Fasilitas Terpilih",
     doctors: "Dokter",
     doctorDetail: "Detail Dokter",
     searchDoctor: "Cari nama atau spesialisasi dokter",
@@ -473,6 +477,7 @@ export const copy = {
     runScenario: "Jalankan Simulasi",
   },
   screening: {
+    simulationMode: "Mode Simulasi",
     dataDemo: "Data simulasi untuk pengujian.",
     demo: "Mode Simulasi",
     demoNotice: "Respons contoh untuk pengujian, bukan hasil skrining anak.",

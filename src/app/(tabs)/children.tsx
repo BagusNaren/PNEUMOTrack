@@ -1,6 +1,4 @@
-// src/app/(tabs)/children.tsx
-// Children profile list and active child switcher.
-
+import { UI, Spacing } from "@/constants/theme";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -13,7 +11,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -77,104 +74,111 @@ export default function ChildrenScreen() {
   };
 
   return (
-    <View className="flex-1 bg-surface dark:bg-surface-dark">
+    <View className="flex-1 bg-surface">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
           paddingTop: insets.top,
-          paddingBottom: 24,
-          paddingHorizontal: 20,
+          paddingBottom: Spacing.four,
+          paddingHorizontal: UI.gutter,
         }}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader title={copy.children.listTitle} showBack={false} />
+        <View className="w-full max-w-content self-center">
+          <ScreenHeader title={copy.children.listTitle} showBack={false} />
 
-        {isLoading ? (
-          <LoadingState />
-        ) : error ? (
-          <ErrorState
-            description={copy.common.loadFailed}
-            onAction={() => void refresh()}
-          />
-        ) : children.length === 0 ? (
-          <EmptyState
-            title={copy.children.emptyTitle}
-            body={copy.children.emptyBody}
-            className="mt-12"
-          />
-        ) : (
-          <View className="gap-3 mt-2">
-            {children.map((child) => {
-              const isActive = activeChild?.id === child.id;
+          {isLoading ? (
+            <LoadingState />
+          ) : error ? (
+            <ErrorState
+              description={copy.common.loadFailed}
+              onAction={() => void refresh()}
+            />
+          ) : children.length === 0 ? (
+            <EmptyState
+              title={copy.children.emptyTitle}
+              body={copy.children.emptyBody}
+              className="mt-12"
+            />
+          ) : (
+            <View className="mt-2 gap-3">
+              {children.map((child) => {
+                const isActive = activeChild?.id === child.id;
 
-              return (
-                <Card
-                  key={child.id}
-                  variant={isActive ? "brand" : "default"}
-                  className="gap-3"
-                >
-                  <View className="flex-row items-center gap-3">
-                    <Avatar
-                      name={child.name}
-                      accessibilityLabel={copy.children.avatarLabel(child.name)}
-                    />
-
-                    <View className="flex-1">
-                      <View className="flex-row flex-wrap items-center gap-2">
-                        <Text className="text-subtitle font-bold text-ink dark:text-ink-dark">
-                          {child.name}
-                        </Text>
-                        {isActive && (
-                          <Badge
-                            label={copy.children.activeLabel}
-                            variant="brand"
-                          />
+                return (
+                  <Card
+                    key={child.id}
+                    variant={isActive ? "brand" : "default"}
+                    className="gap-3"
+                  >
+                    <View className="flex-row items-center gap-3">
+                      <Avatar
+                        name={child.name}
+                        accessibilityLabel={copy.children.avatarLabel(
+                          child.name,
                         )}
+                      />
+
+                      <View className="flex-1 gap-1">
+                        <View className="flex-row flex-wrap items-center gap-2">
+                          <Text className="text-subtitle font-bold text-ink">
+                            {child.name}
+                          </Text>
+                          {isActive && (
+                            <View className="rounded-pill bg-brand px-3 py-1">
+                              <Text className="text-label font-semibold text-on-brand">
+                                {copy.children.activeLabel}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+
+                        <Text className="text-caption text-ink-muted">
+                          {getAgeString(child.birth_date)} •{" "}
+                          {child.sex === "male"
+                            ? copy.children.sexMale
+                            : copy.children.sexFemale}
+                        </Text>
                       </View>
-
-                      <Text className="text-caption text-ink-muted">
-                        {getAgeString(child.birth_date)} •{" "}
-                        {child.sex === "male"
-                          ? copy.children.sexMale
-                          : copy.children.sexFemale}
-                      </Text>
                     </View>
-                  </View>
 
-                  <View className="flex-row flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/40">
-                    {!isActive && (
+                    <View
+                      className={`flex-row flex-wrap items-center ${isActive ? "justify-end" : "justify-between"} gap-3 border-t border-subtle pt-2`}
+                    >
+                      {!isActive && (
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => setActiveChild(child)}
+                          className="min-h-12 justify-center py-3 active:opacity-90"
+                        >
+                          <Text className="text-label font-semibold text-brand">
+                            {copy.children.setActive}
+                          </Text>
+                        </Pressable>
+                      )}
+
                       <Pressable
                         accessibilityRole="button"
-                        onPress={() => setActiveChild(child)}
-                        className="min-h-12 justify-center py-3 active:opacity-90"
+                        onPress={() => handleDelete(child)}
+                        className="min-h-12 min-w-12 justify-center px-3 py-3 active:opacity-90"
                       >
-                        <Text className="text-label font-semibold text-brand">
-                          {copy.children.setActive}
+                        <Text className="text-label font-semibold text-risk">
+                          {copy.common.delete}
                         </Text>
                       </Pressable>
-                    )}
-
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => handleDelete(child)}
-                      className="min-h-12 min-w-12 justify-center px-3 py-3 active:opacity-90"
-                    >
-                      <Text className="text-label font-semibold text-risk">
-                        {copy.common.delete}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </Card>
-              );
-            })}
-          </View>
-        )}
+                    </View>
+                  </Card>
+                );
+              })}
+            </View>
+          )}
+        </View>
       </ScrollView>
 
-      <View className="px-5 pb-4">
+      <View className="w-full max-w-content self-center px-5 pb-4">
         <Button
           label={copy.children.addButton}
           size="md"

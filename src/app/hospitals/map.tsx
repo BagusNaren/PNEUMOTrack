@@ -1,9 +1,13 @@
+import { UI, Spacing } from "@/constants/theme";
+import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   FlatList,
   Linking,
   Platform,
+  Pressable,
   Text,
   TextInput,
   View,
@@ -52,12 +56,13 @@ export default function HospitalMapScreen() {
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top }}>
       <FlatList
+        className="w-full max-w-content flex-1 self-center"
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 24,
-          gap: 16,
+          paddingHorizontal: UI.gutter,
+          paddingBottom: insets.bottom + Spacing.four,
+          gap: Spacing.three,
         }}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
@@ -66,17 +71,27 @@ export default function HospitalMapScreen() {
             <Text className="text-body text-ink-muted">
               {copy.care.mapBody}
             </Text>
-            <Text className="text-label font-semibold text-ink">
-              {copy.care.searchHospital}
-            </Text>
-            <TextInput
-              accessibilityLabel={copy.care.searchHospital}
-              value={search}
-              onChangeText={setSearch}
-              placeholder={copy.care.searchHospital}
-              placeholderTextColor={theme.inkMuted}
-              className="min-h-12 rounded-xl border border-border px-4 py-3 text-body text-ink"
-            />
+            <View className="min-h-12 flex-row items-center gap-2 rounded-pill border border-border bg-surface-muted pl-4">
+              <Icon name="search" tone="muted" />
+              <TextInput
+                accessibilityLabel={copy.care.searchHospital}
+                value={search}
+                onChangeText={setSearch}
+                placeholder={copy.care.searchHospital}
+                placeholderTextColor={theme.inkMuted}
+                className="min-w-0 flex-1 py-3 text-body text-ink"
+              />
+              {search.length > 0 && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={copy.common.clearSearch}
+                  onPress={() => setSearch("")}
+                  className="min-h-12 min-w-12 items-center justify-center rounded-pill active:opacity-70"
+                >
+                  <Icon name="close" tone="muted" />
+                </Pressable>
+              )}
+            </View>
             {hospitals.error && (
               <ErrorState
                 description={copy.common.loadFailed}
@@ -101,12 +116,32 @@ export default function HospitalMapScreen() {
           )
         }
         renderItem={({ item }) => (
-          <Card>
+          <Card variant={item.id === id ? "brand" : "default"}>
+            {item.id === id && (
+              <Badge variant="muted" label={copy.care.selectedFacility} />
+            )}
             <Text className="text-subtitle font-semibold text-ink">
               {item.name}
             </Text>
+            <Text className="text-label text-ink-muted">
+              {item.type}
+              {item.distance_km !== undefined
+                ? ` · ${copy.care.distance(item.distance_km)}`
+                : ""}
+            </Text>
             <Text className="text-body text-ink-muted">{item.address}</Text>
             <Button label={copy.care.map} onPress={() => void navigate(item)} />
+            {item.phone && (
+              <Button
+                label={copy.care.callHospital}
+                variant="secondary"
+                onPress={() => {
+                  void Linking.openURL(`tel:${item.phone}`).catch(() =>
+                    setOpenFailed(true),
+                  );
+                }}
+              />
+            )}
           </Card>
         )}
       />

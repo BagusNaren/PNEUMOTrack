@@ -100,7 +100,9 @@ export default function RecommendationScreen() {
       )}
       <View className="gap-3">
         <Card>
-          <Icon name="doctor" tone="brand" />
+          <View className="h-11 w-11 items-center justify-center rounded-xl bg-surface-brand-soft">
+            <Icon name="doctor" tone="brand" />
+          </View>
           <Text
             accessibilityRole="header"
             className="text-subtitle font-semibold text-ink"
@@ -112,11 +114,14 @@ export default function RecommendationScreen() {
           </Text>
           <Button
             label={copy.recommendation.consult}
+            variant={result?.result === "risk" ? "risk" : "primary"}
             onPress={() => router.push("/doctors")}
           />
         </Card>
         <Card>
-          <Icon name="hospital" tone="brand" />
+          <View className="h-11 w-11 items-center justify-center rounded-xl bg-surface-brand-soft">
+            <Icon name="hospital" tone="brand" />
+          </View>
           <Text
             accessibilityRole="header"
             className="text-subtitle font-semibold text-ink"

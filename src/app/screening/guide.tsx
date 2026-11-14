@@ -100,13 +100,11 @@ export default function GuideScreen() {
             {copy.guide.heading}
           </Text>
           <RecordingGuide />
-          <View className="gap-3">
-            {copy.guide.tips.map((tip) => (
-              <Text key={tip} className="text-body text-ink dark:text-ink-dark">
-                {tip}
-              </Text>
+          <Card>
+            {copy.guide.tips.map((tip, index) => (
+              <View key={tip} className="flex-row items-start gap-3"><View className="h-7 w-7 items-center justify-center rounded-full bg-surface-brand"><Text className="text-label font-bold text-brand">{index + 1}</Text></View><Text className="flex-1 text-body text-ink">{tip}</Text></View>
             ))}
-          </View>
+          </Card>
           <PermissionPanel recorder={recorder} />
           {recorder.permission === "granted" && (
             <>
@@ -150,12 +148,11 @@ export default function GuideScreen() {
             </>
           )}
           {recorder.error && (
-            <Text
-              accessibilityRole="alert"
-              className="text-body text-ink dark:text-ink-dark"
-            >
-              {recorder.error}
-            </Text>
+            <Card variant="risk">
+              <Text accessibilityRole="alert" className="text-body text-risk">
+                {recorder.error}
+              </Text>
+            </Card>
           )}
         </>
       )}

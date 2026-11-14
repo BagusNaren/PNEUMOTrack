@@ -1,3 +1,4 @@
+import { UI } from "@/constants/theme";
 import {
   TabList,
   TabSlot,
@@ -37,11 +38,11 @@ function TabButton({
       ]}
       className="min-h-12 flex-1 items-center justify-center gap-1 rounded-card active:opacity-70"
     >
-      <Icon
+      <View className={`px-3 py-1 rounded-pill ${isFocused ? "bg-surface-brand" : "bg-transparent"}`}><Icon
         name={icon}
         tone={isFocused ? "brand" : "muted"}
         selected={isFocused}
-      />
+      /></View>
       <Text
         className={`text-caption ${isFocused ? "font-bold text-brand" : "text-ink-muted"}`}
       >
@@ -62,9 +63,9 @@ export default function TabsLayout() {
           className="min-h-16 w-full max-w-content flex-row items-center self-center border-t border-border bg-surface-card px-3 dark:border-border-dark dark:bg-surface-card-dark"
           style={{
             paddingBottom: insets.bottom,
-            paddingLeft: insets.left + 12,
-            paddingRight: insets.right + 12,
-            minHeight: 64 + insets.bottom,
+            paddingLeft: insets.left + UI.gap,
+            paddingRight: insets.right + UI.gap,
+            minHeight: UI.tabHeight + insets.bottom,
           }}
         >
           <TabTrigger name="home" href="/(tabs)" asChild>
@@ -84,8 +85,8 @@ export default function TabsLayout() {
             onPress={() => setMenuOpen(true)}
             className="min-h-12 flex-1 items-center justify-center gap-1 rounded-card active:opacity-70"
           >
-            <Icon name="menu" tone="muted" />
-            <Text className="text-caption text-ink-muted">{copy.nav.menu}</Text>
+            <View className={`px-3 py-1 rounded-pill ${menuOpen ? "bg-surface-brand" : "bg-transparent"}`}><Icon name="menu" tone={menuOpen ? "brand" : "muted"} selected={menuOpen} /></View>
+            <Text className={`text-caption ${menuOpen ? "font-bold text-brand" : "text-ink-muted"}`}>{copy.nav.menu}</Text>
           </Pressable>
           <TabTrigger
             name="monitoring"

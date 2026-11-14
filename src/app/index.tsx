@@ -20,10 +20,10 @@ export default function EntryScreen() {
           contentFit="contain"
           style={{ width: UI.logoSize, height: UI.logoSize }}
         />
-        <Text className="text-title font-bold text-brand dark:text-brand-light">
+        <Text className="text-display font-bold text-brand">
           {copy.common.appName}
         </Text>
-        <Text className="text-center text-title font-bold text-brand dark:text-brand-light">
+        <Text className="mt-1 max-w-[280px] text-center text-body font-normal text-ink-muted">
           {copy.common.tagline}
         </Text>
       </View>

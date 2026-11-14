@@ -1,5 +1,10 @@
 {
   "light": {
+    "borderSubtle": "#DCE4EC",
+    "warning": "#8A4B08",
+    "surfaceWarning": "#FDF3E7",
+    "borderWarning": "#D99B52",
+    "scrim": "#0B1B2B80",
     "surface": "#FFFFFF",
     "surfaceMuted": "#F6F8FA",
     "surfaceCard": "#FFFFFF",
@@ -20,6 +25,11 @@
     "surfaceSafe": "#D9EFE7"
   },
   "dark": {
+    "borderSubtle": "#243244",
+    "warning": "#F5B971",
+    "surfaceWarning": "#332414",
+    "borderWarning": "#8A5A24",
+    "scrim": "#000000B3",
     "surface": "#0B1220",
     "surfaceMuted": "#131C2A",
     "surfaceCard": "#131C2A",

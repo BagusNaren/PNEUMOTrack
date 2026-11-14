@@ -1,5 +1,6 @@
 import { SymbolView } from "expo-symbols";
 import { Text, View } from "react-native";
+import { UI } from "@/constants/theme";
 import { copy } from "@/constants/copy";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -22,9 +23,9 @@ export function RecordingGuide() {
             android: "account_circle",
             web: "account_circle",
           }}
-          size={56}
+          size={UI.diagramSize}
           tintColor={theme.brand}
-          style={{ width: 56, height: 56 }}
+          style={{ width: UI.diagramSize, height: UI.diagramSize }}
         />
         <View className="min-w-0 flex-1 gap-2">
           <Text className="text-center text-label font-semibold text-brand dark:text-brand-light">
@@ -34,9 +35,9 @@ export function RecordingGuide() {
         </View>
         <SymbolView
           name={{ ios: "iphone", android: "smartphone", web: "smartphone" }}
-          size={56}
+          size={UI.diagramSize}
           tintColor={theme.brand}
-          style={{ width: 56, height: 72 }}
+          style={{ width: UI.diagramSize, height: UI.diagramHeight }}
         />
       </View>
       <View className="w-full flex-row justify-between gap-3">

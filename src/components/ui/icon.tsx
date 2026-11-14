@@ -26,6 +26,7 @@ const symbols = {
     android: "chevron_right",
     web: "chevron_right",
   },
+  close: { ios: "xmark", android: "close", web: "close" },
   search: { ios: "magnifyingglass", android: "search", web: "search" },
   doctor: { ios: "stethoscope", android: "stethoscope", web: "stethoscope" },
   hospital: {
@@ -64,27 +65,30 @@ export function Icon({
   name,
   tone = "ink",
   selected = false,
+  size = UI.iconLg,
 }: {
   name: IconName;
-  tone?: "ink" | "muted" | "brand" | "risk" | "safe" | "onBrand";
+  tone?: "ink" | "muted" | "brand" | "risk" | "safe" | "warning" | "onBrand";
   selected?: boolean;
+  size?: number;
 }) {
   const theme = useTheme();
   const colors = {
     ink: theme.ink,
-    muted: theme.inkMuted,
+    muted: theme.iconMuted,
     brand: theme.brand,
     risk: theme.risk,
     safe: theme.safe,
+    warning: theme.warning,
     onBrand: theme.onBrand,
   };
   return (
     <SymbolView
       name={symbols[name]}
-      size={UI.iconSize}
+      size={size}
       tintColor={colors[tone]}
       weight={selected ? "bold" : "regular"}
-      style={{ width: UI.iconSize, height: UI.iconSize }}
+      style={{ width: size, height: size }}
       accessible={false}
     />
   );

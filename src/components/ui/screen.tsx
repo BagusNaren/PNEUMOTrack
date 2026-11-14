@@ -1,3 +1,4 @@
+import { Spacing } from "@/constants/theme";
 import type { PropsWithChildren } from "react";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,7 +20,7 @@ export function Screen({
       {children}
     </View>
   );
-  const paddingBottom = (bottomInset ? insets.bottom : 0) + 24;
+  const paddingBottom = (bottomInset ? insets.bottom : 0) + Spacing.four;
   return (
     <View
       className="flex-1 bg-surface dark:bg-surface-dark"

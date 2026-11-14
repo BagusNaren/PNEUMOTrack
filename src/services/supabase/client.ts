@@ -10,11 +10,15 @@ import { Config } from '@/constants/config';
 
 const isServer = Platform.OS === 'web' && typeof window === 'undefined';
 
-export const supabase = createClient(Config.supabaseUrl, Config.supabaseAnonKey, {
-  auth: {
-    storage: isServer ? undefined : AsyncStorage,
-    autoRefreshToken: !isServer,
-    persistSession: !isServer,
-    detectSessionInUrl: false,
+export const supabase = createClient(
+  Config.supabaseUrl || "http://127.0.0.1:54321",
+  Config.supabaseAnonKey || "public-anon-key-placeholder",
+  {
+    auth: {
+      storage: isServer ? undefined : AsyncStorage,
+      autoRefreshToken: !isServer,
+      persistSession: !isServer,
+      detectSessionInUrl: false,
+    },
   },
-});
+);

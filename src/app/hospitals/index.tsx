@@ -1,6 +1,10 @@
+import { UI, Spacing } from "@/constants/theme";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ListRow } from "@/components/ui/list-row";
 import { router } from "expo-router";
 import { useCallback } from "react";
-import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
+import { FlatList, RefreshControl, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -22,11 +26,12 @@ export default function HospitalsScreen() {
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top }}>
       <FlatList
+        className="w-full max-w-content flex-1 self-center"
         data={hospitals.data ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 24,
+          paddingHorizontal: UI.gutter,
+          paddingBottom: insets.bottom + Spacing.four,
         }}
         refreshControl={
           <RefreshControl
@@ -35,11 +40,11 @@ export default function HospitalsScreen() {
           />
         }
         ListHeaderComponent={
-          <>
+          <View className="gap-3 pb-2">
             <ScreenHeader title={copy.care.hospitals} />
             {isDefaultFallback && (
-              <View className="mb-4 gap-2">
-                <Text className="text-body text-ink-muted">
+              <Card variant="warning">
+                <Text className="text-body text-ink">
                   {copy.care.locationFallback}
                 </Text>
                 <Button
@@ -47,10 +52,11 @@ export default function HospitalsScreen() {
                   variant="secondary"
                   onPress={() => void requestLocation()}
                 />
-              </View>
+              </Card>
             )}
             <Button
               label={copy.care.mapTitle}
+              icon={<Icon name="map" tone="brand" />}
               variant="secondary"
               onPress={() => router.push("/hospitals/map")}
             />
@@ -60,7 +66,7 @@ export default function HospitalsScreen() {
                 onAction={() => void hospitals.reload()}
               />
             )}
-          </>
+          </View>
         }
         ListEmptyComponent={
           hospitals.isLoading ? (
@@ -73,31 +79,35 @@ export default function HospitalsScreen() {
           )
         }
         renderItem={({ item }) => (
-          <Pressable
-            accessibilityRole="button"
+          <ListRow
+            title={item.name}
+            leading={
+              <View className="h-11 w-11 items-center justify-center rounded-xl bg-surface-brand-soft">
+                <Icon name="hospital" tone="brand" />
+              </View>
+            }
+            subtitle={
+              <View className="gap-1.5">
+                <Text className="text-label text-ink-muted">
+                  {item.type} · {item.address}
+                </Text>
+                {!isDefaultFallback && item.distance_km !== undefined && (
+                  <Text className="text-caption text-ink-muted">
+                    {copy.care.distance(item.distance_km)}
+                  </Text>
+                )}
+                {item.has_pediatric && (
+                  <Badge variant="brand" label={copy.care.pediatric} />
+                )}
+              </View>
+            }
             onPress={() =>
               router.push({
                 pathname: "/hospitals/map",
                 params: { id: item.id },
               })
             }
-            className="min-h-12 flex-row items-center gap-3 border-b border-border/40 py-4 active:opacity-70"
-          >
-            <Icon name="hospital" tone="brand" />
-            <View className="min-w-0 flex-1 gap-1">
-              <Text className="text-subtitle font-semibold text-ink">
-                {item.name}
-              </Text>
-              <Text className="text-label text-ink-muted">
-                {item.type} · {item.address}
-              </Text>
-              {!isDefaultFallback && item.distance_km !== undefined && (
-                <Text className="text-caption text-ink-muted">
-                  {copy.care.distance(item.distance_km)}
-                </Text>
-              )}
-            </View>
-          </Pressable>
+          />
         )}
       />
     </View>

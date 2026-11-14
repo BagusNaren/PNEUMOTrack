@@ -1,7 +1,9 @@
+import { Icon } from "@/components/ui/icon";
+import { Config } from "@/constants/config";
+import { UI, Spacing } from "@/constants/theme";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -31,16 +33,18 @@ export default function NewChildScreen() {
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [sex, setSex] = useState<Sex>("male");
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSave = async () => {
     if (isLoading) return;
-    if (!user) {
-      router.replace('/(auth)/sign-in');
+    const parentId = user?.id ?? (Config.useMockData ? "user-demo" : null);
+    if (!parentId) {
+      router.replace("/(auth)/sign-in");
       return;
     }
     if (!name.trim()) {
-      Alert.alert(copy.common.errorTitle, copy.children.nameRequired);
+      setError(copy.children.nameRequired);
       return;
     }
     const parsed = new Date(`${birthDate}T00:00:00`);
@@ -52,13 +56,13 @@ export default function NewChildScreen() {
       parsed.getMonth() + 1 !== Number(birthDate.slice(5, 7)) ||
       parsed.getDate() !== Number(birthDate.slice(8, 10))
     ) {
-      Alert.alert(copy.common.errorTitle, copy.children.dateRequired);
+      setError(copy.children.dateRequired);
       return;
     }
 
+    setError(null);
     setIsLoading(true);
     try {
-      const parentId = user.id;
       const created = await childrenService.create(parentId, {
         name: name.trim(),
         birth_date: birthDate,
@@ -67,12 +71,14 @@ export default function NewChildScreen() {
 
       await refresh();
       setActiveChild(created);
-      Alert.alert(copy.common.save, copy.children.saved, [
-        { text: copy.common.confirm, onPress: () => router.back() },
-      ]);
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/(tabs)/children");
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : copy.children.saveFailed;
-      Alert.alert(copy.common.errorTitle, msg);
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -80,78 +86,106 @@ export default function NewChildScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-surface dark:bg-surface-dark"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="flex-1 bg-surface"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top,
-          paddingBottom: insets.bottom + 24,
-          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + Spacing.four,
+          paddingHorizontal: UI.gutter,
         }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader title={copy.children.addTitle} />
+        <View
+          style={{ maxWidth: UI.maxFormWidth }}
+          className="w-full self-center"
+        >
+          <ScreenHeader title={copy.children.addTitle} />
 
-        <View className="items-center my-6">
-          <Avatar
-            name={name}
-            accessibilityLabel={copy.children.avatarLabel(name)}
-          />
-        </View>
-
-        <View className="gap-5">
-          <View className="gap-1.5">
-            <Text className="text-label font-bold text-ink dark:text-ink-dark">
-              {copy.children.nameLabel} *
-            </Text>
-            <TextInput
-              accessibilityLabel={copy.children.nameLabel}
-              className="min-h-12 rounded-xl border border-border bg-surface px-4 py-3 text-body text-ink"
-              placeholder={copy.children.namePlaceholder}
-              placeholderTextColor={theme.inkMuted}
-              value={name}
-              onChangeText={setName}
+          <View className="my-6 items-center">
+            <Avatar
+              size="lg"
+              name={name}
+              accessibilityLabel={copy.children.avatarLabel(name)}
             />
           </View>
 
-          <View className="gap-1.5">
-            <Text className="text-label font-bold text-ink dark:text-ink-dark">
-              {copy.children.birthDateLabel} (YYYY-MM-DD)
-            </Text>
-            <TextInput
-              accessibilityLabel={copy.children.birthDateLabel}
-              className="min-h-12 rounded-xl border border-border bg-surface px-4 py-3 text-body text-ink"
-              placeholder={copy.children.dateHint}
-              placeholderTextColor={theme.inkMuted}
-              value={birthDate}
-              onChangeText={setBirthDate}
-            />
+          <View className="gap-5">
+            <View className="gap-1.5">
+              <Text className="text-label font-bold text-ink">
+                {copy.children.nameLabel} *
+              </Text>
+              <TextInput
+                accessibilityLabel={copy.children.nameLabel}
+                className={`min-h-12 rounded-xl border bg-surface px-4 py-3 text-body text-ink ${error === copy.children.nameRequired ? "border-risk-border" : "border-border"}`}
+                placeholder={copy.children.namePlaceholder}
+                placeholderTextColor={theme.inkMuted}
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+
+            <View className="gap-1.5">
+              <Text className="text-label font-bold text-ink">
+                {copy.children.birthDateLabel} (YYYY-MM-DD)
+              </Text>
+              <TextInput
+                accessibilityLabel={copy.children.birthDateLabel}
+                className={`min-h-12 rounded-xl border bg-surface px-4 py-3 text-body text-ink ${error === copy.children.dateRequired ? "border-risk-border" : "border-border"}`}
+                placeholder={copy.children.dateHint}
+                placeholderTextColor={theme.inkMuted}
+                value={birthDate}
+                keyboardType="numbers-and-punctuation"
+                maxLength={10}
+                onChangeText={(value) => {
+                  const digits = value.replace(/\D/g, "").slice(0, 8);
+                  setBirthDate(
+                    [
+                      digits.slice(0, 4),
+                      digits.slice(4, 6),
+                      digits.slice(6, 8),
+                    ]
+                      .filter(Boolean)
+                      .join("-"),
+                  );
+                }}
+              />
+            </View>
+
+            <View className="gap-1.5">
+              <Text className="text-label font-bold text-ink">
+                {copy.children.sexLabel}
+              </Text>
+              <SegmentedTabs
+                options={[
+                  { key: "male", label: copy.children.sexMale },
+                  { key: "female", label: copy.children.sexFemale },
+                ]}
+                value={sex}
+                onChange={(v) => setSex(v as Sex)}
+              />
+            </View>
           </View>
 
-          <View className="gap-1.5">
-            <Text className="text-label font-bold text-ink dark:text-ink-dark">
-              {copy.children.sexLabel}
-            </Text>
-            <SegmentedTabs
-              options={[
-                { key: "male", label: copy.children.sexMale },
-                { key: "female", label: copy.children.sexFemale },
-              ]}
-              value={sex}
-              onChange={(v) => setSex(v as Sex)}
+          {error && (
+            <View
+              accessibilityRole="alert"
+              className="mt-4 flex-row items-center gap-2 rounded-xl border border-risk-border bg-risk-surface px-4 py-3"
+            >
+              <Icon name="warning" tone="risk" />
+              <Text className="flex-1 text-label text-risk">{error}</Text>
+            </View>
+          )}
+          <View className="mt-10">
+            <Button
+              label={copy.common.save}
+              size="lg"
+              isLoading={isLoading}
+              onPress={handleSave}
             />
           </View>
-        </View>
-
-        <View className="mt-10">
-          <Button
-            label={copy.common.save}
-            size="lg"
-            isLoading={isLoading}
-            onPress={handleSave}
-          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

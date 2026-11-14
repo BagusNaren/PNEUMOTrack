@@ -1,3 +1,5 @@
+import { UI } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { Image } from "expo-image";
 import {
   router,
@@ -6,7 +8,7 @@ import {
   usePreventRemove,
 } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { AnalysisPulse } from "@/components/screening/motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,6 +29,7 @@ export default function AnalyzingScreen() {
   const { source: rawSource } = useLocalSearchParams<{
     source?: string | string[];
   }>();
+  const theme = useTheme();
   const source = parseScreeningSource(rawSource);
   const {
     status,
@@ -108,20 +111,15 @@ export default function AnalyzingScreen() {
                 source={require("../../../UI_reference/logo.png")}
                 accessibilityLabel={copy.common.appName}
                 contentFit="contain"
-                style={{ width: 140, height: 140 }}
+                style={{ width: UI.analyzingLogoSize, height: UI.analyzingLogoSize }}
               />
             </AnalysisPulse>
           </View>
-          <LoadingState
-            label={
-              status === "uploading"
-                ? copy.analyzing.uploading
-                : copy.analyzing.processing
-            }
-          />
-          <Text className="text-body text-ink-muted dark:text-ink-dark-muted">
-            {copy.analyzing.waiting}
-          </Text>
+          <View accessibilityLiveRegion="polite" className="items-center gap-3">
+            <ActivityIndicator color={theme.brand} />
+            <Text className="text-subtitle font-semibold text-brand text-center">{status === "uploading" ? copy.analyzing.uploading : copy.analyzing.processing}</Text>
+            <Text className="text-body text-ink-muted text-center">{copy.analyzing.waiting}</Text>
+          </View>
           <Button
             label={copy.analyzing.cancel}
             variant="secondary"

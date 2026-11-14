@@ -1,6 +1,10 @@
+import { UI, Spacing } from "@/constants/theme";
+import { ListRow } from "@/components/ui/list-row";
+import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
 import { router } from "expo-router";
 import { useCallback } from "react";
-import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
+import { FlatList, RefreshControl, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -27,9 +31,13 @@ export default function HistoryScreen() {
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top }}>
       <FlatList
+        className="w-full max-w-content flex-1 self-center"
         data={isLoading || error ? [] : (history.data ?? [])}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+        contentContainerStyle={{
+          paddingHorizontal: UI.gutter,
+          paddingBottom: Spacing.four,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={history.isRefreshing}
@@ -75,33 +83,27 @@ export default function HistoryScreen() {
           )
         }
         renderItem={({ item }) => (
-          <Pressable
-            accessibilityRole="button"
+          <ListRow
             onPress={() =>
-              router.push({
-                pathname: "/history/[id]",
-                params: { id: item.id },
-              })
+              router.push({ pathname: "/history/[id]", params: { id: item.id } })
             }
-            className="min-h-12 gap-2 border-b border-border/40 py-4 active:opacity-70"
-          >
-            <Text className="text-body font-semibold text-ink">
-              {formatDate(item.created_at, true)}
-            </Text>
-            <Text
-              className={`text-label ${item.result === "risk" ? "text-risk" : "text-brand"}`}
-            >
-              {item.result === "risk"
-                ? copy.dashboard.riskStatus
-                : copy.dashboard.normalStatus}
-            </Text>
-            <Text className="text-caption text-ink-muted">
-              {formatDuration(item.duration_sec)}
-            </Text>
-          </Pressable>
+            title={formatDate(item.created_at, true)}
+            subtitle={formatDuration(item.duration_sec)}
+            leading={
+              <View
+                className={`h-9 w-9 items-center justify-center rounded-full ${item.result === "risk" ? "bg-risk-surface" : "bg-surface-safe"}`}
+              >
+                <Icon
+                  name={item.result === "risk" ? "warning" : "check"}
+                  tone={item.result === "risk" ? "risk" : "safe"}
+                />
+              </View>
+            }
+            trailing={<Badge variant={item.result} />}
+          />
         )}
       />
-      <View className="px-5 pb-4">
+      <View className="w-full max-w-content self-center px-5 pb-4">
         <Button
           label={activeChild ? copy.record.start : copy.children.addButton}
           onPress={() =>

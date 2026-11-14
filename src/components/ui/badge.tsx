@@ -5,9 +5,9 @@ const variants = {
   normal: "bg-surface-brand dark:bg-surface-brand-dark",
   brand: "bg-surface-brand dark:bg-surface-brand-dark",
   risk: "bg-risk-surface dark:bg-risk-surface-dark",
-  disagreement: "bg-surface-brand-soft dark:bg-surface-brand-soft-dark",
+  disagreement: "bg-surface-warning border border-border-warning",
   muted: "bg-surface-muted dark:bg-surface-muted-dark",
-  warning: "bg-surface-brand-soft dark:bg-surface-brand-soft-dark",
+  warning: "bg-surface-warning border border-border-warning",
 } as const;
 
 export function Badge({
@@ -26,7 +26,9 @@ export function Badge({
     warning: copy.result.riskBadge,
   };
   const textColor =
-    variant === "risk"
+    variant === "warning" || variant === "disagreement"
+      ? "text-warning"
+      : variant === "risk"
       ? "text-risk dark:text-risk-light"
       : variant === "muted"
         ? "text-ink-muted dark:text-ink-dark-muted"

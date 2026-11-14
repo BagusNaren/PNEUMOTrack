@@ -1,9 +1,11 @@
+import { UI, Spacing } from "@/constants/theme";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState, type ComponentRef } from "react";
 import {
   KeyboardAvoidingView,
   Linking,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -54,14 +56,14 @@ export default function ChatRoomScreen() {
       style={{ paddingTop: insets.top }}
     >
       <View className="px-4">
-        <ScreenHeader title={doctor.data?.name ?? copy.chats.title} />
+        <ScreenHeader title={doctor.data?.name ?? copy.chats.title} rightAction={doctor.data?.phone ? <Pressable accessibilityRole="button" accessibilityLabel={copy.chats.call} onPress={() => void call()} className="min-h-12 min-w-12 items-center justify-center rounded-full active:opacity-70"><Icon name="phone" tone="brand" /></Pressable> : undefined} />
       </View>
       <ScrollView
         ref={scroll}
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: 24,
-          gap: 16,
+          paddingHorizontal: UI.gutter,
+          paddingBottom: Spacing.four,
+          gap: Spacing.three,
         }}
         keyboardShouldPersistTaps="handled"
         onContentSizeChange={() =>
@@ -96,7 +98,7 @@ export default function ChatRoomScreen() {
         {chat.data?.messages.map((message) => (
           <View
             key={message.id}
-            className={`max-w-[90%] gap-1 rounded-card px-4 py-3 ${message.sender_role === "parent" ? "self-end bg-brand" : "self-start bg-surface-brand"}`}
+            className={`max-w-[78%] gap-1 rounded-card px-4 py-3 ${message.sender_role === "parent" ? "self-end bg-brand" : "self-start bg-surface-brand"}`}
           >
             <Text
               selectable
@@ -111,14 +113,6 @@ export default function ChatRoomScreen() {
             </Text>
           </View>
         ))}
-        {doctor.data?.phone && (
-          <Button
-            label={copy.chats.call}
-            variant="secondary"
-            icon={<Icon name="phone" tone="brand" />}
-            onPress={() => void call()}
-          />
-        )}
         {callFailed && (
           <Text accessibilityRole="alert" className="text-body text-risk">
             {copy.chats.callError}
@@ -126,17 +120,15 @@ export default function ChatRoomScreen() {
         )}
       </ScrollView>
       <View
-        style={{ paddingBottom: insets.bottom + 12 }}
-        className="gap-2 border-t border-border px-5 pt-3"
+        style={{ paddingBottom: insets.bottom + UI.gap }}
+        className="gap-2 border-t border-subtle bg-surface px-4 pt-2.5"
       >
         {chat.sendFailed && (
           <Text accessibilityRole="alert" className="text-label text-risk">
             {copy.chats.sendError}
           </Text>
         )}
-        <Text className="text-label font-semibold text-ink">
-          {copy.chats.input}
-        </Text>
+        <View className="flex-row items-end gap-2">
         <TextInput
           accessibilityLabel={copy.chats.input}
           value={input}
@@ -145,9 +137,10 @@ export default function ChatRoomScreen() {
           maxLength={2000}
           placeholder={copy.chats.input}
           placeholderTextColor={theme.inkMuted}
-          className="min-h-12 rounded-xl border border-border px-4 py-3 text-body text-ink"
+          className="min-w-0 flex-1 min-h-12 max-h-28 rounded-2xl border border-border bg-surface-muted px-4 py-2.5 text-body text-ink"
         />
         <Button
+          className="px-5"
           label={copy.chats.send}
           loading={chat.sending}
           disabled={
@@ -159,6 +152,7 @@ export default function ChatRoomScreen() {
               setInput((current) => (current === draft ? "" : current));
           }}
         />
+        </View>
       </View>
     </KeyboardAvoidingView>
   );

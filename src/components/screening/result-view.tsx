@@ -14,7 +14,7 @@ export function ResultView({ result, onRerecord }: ResultViewProps) {
     <View className="gap-6">
       <StatusBanner variant={result.result} />
       {!result.agreement && (
-        <Card variant="soft">
+        <Card variant="warning">
           <Badge variant="disagreement" />
           <Text className="text-body text-ink dark:text-ink-dark">
             {copy.result.disagreement}
@@ -28,24 +28,28 @@ export function ResultView({ result, onRerecord }: ResultViewProps) {
           )}
         </Card>
       )}
-      <View className="gap-3">
-        <Text
-          accessibilityRole="header"
-          className="text-subtitle font-semibold text-ink dark:text-ink-dark"
-        >
-          {copy.ui.waveform}
-        </Text>
-        <Text className="text-caption text-ink-muted">
-          {formatDuration(result.duration_sec)}
-        </Text>
+      <Card>
+        <View className="flex-row items-center justify-between gap-2">
+          <Text
+            accessibilityRole="header"
+            className="min-w-0 flex-1 text-subtitle font-semibold text-ink"
+          >
+            {result.result === "risk"
+              ? copy.result.abnormalPattern
+              : copy.result.normalPattern}
+          </Text>
+          <Text className="text-caption text-ink-muted">
+            {formatDuration(result.duration_sec)}
+          </Text>
+        </View>
         {result.waveform.length ? (
           <Waveform samples={result.waveform} variant={result.result} />
         ) : (
-          <Text className="text-body text-ink-muted dark:text-ink-dark-muted">
+          <Text className="text-body text-ink-muted">
             {copy.result.noWaveform}
           </Text>
         )}
-      </View>
+      </Card>
       <Card variant="soft">
         <Text
           accessibilityRole="header"

@@ -62,6 +62,8 @@ for (const [scheme, colors] of Object.entries(palette)) {
     for (const [foreground, background] of [
       ["onBrand", "brand"],
       ["onRisk", "risk"],
+      ["warning", "surfaceWarning"],
+      ["warning", "surface"],
     ]) {
       assert.ok(contrast(colors[foreground], colors[background]) >= 4.5);
     }

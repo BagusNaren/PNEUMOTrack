@@ -1,3 +1,6 @@
+import { UI, Spacing } from "@/constants/theme";
+import { Icon } from "@/components/ui/icon";
+import { ListRow } from "@/components/ui/list-row";
 import { router } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -34,11 +37,12 @@ export default function DoctorsScreen() {
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top }}>
       <FlatList
+        className="w-full max-w-content flex-1 self-center"
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 24,
+          paddingHorizontal: UI.gutter,
+          paddingBottom: insets.bottom + Spacing.four,
         }}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -50,17 +54,11 @@ export default function DoctorsScreen() {
         ListHeaderComponent={
           <>
             <ScreenHeader title={copy.care.doctors} />
-            <Text className="mb-2 text-label font-semibold text-ink">
-              {copy.care.searchDoctor}
-            </Text>
-            <TextInput
-              accessibilityLabel={copy.care.searchDoctor}
-              value={search}
-              onChangeText={setSearch}
-              placeholder={copy.care.searchDoctor}
-              placeholderTextColor={theme.inkMuted}
-              className="mb-4 min-h-12 rounded-xl border border-border px-4 py-3 text-body text-ink"
-            />
+            <View className="min-h-12 flex-row items-center gap-2 rounded-pill border border-border bg-surface-muted pl-4 mb-4">
+              <Icon name="search" tone="muted" />
+              <TextInput accessibilityLabel={copy.care.searchDoctor} value={search} onChangeText={setSearch} placeholder={copy.care.searchDoctor} placeholderTextColor={theme.inkMuted} className="min-w-0 flex-1 py-3 text-body text-ink" />
+              {search.length > 0 && <Pressable accessibilityRole="button" accessibilityLabel={copy.common.clearSearch} onPress={() => setSearch("")} className="min-h-12 min-w-12 items-center justify-center rounded-pill active:opacity-70"><Icon name="close" tone="muted" /></Pressable>}
+            </View>
             {doctors.error && (
               <ErrorState
                 description={copy.common.loadFailed}
@@ -80,38 +78,12 @@ export default function DoctorsScreen() {
           )
         }
         renderItem={({ item }) => (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() =>
-              router.push({
-                pathname: "/doctors/[id]",
-                params: { id: item.id },
-              })
-            }
-            className="min-h-12 flex-row items-center gap-3 border-b border-border/40 py-4 active:opacity-70"
-          >
-            <Avatar
-              name={item.name}
-              source={item.photo_url ? { uri: item.photo_url } : undefined}
-              accessibilityLabel={item.name}
-            />
-            <View className="min-w-0 flex-1 gap-1">
-              <Text className="text-subtitle font-semibold text-ink">
-                {item.name}
-              </Text>
-              <Text className="text-body text-ink-muted">{item.specialty}</Text>
-              {item.hospital_name && (
-                <Text className="text-label text-ink-muted">
-                  {item.hospital_name}
-                </Text>
-              )}
-              {item.rating !== null && (
-                <Text className="text-caption text-brand">
-                  {copy.care.rating(item.rating)}
-                </Text>
-              )}
-            </View>
-          </Pressable>
+          <ListRow
+            onPress={() => router.push({ pathname: "/doctors/[id]", params: { id: item.id } })}
+            leading={<Avatar size="md" name={item.name} source={item.photo_url ? { uri: item.photo_url } : undefined} accessibilityLabel={item.name} />}
+            title={item.name}
+            subtitle={<View className="gap-1"><Text className="text-label text-brand">{item.specialty}</Text><Text className="text-caption text-ink-muted">{item.hospital_name}{item.rating !== null ? ` · ★ ${item.rating.toLocaleString("id-ID", { minimumFractionDigits: 1 })}` : ""}</Text></View>}
+          />
         )}
       />
     </View>

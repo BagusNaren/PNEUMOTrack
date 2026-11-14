@@ -1,3 +1,5 @@
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { Spacing, UI } from "@/constants/theme";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -85,13 +87,17 @@ export default function SignUpScreen() {
         contentContainerStyle={{
           flexGrow: 1,
           paddingTop: insets.top,
-          paddingBottom: insets.bottom + 24,
+          paddingBottom: insets.bottom + Spacing.four,
         }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-1 justify-center px-6">
-          <View className="mb-10 items-center gap-2">
+        <View
+          style={{ maxWidth: UI.maxFormWidth }}
+          className="w-full self-center flex-1 justify-center px-5 py-8"
+        >
+          <ScreenHeader title="" />
+          <View className="mb-8 items-center gap-2">
             <Text className="text-title font-bold text-brand dark:text-brand-light">
               {copy.auth.signUpTitle}
             </Text>
@@ -103,7 +109,7 @@ export default function SignUpScreen() {
                 {copy.auth.nameLabel}
               </Text>
               <TextInput
-                className="min-h-12 rounded-xl border border-border bg-surface px-4 py-3 text-body text-ink"
+                className={`min-h-12 rounded-xl border bg-surface px-4 py-3 text-body text-ink ${error && !name.trim() ? "border-risk-border" : "border-border"}`}
                 placeholder={copy.auth.namePlaceholder}
                 placeholderTextColor={theme.inkMuted}
                 value={name}
@@ -120,7 +126,7 @@ export default function SignUpScreen() {
                 {copy.auth.emailLabel}
               </Text>
               <TextInput
-                className="min-h-12 rounded-xl border border-border bg-surface px-4 py-3 text-body text-ink"
+                className={`min-h-12 rounded-xl border bg-surface px-4 py-3 text-body text-ink ${error && (!email.trim() || !email.includes("@")) ? "border-risk-border" : "border-border"}`}
                 placeholder={copy.auth.emailPlaceholder}
                 placeholderTextColor={theme.inkMuted}
                 value={email}
@@ -138,7 +144,7 @@ export default function SignUpScreen() {
                 {copy.auth.passwordLabel}
               </Text>
               <TextInput
-                className="min-h-12 rounded-xl border border-border bg-surface px-4 py-3 text-body text-ink"
+                className={`min-h-12 rounded-xl border bg-surface px-4 py-3 text-body text-ink ${error && password.length < 8 ? "border-risk-border" : "border-border"}`}
                 placeholder={copy.auth.passwordPlaceholder}
                 placeholderTextColor={theme.inkMuted}
                 value={password}
@@ -152,8 +158,9 @@ export default function SignUpScreen() {
             </View>
 
             {error ? (
-              <View className="rounded-xl bg-risk-surface px-4 py-3">
-                <Text className="text-caption text-risk">{error}</Text>
+              <View accessibilityRole="alert" className="flex-row items-center gap-2 rounded-xl border border-risk-border bg-risk-surface px-4 py-3">
+                <Icon name="warning" tone="risk" />
+                <Text className="flex-1 text-label text-risk">{error}</Text>
               </View>
             ) : null}
 

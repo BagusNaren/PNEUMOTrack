@@ -2,8 +2,11 @@ import "@/global.css";
 
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useReduceMotion } from "@/components/screening/motion";
 import { ThemeRoot } from "@/components/ui/theme-root";
+import { Config } from "@/constants/config";
 import { type PropsWithChildren, useMemo } from "react";
+import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ActiveChildProvider, useActiveChild } from "@/hooks/use-active-child";
@@ -14,6 +17,7 @@ import {
 } from "@/hooks/use-screening";
 import { SessionProvider, useSession } from "@/hooks/use-session";
 import { useTheme } from "@/hooks/use-theme";
+import { ThemePreferenceProvider } from "@/hooks/theme-preference";
 import { screeningsService } from "@/services/screenings";
 
 function formatChildAgeLabel(birthDateStr: string): string {
@@ -71,8 +75,9 @@ function ScreeningBridge({ children }: PropsWithChildren) {
 
 function SessionBoundProviders({ children }: PropsWithChildren) {
   const { user } = useSession();
+  const parentId = user?.id ?? (Config.useMockData ? "user-demo" : null);
   return (
-    <ActiveChildProvider parentId={user?.id ?? null}>
+    <ActiveChildProvider parentId={parentId}>
       <ScreeningBridge>{children}</ScreeningBridge>
     </ActiveChildProvider>
   );
@@ -87,8 +92,17 @@ function AppProviders({ children }: PropsWithChildren) {
 }
 
 export default function RootLayout() {
+  return (
+    <ThemePreferenceProvider>
+      <ThemedLayout />
+    </ThemePreferenceProvider>
+  );
+}
+
+function ThemedLayout() {
   const scheme = useColorScheme();
   const colors = useTheme();
+  const reducedMotion = useReduceMotion();
   const base = scheme === "dark" ? DarkTheme : DefaultTheme;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -112,7 +126,10 @@ export default function RootLayout() {
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  animation: "none",
+                  animation:
+                    Platform.OS === "web" || reducedMotion
+                      ? "none"
+                      : "slide_from_right",
                   contentStyle: { backgroundColor: colors.surface },
                 }}
               />

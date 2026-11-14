@@ -6,14 +6,14 @@ import { copy } from "@/constants/copy";
 export function OfflineBanner({ visible }: { visible: boolean }) {
   if (!visible) return null;
   return (
-    <Card variant="soft">
+    <Card variant="warning">
       <View
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
         className="flex-row items-center gap-3"
       >
         <View className="shrink-0">
-          <Icon name="error" tone="brand" />
+          <Icon name="error" tone="warning" />
         </View>
         <Text className="min-w-0 flex-1 text-body text-ink dark:text-ink-dark">
           {copy.networkErrors.offlineBanner}

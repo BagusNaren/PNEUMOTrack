@@ -6,16 +6,19 @@ import { copy } from "@/constants/copy";
 export function Avatar({
   name,
   source,
+  size = "lg",
   accessibilityLabel = copy.ui.avatarFallback,
 }: {
   name?: string;
   source?: ImageSource;
+  size?: "sm" | "md" | "lg" | "xl";
   accessibilityLabel?: string;
 }) {
   const [failedSource, setFailedSource] = useState<ImageSource>();
   const initials =
     name
-      ?.trim()
+      ?.replace(/^((dr|drg|prof|ir|h|hj)\.?\s+)+/i, "")
+      .trim()
       .split(/\s+/)
       .slice(0, 2)
       .map((part) => Array.from(part)[0])
@@ -25,7 +28,7 @@ export function Avatar({
     <View
       accessible
       accessibilityLabel={accessibilityLabel}
-      className="h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-brand dark:bg-surface-brand-dark"
+      className={`shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-brand ${ { sm: "h-10 w-10", md: "h-12 w-12", lg: "h-16 w-16", xl: "h-20 w-20" }[size]}`}
     >
       {source && source !== failedSource ? (
         <Image
@@ -35,7 +38,7 @@ export function Avatar({
           onError={() => setFailedSource(source)}
         />
       ) : (
-        <Text className="text-subtitle font-semibold text-brand dark:text-brand-light">
+        <Text className={`font-semibold text-brand ${ { sm: "text-label", md: "text-body", lg: "text-subtitle", xl: "text-title" }[size]}`}>
           {initials}
         </Text>
       )}

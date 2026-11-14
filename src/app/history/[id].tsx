@@ -1,13 +1,14 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
-import { ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text, View } from "react-native";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DangerSignsBox } from "@/components/ui/danger-signs-box";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
+import { Screen } from "@/components/ui/screen";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { Waveform } from "@/components/ui/waveform";
@@ -17,7 +18,6 @@ import { screeningsService } from "@/services/screenings";
 import { formatDate, formatDuration } from "@/utils/format";
 
 export default function HistoryDetailScreen() {
-  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const record = useResource(
     useCallback(
@@ -27,15 +27,7 @@ export default function HistoryDetailScreen() {
   );
   const screening = record.data;
   return (
-    <ScrollView
-      className="flex-1 bg-surface"
-      contentContainerStyle={{
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom + 24,
-        paddingHorizontal: 20,
-        gap: 16,
-      }}
-    >
+    <Screen>
       <ScreenHeader title={copy.history.detailTitle} />
       {record.isLoading ? (
         <LoadingState />
@@ -55,21 +47,31 @@ export default function HistoryDetailScreen() {
                 {formatDuration(screening.duration_sec)}
               </Text>
               <Card>
-                <Text
-                  accessibilityRole="header"
-                  className="text-label font-semibold text-ink"
-                >
-                  {copy.ui.waveform}
-                </Text>
+                <View className="flex-row items-center justify-between gap-2">
+                  <Text
+                    accessibilityRole="header"
+                    className="min-w-0 flex-1 text-subtitle font-semibold text-ink"
+                  >
+                    {screening.result === "risk"
+                      ? copy.result.abnormalPattern
+                      : copy.result.normalPattern}
+                  </Text>
+                  <Text className="text-caption text-ink-muted">
+                    {formatDuration(screening.duration_sec)}
+                  </Text>
+                </View>
                 {screening.waveform?.length ? (
-                  <Waveform samples={screening.waveform} />
+                  <Waveform
+                    samples={screening.waveform}
+                    variant={screening.result}
+                  />
                 ) : (
                   <Text className="text-body text-ink-muted">
                     {copy.result.noWaveform}
                   </Text>
                 )}
               </Card>
-              <Card>
+              <Card variant="soft">
                 <Text
                   accessibilityRole="header"
                   className="text-subtitle font-semibold text-ink"
@@ -80,9 +82,12 @@ export default function HistoryDetailScreen() {
                   {screening.summary || copy.history.summaryUnavailable}
                 </Text>
                 {!screening.agreement && (
-                  <Text className="text-body text-ink-muted">
-                    {copy.result.disagreement}
-                  </Text>
+                  <View className="mt-1 gap-2">
+                    <Badge variant="disagreement" />
+                    <Text className="text-body text-ink-muted">
+                      {copy.result.disagreement}
+                    </Text>
+                  </View>
                 )}
               </Card>
               <DangerSignsBox includeDisclaimer />
@@ -118,6 +123,6 @@ export default function HistoryDetailScreen() {
           )}
         </>
       )}
-    </ScrollView>
+    </Screen>
   );
 }

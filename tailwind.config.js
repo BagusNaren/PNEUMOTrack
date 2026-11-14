@@ -4,10 +4,15 @@ const color = (name) => `rgb(var(--color-${name}) / <alpha-value>)`;
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
-  darkMode: "media",
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
+        subtle: color("borderSubtle"),
+        warning: color("warning"),
+        "surface-warning": color("surfaceWarning"),
+        "border-warning": color("borderWarning"),
+        scrim: "rgb(var(--color-scrim) / var(--scrim-opacity))",
         surface: { DEFAULT: color("surface"), dark: color("surface") },
         "surface-muted": {
           DEFAULT: color("surfaceMuted"),
@@ -64,7 +69,7 @@ module.exports = {
         caption: ["12px", { lineHeight: "16px" }],
       },
       borderRadius: { card: "16px", sheet: "24px", pill: "999px" },
-      maxWidth: { content: "800px" },
+      maxWidth: { content: "640px", form: "480px" },
     },
   },
   plugins: [],

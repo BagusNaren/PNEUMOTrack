@@ -3,6 +3,7 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -11,9 +12,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArticleRow } from "@/components/ui/article-row";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { Icon } from "@/components/ui/icon";
 import { LoadingState } from "@/components/ui/loading-state";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { copy } from "@/constants/copy";
+import { Spacing, UI } from "@/constants/theme";
 import { useResource } from "@/hooks/use-resource";
 import { useTheme } from "@/hooks/use-theme";
 import { articlesService } from "@/services/articles";
@@ -46,11 +49,12 @@ export default function ArticlesScreen() {
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top }}>
       <FlatList
+        className="w-full max-w-content flex-1 self-center"
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 24,
+          paddingHorizontal: UI.gutter,
+          paddingBottom: insets.bottom + Spacing.four,
         }}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -60,27 +64,44 @@ export default function ArticlesScreen() {
           />
         }
         ListHeaderComponent={
-          <>
+          <View className="gap-3 pb-2">
             <ScreenHeader title={copy.articles.title} />
-            <Text className="mb-2 text-label font-semibold text-ink">
-              {copy.articles.search}
-            </Text>
-            <TextInput
-              accessibilityLabel={copy.articles.search}
-              placeholder={copy.articles.search}
-              placeholderTextColor={theme.inkMuted}
-              value={search}
-              onChangeText={setSearch}
-              className="min-h-12 rounded-xl border border-border px-4 py-3 text-body text-ink"
-            />
-            <View className="my-4 flex-row flex-wrap gap-2">
+            <View className="min-h-12 flex-row items-center gap-2 rounded-pill border border-border bg-surface-muted pl-4">
+              <Icon name="search" tone="muted" />
+              <TextInput
+                accessibilityLabel={copy.articles.search}
+                placeholder={copy.articles.search}
+                placeholderTextColor={theme.inkMuted}
+                value={search}
+                onChangeText={setSearch}
+                className="min-w-0 flex-1 py-3 text-body text-ink"
+              />
+              {search.length > 0 && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={copy.common.clearSearch}
+                  onPress={() => setSearch("")}
+                  className="min-h-12 min-w-12 items-center justify-center rounded-pill active:opacity-70"
+                >
+                  <Icon name="close" tone="muted" />
+                </Pressable>
+              )}
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{
+                gap: Spacing.two,
+                paddingVertical: Spacing.one,
+              }}
+            >
               {categories.map((item) => (
                 <Pressable
                   key={item}
                   accessibilityRole="button"
                   accessibilityState={{ selected: item === category }}
                   onPress={() => setCategory(item)}
-                  className={`min-h-12 justify-center rounded-pill px-4 py-3 active:opacity-90 ${item === category ? "bg-brand" : "bg-surface-brand-soft"}`}
+                  className={`min-h-11 items-center justify-center rounded-pill px-4 py-2 active:opacity-90 ${item === category ? "bg-brand" : "bg-surface-brand-soft"}`}
                 >
                   <Text
                     className={`text-label font-semibold ${item === category ? "text-on-brand" : "text-brand"}`}
@@ -89,14 +110,14 @@ export default function ArticlesScreen() {
                   </Text>
                 </Pressable>
               ))}
-            </View>
+            </ScrollView>
             {articles.error && (
               <ErrorState
                 description={copy.common.loadFailed}
                 onAction={() => void articles.reload()}
               />
             )}
-          </>
+          </View>
         }
         ListEmptyComponent={
           articles.isLoading ? (

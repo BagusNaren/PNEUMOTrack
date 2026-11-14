@@ -1,3 +1,6 @@
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
 import { Text, View } from "react-native";
@@ -91,9 +94,7 @@ export default function RecordScreen() {
         />
       ) : (
         <>
-          <Text className="text-center text-body text-ink dark:text-ink-dark">
-            {child.child.name}
-          </Text>
+          <View className="items-center"><Badge variant="brand" label={`${child.child.name} · ${child.child.ageLabel}`} /></View>
           <View className="items-center gap-3 py-4">
             <Text
               accessibilityLiveRegion="polite"
@@ -123,12 +124,7 @@ export default function RecordScreen() {
             {copy.record.limit}
           </Text>
           {recorder.interrupted && (
-            <Text
-              accessibilityRole="alert"
-              className="text-body text-ink dark:text-ink-dark"
-            >
-              {copy.record.background}
-            </Text>
+            <Card variant="warning"><View accessibilityRole="alert" className="flex-row items-center gap-3"><Icon name="warning" tone="warning" /><Text className="flex-1 text-body text-warning">{copy.record.background}</Text></View></Card>
           )}
           <PermissionPanel recorder={recorder} />
           {recorder.permission === "granted" && (
@@ -161,12 +157,7 @@ export default function RecordScreen() {
               ) : recorder.phase === "stopped" ? (
                 recorder.isTooShort || !recorder.audioUri ? (
                   <>
-                    <Text
-                      accessibilityRole="alert"
-                      className="text-body text-ink dark:text-ink-dark"
-                    >
-                      {copy.record.tooShort}
-                    </Text>
+                    <Card variant="warning"><View accessibilityRole="alert" className="flex-row items-center gap-3"><Icon name="warning" tone="warning" /><Text className="flex-1 text-body text-warning">{copy.record.tooShort}</Text></View></Card>
                     <Button
                       label={copy.common.rerecord}
                       loading={recorder.busy}
@@ -212,13 +203,7 @@ export default function RecordScreen() {
             </View>
           )}
           {recorder.error && (
-            <Text
-              selectable
-              accessibilityRole="alert"
-              className="text-body text-ink dark:text-ink-dark"
-            >
-              {recorder.error}
-            </Text>
+            <Card variant="risk"><View accessibilityRole="alert" className="flex-row items-center gap-3"><Icon name="warning" tone="risk" /><Text className="flex-1 text-body text-risk">{recorder.error}</Text></View></Card>
           )}
           <Button
             label={copy.common.cancel}

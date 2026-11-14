@@ -16,6 +16,7 @@ import { Screen } from "@/components/ui/screen";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { Waveform } from "@/components/ui/waveform";
+import { Config } from "@/constants/config";
 import { copy } from "@/constants/copy";
 import { devSaveModes, useScreening } from "@/hooks/use-screening";
 import { useSingleFlight } from "@/hooks/use-single-flight";
@@ -80,6 +81,11 @@ function ComponentGallery() {
         <ScreenHeader
           title={copy.gallery.title}
           subtitle={copy.common.appName}
+          rightAction={
+            Config.useMockData ? (
+              <Badge variant="muted" label={copy.screening.simulationMode} />
+            ) : undefined
+          }
         />
         <Text className="text-body text-ink-muted dark:text-ink-dark-muted">
           {copy.gallery.description}

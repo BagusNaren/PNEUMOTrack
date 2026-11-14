@@ -1,3 +1,4 @@
+import { UI } from "@/constants/theme";
 import { memo, useEffect } from "react";
 import { Text, View } from "react-native";
 import Animated, {
@@ -16,8 +17,8 @@ import {
 } from "@/components/screening/motion";
 import { copy } from "@/constants/copy";
 
-const BAR_COUNT = 32;
-const BAR_HEIGHT = 72;
+const BAR_COUNT = UI.waveformBarCount;
+const BAR_HEIGHT = UI.waveformBarHeight;
 const MIN_SCALE = 2 / BAR_HEIGHT;
 const BAR_INDICES = Array.from({ length: BAR_COUNT }, (_, index) => index);
 
@@ -162,7 +163,7 @@ export const Waveform = memo(function Waveform({
             ))}
       </View>
       {!useSharedLiveBars && !resolvedSamples.length && (
-        <Text className="text-caption text-ink dark:text-ink-dark">
+        <Text className="text-caption text-ink-muted">
           {copy.ui.noSamples}
         </Text>
       )}

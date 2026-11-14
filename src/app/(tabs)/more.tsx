@@ -1,7 +1,10 @@
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
+import { ListRow } from "@/components/ui/list-row";
+import { Screen } from "@/components/ui/screen";
+import { useThemePreference } from "@/hooks/theme-preference";
 import { router, type Href } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Alert, Text, View } from "react-native";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -55,7 +58,7 @@ const items = [
 }[];
 
 export default function MoreScreen() {
-  const insets = useSafeAreaInsets();
+  const { preference, setPreference } = useThemePreference();
   const { user, signOut } = useSession();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -81,15 +84,7 @@ export default function MoreScreen() {
     ]);
   const name = user?.user_metadata?.full_name;
   return (
-    <ScrollView
-      className="flex-1 bg-surface"
-      contentContainerStyle={{
-        paddingTop: insets.top,
-        paddingHorizontal: 20,
-        paddingBottom: 24,
-        gap: 20,
-      }}
-    >
+    <Screen bottomInset={false}>
       <ScreenHeader title={copy.nav.more} />
       <Card variant="brand" className="flex-row items-center gap-3">
         <Avatar name={name} />
@@ -110,22 +105,31 @@ export default function MoreScreen() {
           {copy.more.services}
         </Text>
         {items.map((item) => (
-          <Pressable
+          <ListRow
             key={item.href}
-            accessibilityRole="button"
+            title={item.title}
+            subtitle={item.body}
+            leading={<Icon name={item.icon} tone="brand" />}
             onPress={() => router.push(item.href)}
-            className="min-h-12 flex-row items-center gap-3 border-b border-border/40 py-4 active:opacity-70"
-          >
-            <Icon name={item.icon} tone="brand" />
-            <View className="min-w-0 flex-1 gap-1">
-              <Text className="text-body font-semibold text-ink">
-                {item.title}
-              </Text>
-              <Text className="text-caption text-ink-muted">{item.body}</Text>
-            </View>
-            <Icon name="chevronRight" tone="muted" />
-          </Pressable>
+          />
         ))}
+      </View>
+      <View className="gap-3">
+        <Text
+          accessibilityRole="header"
+          className="text-subtitle font-semibold text-ink"
+        >
+          {copy.gallery.appearance}
+        </Text>
+        <SegmentedTabs
+          options={[
+            { key: "system", label: copy.gallery.system },
+            { key: "light", label: copy.gallery.light },
+            { key: "dark", label: copy.gallery.dark },
+          ]}
+          value={preference}
+          onChange={setPreference}
+        />
       </View>
       <View className="gap-2">
         <Text
@@ -135,6 +139,19 @@ export default function MoreScreen() {
           {copy.more.aboutTitle}
         </Text>
         <Text className="text-body text-ink-muted">{copy.more.aboutBody}</Text>
+      </View>
+      <View className="gap-2">
+        <Text
+          accessibilityRole="header"
+          className="text-subtitle font-semibold text-ink"
+        >
+          {copy.more.privacy}
+        </Text>
+        <Card variant="soft">
+          <Text className="text-body text-ink-muted">
+            {copy.more.privacyBody}
+          </Text>
+        </Card>
       </View>
       {failed && (
         <Text accessibilityRole="alert" className="text-body text-risk">
@@ -147,6 +164,9 @@ export default function MoreScreen() {
         loading={busy}
         onPress={handleSignOut}
       />
-    </ScrollView>
+      <Text className="text-center text-caption text-ink-muted">
+        {copy.more.appVersion("1.0.0")}
+      </Text>
+    </Screen>
   );
 }
