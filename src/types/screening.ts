@@ -1,3 +1,5 @@
+import type { AudioSource } from "expo-audio";
+
 export type ScreeningOutcome = 'normal' | 'risk';
 
 /** Label model mentah bukan diagnosis dan tidak ditampilkan sebagai hasil klinis. */
@@ -103,6 +105,8 @@ export function toSaveScreeningPayload(
 export interface ResultViewProps {
   result: PredictSuccessResponse | ScreeningHistoryResult;
   onRerecord?: () => void;
+  audioSource?: AudioSource;
+  demoAudio?: boolean;
 }
 
 function isRecord(data: unknown): data is Record<string, unknown> {

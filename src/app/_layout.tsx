@@ -15,6 +15,7 @@ import {
   type ActiveChildAdapter,
   ScreeningProvider,
 } from "@/hooks/use-screening";
+import { ProfileProvider } from "@/hooks/use-profile";
 import { SessionProvider, useSession } from "@/hooks/use-session";
 import { useTheme } from "@/hooks/use-theme";
 import { ThemePreferenceProvider } from "@/hooks/theme-preference";
@@ -86,7 +87,9 @@ function SessionBoundProviders({ children }: PropsWithChildren) {
 function AppProviders({ children }: PropsWithChildren) {
   return (
     <SessionProvider>
-      <SessionBoundProviders>{children}</SessionBoundProviders>
+      <ProfileProvider>
+        <SessionBoundProviders>{children}</SessionBoundProviders>
+      </ProfileProvider>
     </SessionProvider>
   );
 }

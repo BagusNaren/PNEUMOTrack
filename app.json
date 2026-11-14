@@ -66,6 +66,13 @@
           "enableBackgroundPlayback": false
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "PNEUMOTrack membutuhkan akses galeri untuk mengatur foto profil Anda.",
+          "cameraPermission": false
+        }
+      ],
       "expo-asset",
       "expo-font",
       "expo-status-bar",

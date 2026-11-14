@@ -105,7 +105,7 @@ The bottom navigation is icon-only, 64 px, one hairline, 48 px touch targets. Pr
 ### Acceptance
 
 - Onboarding, login, and dashboard work on a physical device.
-- Profile shows the demo account, children, and latest screening.
+- Profile shows the demo account, children, and latest screening; the parent can edit name, phone, and city and set a local profile photo. The photo also appears in the dashboard header and opens profile editing. Child avatars remain initials.
 - All listed screens are reachable with dummy data.
 - Lucide icons only.
 - System font, light mode, Indonesian copy.
@@ -376,14 +376,9 @@ Required on result and recommendation screens.
 
 Container `flex-row gap-1 rounded-pill bg-surface-brand-soft p-1`; active `bg-brand` + `text-on-brand`; inactive `text-brand`.
 
-### `HeartGauge` (dashboard/monitoring)
+### `Status details grid` (dashboard)
 
-Concentric heart-shaped indicator with three rings (safe / watch / risk). Implementation requires `react-native-svg` (`bunx expo install react-native-svg`), rings drawn as stroked paths, center label:
-
-- safe: stroke `safe`, center text `text-brand “Tidak ada indikasi pneumonia”`
-- risk: stroke `risk`, center text `text-risk “Indikasi pneumonia”`
-
-Never rely on color alone — always pair with the label.
+The screening status card uses a two-column text grid for duration, cough segments, date, and method. There is no decorative illustration; the status label and the grid carry the hierarchy. On narrow screens the date and method values may wrap inside their half-width column.
 
 ### `Waveform`
 
@@ -455,12 +450,11 @@ Rules:
 Structure:
 
 1. Greeting block: `text-caption text-ink-muted` “Hai, Bunda” + `text-title font-bold` “Pantau kondisi si kecil”.
-2. Child hero card: `rounded-card bg-surface-brand p-4`, name + age pill, child photo right-aligned, `overflow-hidden`.
-3. Vitals card: icon rows (suhu, napas, detak) with `text-caption` labels; right side `HeartGauge` 120px.
-4. Primary action “Rekam Batuk” (`PrimaryButton`).
-5. “Artikel & Berita” section: `SectionTitle` + horizontal `ScrollView` of 2–3 article cards (`w-40`).
+2. Child selector card: `rounded-card bg-surface-brand p-4`, avatar, name, age pill, sex, and chevron.
+3. Screening status card: status text and a two-column grid of duration, cough segments, date, and method; actions “Rekam Batuk” and “Lihat Detail”.
+4. “Artikel & Berita” section: `SectionTitle` + list of article rows.
 
-Risk state: same layout, `bg-risk-surface` on hero + vitals card, gauge ring `risk`, banner copy “Indikasi risiko pneumonia terdeteksi”, CTA becomes “Lihat Rekomendasi”.
+Risk state: same layout, `bg-risk-surface` on the status card, banner copy “Indikasi risiko pneumonia terdeteksi”, CTA becomes “Lihat Rekomendasi”. No vitals are shown; the app only analyzes cough audio.
 
 ### 7.3 Recording guidance
 
@@ -729,7 +723,7 @@ export const copy = {
 | `Spacing` numbers | Use Tailwind spacing utilities; keep constants only for numeric props (chart padding, insets). |
 | Inline `StyleSheet` | Migrate screen by screen; do not mix both in one component. |
 
-Shared components to create: `src/components/ui/{screen,screen-header,card,primary-button,secondary-button,status-banner,disclaimer,list-row,segmented-tabs,heart-gauge,waveform,empty-state,error-state}.tsx`.
+Shared components to create: `src/components/ui/{screen,screen-header,card,primary-button,secondary-button,status-banner,disclaimer,list-row,segmented-tabs,waveform,empty-state,error-state}.tsx`.
 
 ---
 

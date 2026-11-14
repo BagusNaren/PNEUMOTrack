@@ -17,6 +17,7 @@ import { Config } from "@/constants/config";
 import { copy } from "@/constants/copy";
 import { Spacing, UI } from "@/constants/theme";
 import { useActiveChild } from "@/hooks/use-active-child";
+import { useProfile } from "@/hooks/use-profile";
 import { useResource } from "@/hooks/use-resource";
 import { useSession } from "@/hooks/use-session";
 import { screeningsService } from "@/services/screenings";
@@ -74,6 +75,7 @@ const services = [
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useSession();
+  const { profile } = useProfile();
   const { activeChild, children, setActiveChild } = useActiveChild();
   const childId = activeChild?.id;
   const latest = useResource(
@@ -113,20 +115,49 @@ export default function ProfileScreen() {
         <View className="w-full max-w-content self-center gap-6">
           <ScreenHeader title={copy.profile.title} showBack={false} />
 
-          <Card variant="brand" className="flex-row items-center gap-3">
-            <Avatar name={user?.user_metadata?.full_name || "Bunda"} size="lg" />
-            <View className="min-w-0 flex-1 gap-1">
-              <Text className="text-subtitle font-bold text-ink">
-                {user?.user_metadata?.full_name || copy.more.account}
-              </Text>
-              <Text className="text-label text-ink-muted">
-                {user?.email || copy.more.accountUnavailable}
-              </Text>
-              {Config.useMockData && (
-                <Badge variant="muted" label={copy.profile.demo} />
-              )}
-            </View>
-          </Card>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copy.profile.editProfile}
+            onPress={() => router.push("/profile/edit")}
+            className="active:opacity-80"
+          >
+            <Card variant="brand" className="flex-row items-center gap-3">
+              <View className="relative">
+                <Avatar
+                  name={profile.fullName || "Bunda"}
+                  source={
+                    profile.avatarUri ? { uri: profile.avatarUri } : undefined
+                  }
+                  size="lg"
+                  accessibilityLabel={copy.profile.photo}
+                />
+                <View className="absolute -bottom-1 -right-1 h-7 w-7 items-center justify-center rounded-full border-2 border-surface-brand bg-brand">
+                  <Icon name="camera" tone="onBrand" size={UI.iconSm} />
+                </View>
+              </View>
+              <View className="min-w-0 flex-1 gap-1">
+                <Text className="text-subtitle font-bold text-ink">
+                  {profile.fullName || copy.more.account}
+                </Text>
+                <Text className="text-label text-ink-muted">
+                  {user?.email || copy.more.accountUnavailable}
+                </Text>
+                {profile.phone || profile.city ? (
+                  <Text className="text-caption text-ink-muted">
+                    {[profile.phone, profile.city].filter(Boolean).join(" · ")}
+                  </Text>
+                ) : (
+                  <Text className="text-caption text-ink-muted">
+                    {copy.profile.editCardHint}
+                  </Text>
+                )}
+                {Config.useMockData && (
+                  <Badge variant="muted" label={copy.profile.demo} />
+                )}
+              </View>
+              <Icon name="chevronRight" tone="brand" />
+            </Card>
+          </Pressable>
 
           <View className="gap-3">
             <Text

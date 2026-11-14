@@ -16,14 +16,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { HeartGauge } from "@/components/ui/heart-gauge";
 import { Icon } from "@/components/ui/icon";
 import { LoadingState } from "@/components/ui/loading-state";
 import { copy } from "@/constants/copy";
 import { Config } from "@/constants/config";
 import { useActiveChild } from "@/hooks/use-active-child";
+import { useProfile } from "@/hooks/use-profile";
 import { useResource } from "@/hooks/use-resource";
-import { useSession } from "@/hooks/use-session";
 import { articlesService } from "@/services/articles";
 import { screeningsService } from "@/services/screenings";
 import { formatDate, formatDuration } from "@/utils/format";
@@ -55,7 +54,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
-  const { user } = useSession();
+  const { profile, isReady: profileReady } = useProfile();
   const { activeChild, children, setActiveChild, isLoading, error, refresh } =
     useActiveChild();
   const [showChildPicker, setShowChildPicker] = useState(false);
@@ -70,10 +69,9 @@ export default function DashboardScreen() {
   const articles = useResource(useCallback(() => articlesService.list(), []));
   const screening = latest.data;
   const risk = screening?.result === "risk";
-  const name = user?.user_metadata?.full_name?.trim().split(/\s+/)[0];
+  const name = profile.fullName.trim().split(/\s+/)[0];
   const sexLabel =
     activeChild?.sex === "male" ? copy.children.sexMale : copy.children.sexFemale;
-  const gaugeVariant = screening ? (risk ? "risk" : "normal") : "pending";
   const ctaLabel = risk
     ? copy.dashboard.viewRecommendation
     : copy.dashboard.recordButton;
@@ -109,22 +107,39 @@ export default function DashboardScreen() {
       }
     >
       <View className="w-full max-w-content self-center gap-6">
-        <View className="gap-1">
-          <View className="flex-row flex-wrap items-center justify-between gap-2">
-            <Text
-              accessibilityRole="header"
-              className="text-title font-bold text-ink"
-            >
-              {copy.dashboard.greeting}
-              {name ? `, ${name}` : ""}
+        <View className="flex-row items-center gap-3">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copy.profile.editProfile}
+            onPress={() => router.push("/profile/edit")}
+            className="active:opacity-80"
+          >
+            <Avatar
+              name={profile.fullName || "Bunda"}
+              source={
+                profile.avatarUri ? { uri: profile.avatarUri } : undefined
+              }
+              size="md"
+              accessibilityLabel={copy.profile.photo}
+            />
+          </Pressable>
+          <View className="min-w-0 flex-1 gap-1">
+            <View className="flex-row flex-wrap items-center justify-between gap-2">
+              <Text
+                accessibilityRole="header"
+                className="text-title font-bold text-ink"
+              >
+                {copy.dashboard.greeting}
+                {name ? `, ${name}` : ""}
+              </Text>
+              {Config.useMockData && (
+                <Badge variant="muted" label={copy.screening.simulationMode} />
+              )}
+            </View>
+            <Text className="text-body text-ink-muted">
+              {risk ? copy.dashboard.subtitleRisk : copy.dashboard.subtitle}
             </Text>
-            {Config.useMockData && (
-              <Badge variant="muted" label={copy.screening.simulationMode} />
-            )}
           </View>
-          <Text className="text-body text-ink-muted">
-            {risk ? copy.dashboard.subtitleRisk : copy.dashboard.subtitle}
-          </Text>
         </View>
 
         {isLoading ? (
@@ -246,37 +261,40 @@ export default function DashboardScreen() {
                 </Text>
               </View>
 
-              <View className="flex-row items-center gap-3">
-                <View className="flex-1 gap-2">
-                  {screening ? (
-                    <>
-                      <InfoRow
-                        label="Durasi rekaman"
-                        value={formatDuration(screening.duration_sec)}
-                      />
-                      <InfoRow
-                        label="Segmen batuk"
-                        value={`${screening.chunks} bagian`}
-                      />
-                      <InfoRow
-                        label="Tanggal"
-                        value={formatDate(screening.created_at, true)}
-                      />
-                      <InfoRow label="Metode" value="Analisis audio batuk" />
-                    </>
-                  ) : (
-                    <>
-                      <Text className="text-label font-semibold text-ink">
-                        {copy.dashboard.noScreeningYet}
-                      </Text>
-                      <Text className="text-caption text-ink-muted">
-                        Rekam batuk untuk melihat hasil skrining.
-                      </Text>
-                    </>
-                  )}
+              {screening ? (
+                <View className="flex-row flex-wrap">
+                  <View className="w-1/2 pb-3 pr-2">
+                    <InfoRow
+                      label="Durasi rekaman"
+                      value={formatDuration(screening.duration_sec)}
+                    />
+                  </View>
+                  <View className="w-1/2 pb-3 pl-2">
+                    <InfoRow
+                      label="Segmen batuk"
+                      value={`${screening.chunks} bagian`}
+                    />
+                  </View>
+                  <View className="w-1/2 pr-2">
+                    <InfoRow
+                      label="Tanggal"
+                      value={formatDate(screening.created_at, true)}
+                    />
+                  </View>
+                  <View className="w-1/2 pl-2">
+                    <InfoRow label="Metode" value="Analisis audio batuk" />
+                  </View>
                 </View>
-                <HeartGauge variant={gaugeVariant} size={UI.gaugeSize} />
-              </View>
+              ) : (
+                <View className="gap-1">
+                  <Text className="text-label font-semibold text-ink">
+                    {copy.dashboard.noScreeningYet}
+                  </Text>
+                  <Text className="text-caption text-ink-muted">
+                    Rekam batuk untuk melihat hasil skrining.
+                  </Text>
+                </View>
+              )}
 
               <View className="flex-row flex-wrap gap-2">
                 <Button
@@ -310,6 +328,28 @@ export default function DashboardScreen() {
             ) : null}
           </View>
         )}
+
+        {profileReady && !profile.avatarUri ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copy.profile.completeTitle}
+            onPress={() => router.push("/profile/edit")}
+            className="active:opacity-80"
+          >
+            <Card variant="soft" className="flex-row items-center gap-3">
+              <Avatar name={profile.fullName || "Bunda"} size="md" />
+              <View className="min-w-0 flex-1 gap-0.5">
+                <Text className="text-label font-semibold text-ink">
+                  {copy.profile.completeTitle}
+                </Text>
+                <Text className="text-caption text-ink-muted">
+                  {copy.profile.completeBody}
+                </Text>
+              </View>
+              <Icon name="chevronRight" tone="brand" />
+            </Card>
+          </Pressable>
+        ) : null}
 
         <View className="gap-3">
           <View className="flex-row flex-wrap items-center justify-between gap-2">

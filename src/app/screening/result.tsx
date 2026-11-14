@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Text } from "react-native";
 import { ResultView } from "@/components/screening/result-view";
 import { Button } from "@/components/ui/button";
+import { DEMO_COUGH_AUDIO } from "@/constants/audio";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
@@ -120,7 +121,12 @@ export default function ResultScreen() {
               />
             </Card>
           )}
-          <ResultView result={lastResult} onRerecord={rerecord} />
+          <ResultView
+            result={lastResult}
+            onRerecord={rerecord}
+            audioSource={isDemo ? DEMO_COUGH_AUDIO : undefined}
+            demoAudio={isDemo}
+          />
           {lastResult.result === "risk" && (
             <Button
               label={copy.result.recommendation}

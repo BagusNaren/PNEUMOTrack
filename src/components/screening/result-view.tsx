@@ -1,4 +1,5 @@
 import { Text, View } from "react-native";
+import { AudioPlayback } from "@/components/screening/audio-playback";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,7 +10,12 @@ import { copy } from "@/constants/copy";
 import type { ResultViewProps } from "@/types/screening";
 import { formatDuration } from "@/utils/format";
 
-export function ResultView({ result, onRerecord }: ResultViewProps) {
+export function ResultView({
+  result,
+  onRerecord,
+  audioSource,
+  demoAudio = false,
+}: ResultViewProps) {
   return (
     <View className="gap-6">
       <StatusBanner variant={result.result} />
@@ -49,6 +55,11 @@ export function ResultView({ result, onRerecord }: ResultViewProps) {
             {copy.result.noWaveform}
           </Text>
         )}
+        {audioSource ? (
+          <View className="border-t border-border pt-3">
+            <AudioPlayback source={audioSource} demo={demoAudio} />
+          </View>
+        ) : null}
       </Card>
       <Card variant="soft">
         <Text

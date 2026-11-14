@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
 import { Text, View } from "react-native";
+import { AudioPlayback } from "@/components/screening/audio-playback";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +13,8 @@ import { Screen } from "@/components/ui/screen";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { Waveform } from "@/components/ui/waveform";
+import { DEMO_COUGH_AUDIO } from "@/constants/audio";
+import { Config } from "@/constants/config";
 import { copy } from "@/constants/copy";
 import { useResource } from "@/hooks/use-resource";
 import { screeningsService } from "@/services/screenings";
@@ -70,6 +73,11 @@ export default function HistoryDetailScreen() {
                     {copy.result.noWaveform}
                   </Text>
                 )}
+                {Config.useMockData ? (
+                  <View className="border-t border-border pt-3">
+                    <AudioPlayback source={DEMO_COUGH_AUDIO} demo />
+                  </View>
+                ) : null}
               </Card>
               <Card variant="soft">
                 <Text

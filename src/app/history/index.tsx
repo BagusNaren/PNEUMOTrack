@@ -40,6 +40,15 @@ export default function HistoryScreen() {
   const segments = chronological.map((item) => item.chunks ?? 0);
   const normalCount = items.filter((item) => item.result === "normal").length;
   const riskCount = items.length - normalCount;
+  const averageDuration = durations.length
+    ? durations.reduce((total, value) => total + value, 0) / durations.length
+    : 0;
+  const maxDuration = durations.length ? Math.max(...durations) : 0;
+  const averageSegments = segments.length
+    ? segments.reduce((total, value) => total + value, 0) / segments.length
+    : 0;
+  const maxSegments = segments.length ? Math.max(...segments) : 0;
+  const hasTrend = items.length >= 2;
   const loading = isLoading || history.isLoading;
 
   const onRefresh = () => {
@@ -53,7 +62,7 @@ export default function HistoryScreen() {
       contentContainerStyle={{
         paddingTop: insets.top,
         paddingHorizontal: UI.gutter,
-        paddingBottom: Spacing.four,
+        paddingBottom: Spacing.six,
       }}
       refreshControl={
         <RefreshControl refreshing={history.isRefreshing} onRefresh={onRefresh} />
@@ -130,52 +139,128 @@ export default function HistoryScreen() {
                   {copy.history.trends}
                 </Text>
                 <Text className="text-caption text-ink-muted">
-                  {copy.history.graphNote}
+                  {copy.history.perRecordingNote}
                 </Text>
               </View>
 
-              <View className="gap-2">
-                <Text className="text-label font-semibold text-ink">
-                  {copy.history.durationChart}
-                </Text>
-                <TrendChart
-                  samples={durations}
-                  accessibilityLabel={copy.history.durationChart}
-                />
-              </View>
+              {hasTrend ? (
+                <>
+                  <View className="gap-2">
+                    <Text className="text-label font-semibold text-ink">
+                      {copy.history.durationChart}
+                    </Text>
+                    <TrendChart
+                      samples={durations}
+                      accessibilityLabel={copy.history.durationChart}
+                    />
+                    <View className="flex-row gap-2">
+                      <Text className="flex-1 text-caption text-ink-muted">
+                        {copy.history.oldest}:{" "}
+                        {formatDate(chronological[0].created_at, false)}
+                      </Text>
+                      <Text className="flex-1 text-right text-caption text-ink-muted">
+                        {copy.history.newest}:{" "}
+                        {formatDate(
+                          chronological[chronological.length - 1].created_at,
+                          false,
+                        )}
+                      </Text>
+                    </View>
+                    <View className="flex-row gap-2">
+                      <Text className="flex-1 text-caption text-ink-muted">
+                        {copy.history.average(formatDuration(averageDuration))}
+                      </Text>
+                      <Text className="flex-1 text-right text-caption text-ink-muted">
+                        {copy.history.highest(formatDuration(maxDuration))}
+                      </Text>
+                    </View>
+                  </View>
 
-              <View className="gap-2">
-                <Text className="text-label font-semibold text-ink">
-                  {copy.history.segmentsChart}
-                </Text>
-                <TrendChart
-                  samples={segments}
-                  variant="bar"
-                  accessibilityLabel={copy.history.segmentsChart}
-                />
-              </View>
+                  <View className="gap-2">
+                    <Text className="text-label font-semibold text-ink">
+                      {copy.history.segmentsChart}
+                    </Text>
+                    <TrendChart
+                      samples={segments}
+                      variant="bar"
+                      showValues
+                      accessibilityLabel={copy.history.segmentsChart}
+                    />
+                    <View className="flex-row gap-2">
+                      <Text className="flex-1 text-caption text-ink-muted">
+                        {copy.history.average(
+                          `${averageSegments.toLocaleString("id-ID", {
+                            maximumFractionDigits: 1,
+                            minimumFractionDigits: 1,
+                          })} segmen`,
+                        )}
+                      </Text>
+                      <Text className="flex-1 text-right text-caption text-ink-muted">
+                        {copy.history.highest(`${maxSegments} segmen`)}
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              ) : (
+                <View className="gap-3 rounded-card bg-surface-muted p-4">
+                  <Text className="text-label font-semibold text-ink">
+                    {copy.history.noTrend}
+                  </Text>
+                  <Text className="text-caption text-ink-muted">
+                    {copy.history.noTrendBody}
+                  </Text>
+                  <View className="flex-row gap-3">
+                    <View className="flex-1 gap-0.5">
+                      <Text className="text-caption text-ink-muted">
+                        {copy.history.lastDuration}
+                      </Text>
+                      <Text className="text-label font-semibold text-ink">
+                        {formatDuration(latest?.duration_sec ?? 0)}
+                      </Text>
+                    </View>
+                    <View className="flex-1 gap-0.5">
+                      <Text className="text-caption text-ink-muted">
+                        {copy.history.lastSegments}
+                      </Text>
+                      <Text className="text-label font-semibold text-ink">
+                        {latest?.chunks ?? 0} bagian
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
 
               <View className="flex-row gap-3">
                 <View className="flex-1 rounded-card bg-surface-safe p-3">
-                  <Text className="text-title font-bold text-safe">
-                    {normalCount}
-                  </Text>
+                  <View className="flex-row items-baseline gap-2">
+                    <Text className="text-title font-bold text-safe">
+                      {normalCount}
+                    </Text>
+                    <Text className="text-label font-semibold text-safe">
+                      {copy.history.normalLabel}
+                    </Text>
+                  </View>
                   <Text className="text-caption text-ink-muted">
-                    {copy.dashboard.normalStatus}
+                    {copy.history.recordingCount(normalCount)}
                   </Text>
                 </View>
                 <View className="flex-1 rounded-card bg-risk-surface p-3">
-                  <Text className="text-title font-bold text-risk">
-                    {riskCount}
-                  </Text>
+                  <View className="flex-row items-baseline gap-2">
+                    <Text className="text-title font-bold text-risk">
+                      {riskCount}
+                    </Text>
+                    <Text className="text-label font-semibold text-risk">
+                      {copy.history.riskLabel}
+                    </Text>
+                  </View>
                   <Text className="text-caption text-ink-muted">
-                    {copy.dashboard.riskStatus}
+                    {copy.history.recordingCount(riskCount)}
                   </Text>
                 </View>
               </View>
             </Card>
 
-            <Card variant="soft" className="gap-2">
+            <Card variant="soft" className="gap-3">
               <Text
                 accessibilityRole="header"
                 className="text-subtitle font-semibold text-ink"
@@ -185,6 +270,7 @@ export default function HistoryScreen() {
               <Text className="text-body text-ink">
                 {latest?.summary || copy.history.summaryUnavailable}
               </Text>
+              <View className="h-px bg-border" />
               <Text className="text-caption text-ink-muted">
                 {copy.disclaimer}
               </Text>

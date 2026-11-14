@@ -5,14 +5,14 @@ import { useColorScheme as useDeviceScheme } from "react-native";
 export type ThemePreference = "system" | "light" | "dark";
 const storageKey = "pneumo:theme_preference";
 const ThemeContext = createContext({
-  preference: "system" as ThemePreference,
+  preference: "light" as ThemePreference,
   scheme: "light" as "light" | "dark",
   setPreference: (_value: ThemePreference) => {},
 });
 
 export function ThemePreferenceProvider({ children }: PropsWithChildren) {
   const deviceScheme = useDeviceScheme();
-  const [preference, setValue] = useState<ThemePreference>("system");
+  const [preference, setValue] = useState<ThemePreference>("light");
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     let active = true;

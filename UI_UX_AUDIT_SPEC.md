@@ -218,12 +218,12 @@ Maintain `src/constants/palette.json` as the single source of truth (all existin
   1. Uses a raw `<ScrollView className="flex-1 bg-surface">` without `max-w-content self-center`, stretching full-bleed on tablet/web.
   2. Greeting section displays only `"Hai, <Name>"` (`text-title font-bold text-ink`) and omits the subtitle defined in `copy.dashboard.subtitle` (`"Pantau kondisi si kecil"`) / `copy.dashboard.subtitleRisk` (`"Perhatikan kondisi si kecil"`).
   3. The active child selector is an uncontained row (`Pressable` with `Avatar` + name + chevron) floating directly on the background instead of a distinct hero card (`design.md` §7.2 specifies a `rounded-card bg-surface-brand p-4` child hero card with name and age pill).
-  4. When `screening` is `null` (no screening yet for the active child), the card displays `"Belum ada hasil skrining"` and `"Rekam Batuk"` without the `HeartGauge` pending state or explanatory body text.
+  4. When `screening` is `null` (no screening yet for the active child), the card displays `"Belum ada hasil skrining"` and `"Rekam Batuk"` without the pending status details or explanatory body text.
 - **Design Directive:**
   1. Wrap the `ScrollView` children in `<View className="w-full max-w-content self-center gap-6">`.
   2. Render a two-line greeting header: `copy.dashboard.greeting` (`text-title font-bold text-ink`) on line 1, and `risk ? copy.dashboard.subtitleRisk : copy.dashboard.subtitle` (`text-body text-ink-muted`) on line 2.
   3. Place the active child switcher inside a `Card` (`variant="soft"`, `p-3.5`) showing `<Avatar size="md" name={activeChild.name} />`, child name (`text-subtitle font-semibold text-ink`), child age pill (`text-caption text-brand` computed from `activeChild.birth_date`), and a trailing chevron badge.
-  4. In the screening status `Card` (`variant={risk ? "risk" : "brand"}`), always render `<HeartGauge variant={screening ? (risk ? "risk" : "normal") : "pending"} size={112} />` so the dashboard maintains a consistent visual focal point in all states.
+  4. In the screening status `Card` (`variant={risk ? "risk" : "brand"}`), render the status details in a two-column grid so the card stays readable without a decorative illustration.
 
 #### `src/app/(tabs)/children.tsx` & `src/app/children/new.tsx` (Child Profiles)
 - **Visual/Runtime Issue:**
@@ -316,7 +316,7 @@ Maintain `src/constants/palette.json` as the single source of truth (all existin
 
 The following files contain hard-coded numeric style values, inline magic measurements, raw character glyphs, or inconsistent dark-mode token pairings that must be migrated to semantic tokens (`src/constants/theme.ts` `UI` / `Spacing` tokens and `tailwind.config.js` utilities) by the execution agent:
 
-- [x] [src/constants/theme.ts](file:///c:/Users/ASUS/Documents/Kuliah/Lomba/PNEUMOTrack/src/constants/theme.ts#L60-L73): Expand `UI` with semantic icon sizes (`iconSm: 16`, `iconMd: 20`, `iconLg: 24`, `iconXl: 32`), avatar sizes (`avatarSm: 40`, `avatarMd: 48`, `avatarLg: 64`, `avatarXl: 80`), `analyzingLogoSize: 140`, `gaugeSize: 112`, and `maxFormWidth: 440`.
+- [x] [src/constants/theme.ts](file:///c:/Users/ASUS/Documents/Kuliah/Lomba/PNEUMOTrack/src/constants/theme.ts#L60-L73): Expand `UI` with semantic icon sizes (`iconSm: 16`, `iconMd: 20`, `iconLg: 24`, `iconXl: 32`), avatar sizes (`avatarSm: 40`, `avatarMd: 48`, `avatarLg: 64`, `avatarXl: 80`), `analyzingLogoSize: 140`, and `maxFormWidth: 440`.
 - [x] [src/constants/palette.json](file:///c:/Users/ASUS/Documents/Kuliah/Lomba/PNEUMOTrack/src/constants/palette.json#L1-L42): Add `borderSubtle`, `warning`, `surfaceWarning`, `borderWarning`, and `scrim` tokens to both `light` and `dark` objects, and expose them in `tailwind.config.js`.
 - [x] [src/components/ui/list-row.tsx](file:///c:/Users/ASUS/Documents/Kuliah/Lomba/PNEUMOTrack/src/components/ui/list-row.tsx#L47): Replace hard-coded `<Text className="shrink-0 text-xl text-icon-muted">›</Text>` with `<Icon name="chevronRight" tone="muted" />` and replace `border-border` with `border-subtle`.
 - [x] [src/components/ui/segmented-tabs.tsx](file:///c:/Users/ASUS/Documents/Kuliah/Lomba/PNEUMOTrack/src/components/ui/segmented-tabs.tsx#L34): Remove hard-coded arbitrary `min-w-[120px]` class that forces segmented controls to wrap on narrow screens.

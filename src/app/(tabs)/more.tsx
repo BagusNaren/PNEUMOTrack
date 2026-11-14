@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { copy } from "@/constants/copy";
+import { useProfile } from "@/hooks/use-profile";
 import { useSession } from "@/hooks/use-session";
 
 const items = [
@@ -82,12 +83,16 @@ export default function MoreScreen() {
         },
       },
     ]);
-  const name = user?.user_metadata?.full_name;
+  const { profile } = useProfile();
+  const name = profile.fullName;
   return (
     <Screen bottomInset={false}>
       <ScreenHeader title={copy.nav.more} />
       <Card variant="brand" className="flex-row items-center gap-3">
-        <Avatar name={name} />
+        <Avatar
+          name={name}
+          source={profile.avatarUri ? { uri: profile.avatarUri } : undefined}
+        />
         <View className="min-w-0 flex-1 gap-1">
           <Text className="text-subtitle font-semibold text-ink">
             {name || copy.more.account}

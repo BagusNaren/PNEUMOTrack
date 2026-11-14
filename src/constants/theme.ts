@@ -78,7 +78,6 @@ export const UI = {
   avatarXl: 80,
   analyzingLogoSize: 140,
   authLogoSize: 72,
-  gaugeSize: 112,
   maxFormWidth: 440,
   waveformBarCount: 32,
   waveformBarHeight: 72,
